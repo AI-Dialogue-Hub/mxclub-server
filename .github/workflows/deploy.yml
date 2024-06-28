@@ -46,7 +46,7 @@ jobs:
           go build -trimpath -o mxclub-mini
           mkdir docker
           cp ../../script/Dockerfile.mini ./docker
-          cp ./mxclub-mini ./mxclub-mini
+          cp ./mxclub-mini ./docker
           cd docker
           # 使用Dockerfile构建镜像
           docker build . --file Dockerfile.mini --tag ${{ vars.hubAddr }}/${{ vars.USER_NAME }}/${{ vars.IMAGE_NAME }}:${{ vars.tag }}
