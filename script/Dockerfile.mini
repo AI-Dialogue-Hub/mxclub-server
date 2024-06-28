@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM golang:alpine
 
 # 设置工作目录
 WORKDIR /app
@@ -8,7 +8,7 @@ COPY . .
 
 RUN chmod +x mxclub-mini
 
-RUN ls
+RUN ll -ah
 
 
 # 声明服务端口
