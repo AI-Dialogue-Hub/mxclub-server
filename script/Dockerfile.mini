@@ -1,12 +1,11 @@
 # 使用官方的 golang 1.8 镜像作为基础镜像
-FROM alpine:latest
+FROM golang:1.8-alpine
 
 # 设置工作目录
 WORKDIR /app
 
 # 复制当前目录下的所有文件到工作目录
-COPY ./mxclub-mini ./mxclub-mini
-
+COPY mxclub-mini .
 
 # 设置容器启动时执行的命令，将输出重定向到日志文件
-CMD ["sh", "-c", "./mxclub-mini > ./app.$(date +'%Y.%m.%d').log 2>&1"]
+CMD ["sh", "-c", "./mxclub-mini -f config/mxclub-mini.config > ./app.$(date +'%Y.%m.%d').log 2>&1"]
