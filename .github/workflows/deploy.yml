@@ -40,7 +40,6 @@ jobs:
           docker version
           # 登录阿里云镜像仓库
           docker login --username=${{ secrets.DOCKER_HUB_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }} registry.cn-hangzhou.aliyuncs.com
-          go mod tidy
           cd apps/mxclub-mini
           # 编译 Go 应用程序
           go build -trimpath -o mxclub-mini
