@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM golang:1.19
 
 # 设置工作目录
 WORKDIR /app
