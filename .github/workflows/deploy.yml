@@ -8,6 +8,30 @@ on:
     branches: [ main ]
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: gofmt
+        run: find . -name "*.go" |  xargs gofmt -s -l -e
+
+      - name: govet
+        run: go list ./... | xargs go vet -composites=false
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Handle test failures
+        if: failure()
+        run: |
+          echo "Tests failed. Please check the test results."
+          exit 1
   build:
     runs-on: ubuntu-latest
     steps:
@@ -40,9 +64,10 @@ jobs:
           docker version
           # 登录阿里云镜像仓库
           docker login --username=${{ secrets.DOCKER_HUB_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }} registry.cn-hangzhou.aliyuncs.com
+          go mod tidy
           cd apps/mxclub-mini
           # 编译 Go 应用程序
-          go build -o -trimpath mxclub-mini
+          go build -trimpath -o mxclub-mini
           mkdir docker
           cp ../../script/Dockerfile.mini ./docker
           cp ./mxclub-mini ./mxclub-mini
@@ -62,4 +87,4 @@ jobs:
           # 执行脚本
           script: |
             # 部署脚本 后面的vars是传递给脚本的参数
-            deploy.sh ${{ vars.USER_NAME }} ${{ vars.IMAGE_NAME }} ${{ vars.PORT }} ${{ vars.CONTAINS_PORT }} ${{ vars.hubAddr }} ${{ vars.tag }}
+            sh /home/lfy/workspace/script/deploy.sh ${{ vars.USER_NAME }} ${{ vars.IMAGE_NAME }} ${{ vars.PORT }} ${{ vars.CONTAINS_PORT }} ${{ vars.hubAddr }} ${{ vars.tag }}
