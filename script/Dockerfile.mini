@@ -7,4 +7,5 @@ WORKDIR /app
 COPY mxclub-mini .
 
 # 设置容器启动时执行的命令，将输出重定向到日志文件
-CMD ["sh", "-c", "./mxclub-mini -f config/mxclub-mini.yml > ./app.$(date +'%Y.%m.%d').log 2>&1"]
+#CMD ["sh", "-c", "./mxclub-mini -f config/mxclub-mini.config > ./app.$(date +'%Y.%m.%d').log 2>&1"]
+CMD ["./mxclub-mini", "-f", "config/mxclub-mini.yml"]
