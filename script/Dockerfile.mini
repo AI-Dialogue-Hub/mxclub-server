@@ -6,6 +6,9 @@ WORKDIR /app
 # 复制当前目录下的所有文件到工作目录
 COPY mxclub-mini .
 
+RUN chmod +x mxclub-mini
+# 声明服务端口
+EXPOSE 8000
 # 设置容器启动时执行的命令，将输出重定向到日志文件
 #CMD ["sh", "-c", "./mxclub-mini -f config/mxclub-mini.config > ./app.$(date +'%Y.%m.%d').log 2>&1"]
 CMD ["./mxclub-mini", "-f", "config/mxclub-mini.yml"]

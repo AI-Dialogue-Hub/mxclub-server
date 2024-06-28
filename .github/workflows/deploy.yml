@@ -43,8 +43,9 @@ jobs:
           go mod tidy
           cd apps/mxclub-mini
           # 编译 Go 应用程序
-          go build -trimpath -o mxclub-mini
+          go build -trimpath -o mxclub-mini .
           echo "BUILD SUCCESS"
+          file mxclub-mini
           mkdir docker
           cp ../../script/Dockerfile.mini ./docker
           mv mxclub-mini docker
