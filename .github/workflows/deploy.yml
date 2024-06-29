@@ -51,7 +51,7 @@ jobs:
           ## build admin
           cp ./script/Dockerfile.admin .
           # 使用Dockerfile构建镜像
-          docker build . --file Dockerfile.admin --tag ${{ vars.hubAddr }}/${{ vars.USER_NAME }}/${{ vars.IMAGE_NAME }}:${{ vars.tag }}
+          docker build . --file Dockerfile.admin --tag ${{ vars.hubAddr }}/${{ vars.USER_NAME }}/mxclub-admin:${{ vars.tag }}
           # 推送镜像到镜像仓库
           docker push ${{ vars.hubAddr }}/${{ vars.USER_NAME }}/mxclub-admin:${{ vars.tag }}
       # push后，用ssh连接服务器执行脚本
