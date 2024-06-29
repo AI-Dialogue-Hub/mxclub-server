@@ -12,11 +12,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o mxclub-mini ./ap
 RUN mkdir publish && cp mxclub-mini publish
 
 # 运行阶段指定scratch作为基础镜像
-FROM scratch
+FROM alpine:latest
 
 # 将上一个阶段publish文件夹下的所有文件复制进来
 COPY --from=builder /app/publish .
 
 EXPOSE 8000
 
-ENTRYPOINT ["./mxclub-mini", "-f", "/config/mxclub-mini.yml"]
+CMD ["sh", "-c", "./mxclub-mini -f /config/mxclub-mini.config > /logs/app.$(date +'%Y.%m.%d').log 2>&1"]

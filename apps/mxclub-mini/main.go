@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"mxclub/apps/mxclub-mini/config"
 	_ "mxclub/apps/mxclub-mini/controller"
+	_ "mxclub/apps/mxclub-mini/service"
 )
 
 func main() {

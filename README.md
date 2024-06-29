@@ -21,7 +21,3 @@
   - main.go - 主函数
 - infra - 基础设施组件
 
-```shell
-CREATE DATABASE mxclub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
