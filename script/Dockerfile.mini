@@ -19,4 +19,4 @@ COPY --from=builder /app/publish .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "./mxclub-mini -f /config/mxclub-mini.config > /logs/app.$(date +'%Y.%m.%d').log 2>&1"]
+CMD ["sh", "-c", "./mxclub-mini -f /config/mxclub-mini.yml > /logs/app.$(date +'%Y.%m.%d').log 2>&1"]
