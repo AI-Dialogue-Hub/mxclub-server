@@ -23,6 +23,6 @@ RUN apk --no-cache add tzdata && \
 # 将上一个阶段publish文件夹下的所有文件复制进来
 COPY --from=builder /app/publish .
 
-EXPOSE 8000
+EXPOSE 8001
 
 CMD ["sh", "-c", "./mxclub-admin -f /config/mxclub-admin.yml > /logs/mxclub-admin.$(date +'%Y.%m.%d.%H%M%S').log 2>&1"]
