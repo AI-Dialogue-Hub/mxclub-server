@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"mime"
+	"mime/multipart"
 	"mxclub/apps/mxclub-mini/config"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
@@ -54,7 +55,13 @@ func (*DemoController) PostV1Upload(ctx jet.Ctx) (*api.Response, error) {
 		logger.Error("Error opening the file", fasthttp.StatusInternalServerError)
 		return xjet.WrapperResult(ctx, nil, err)
 	}
-	defer src.Close()
+
+	defer func(src multipart.File) {
+		err = src.Close()
+		if err != nil {
+			logger.Errorf("src close error:%v", err.Error())
+		}
+	}(src)
 
 	// 读取文件内容
 	fileData, err := io.ReadAll(src)
@@ -82,7 +89,12 @@ func (*DemoController) PostV1Upload(ctx jet.Ctx) (*api.Response, error) {
 		logger.Error("Error creating the destination file", fasthttp.StatusInternalServerError)
 		return xjet.WrapperResult(ctx, nil, err)
 	}
-	defer dst.Close()
+	defer func(dst *os.File) {
+		err = dst.Close()
+		if err != nil {
+			logger.Errorf("dst close error:%v", err.Error())
+		}
+	}(dst)
 
 	// 将文件数据写入目标文件
 	_, err = dst.Write(fileData)

@@ -32,7 +32,6 @@ func init() {
 	} else {
 		// gorm
 		jet.Provide(func() *gorm.DB { return db })
-
 	}
 	// redis
 	xredis.NewRedisClient(config.Redis)
@@ -51,8 +50,9 @@ type Server struct {
 }
 
 type File struct {
-	Domain   string `yaml:"domain" validate:"required"`
-	FilePath string `yaml:"file_path" validate:"required"`
+	Domain             string `yaml:"domain" validate:"required"`
+	FilePath           string `yaml:"file_path" validate:"required"`
+	MaxRequestBodySize int    `yaml:"max_request_body_size" validate:"lte=1200,gte=1" reg_err_info:"不合法"`
 }
 
 func GetConfig() *Config {

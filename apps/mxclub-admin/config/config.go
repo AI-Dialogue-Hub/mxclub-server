@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 	"log"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
@@ -24,6 +25,12 @@ func init() {
 	}
 	// mysql
 	jet.Provide(func() *xmysql.MySqlConfig { return config.Mysql })
+	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
+		panic(err)
+	} else {
+		// gorm
+		jet.Provide(func() *gorm.DB { return db })
+	}
 }
 
 type Config struct {
@@ -33,7 +40,8 @@ type Config struct {
 }
 
 type Server struct {
-	Port string `yaml:"port"`
+	Port   string `yaml:"port" validate:"required"`
+	JwtKey string `yaml:"jwt_key" validate:"required"`
 }
 
 type File struct {

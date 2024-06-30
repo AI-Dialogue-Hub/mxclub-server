@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fengyuan-liang/GoKit v0.1.4
-	github.com/fengyuan-liang/jet-web-fasthttp v0.0.6
+	github.com/fengyuan-liang/jet-web-fasthttp v0.0.7
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/go-redsync/redsync/v4 v4.13.0
 	github.com/jinzhu/copier v0.4.0
@@ -15,6 +15,8 @@ require (
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.10
 )
+
+require github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect

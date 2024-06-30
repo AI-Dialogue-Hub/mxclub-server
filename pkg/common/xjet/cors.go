@@ -1,4 +1,4 @@
-package middleware
+package xjet
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/core/router"

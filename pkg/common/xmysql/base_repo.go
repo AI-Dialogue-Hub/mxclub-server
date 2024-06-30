@@ -57,7 +57,7 @@ func (r *BaseRepo[T]) RemoveByID(id interface{}) error {
 }
 
 func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
-	return r.Db.WithContext(r.Ctx).Where(filter).Delete(new(T)).Error
+	return r.Db.WithContext(r.Ctx).Where(filter, data...).Delete(new(T)).Error
 }
 
 func (r *BaseRepo[T]) Update(filter interface{}, update interface{}) error {
@@ -75,13 +75,13 @@ func (r *BaseRepo[T]) FindByID(id interface{}) (*T, error) {
 
 func (r *BaseRepo[T]) Find(filter any, data ...any) ([]*T, error) {
 	var entities []*T
-	err := r.Db.WithContext(r.Ctx).Where(filter, data).Find(&entities).Error
+	err := r.Db.WithContext(r.Ctx).Where(filter, data...).Find(&entities).Error
 	return entities, err
 }
 
 func (r *BaseRepo[T]) FindOne(filter any, data ...any) (*T, error) {
 	var entity T
-	err := r.Db.WithContext(r.Ctx).Where(filter, data).First(&entity).Error
+	err := r.Db.WithContext(r.Ctx).Where(filter, data...).First(&entity).Error
 	return &entity, err
 }
 

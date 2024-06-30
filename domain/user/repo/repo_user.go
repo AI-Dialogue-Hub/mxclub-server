@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"mxclub/domain/user/po"
 	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -14,6 +15,7 @@ func init() {
 
 type IUserRepo interface {
 	xmysql.IBaseRepo[po.User]
+	QueryUserByAccount(username string, password string) (*po.User, error)
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -25,4 +27,8 @@ func NewUserRepo(db *gorm.DB) IUserRepo {
 
 type UserRepo struct {
 	xmysql.BaseRepo[po.User]
+}
+
+func (u *UserRepo) QueryUserByAccount(username string, password string) (*po.User, error) {
+	return u.FindOne("name = ? and password = ?", username, utils.EncryptPassword(password))
 }

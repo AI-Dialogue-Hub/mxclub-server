@@ -28,3 +28,15 @@ func Error(ctx jet.Ctx, msg string, statusCode int) {
 	ctx.Response().Header.SetContentTypeBytes(defaultContentType)
 	ctx.Response().SetBodyString(msg)
 }
+
+func IsAnyEmpty(strs ...string) *api.Response {
+	if strs == nil || len(strs) == 0 {
+		return api.ErrorBadRequest("", "empty value")
+	}
+	for _, str := range strs {
+		if str == "" {
+			return api.ErrorBadRequest("", "empty value")
+		}
+	}
+	return nil
+}
