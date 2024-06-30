@@ -34,7 +34,7 @@ type MiniConfigRepo struct {
 func (repo MiniConfigRepo) FindConfigByName(ctx jet.Ctx, configName string) (*po.MiniConfig, error) {
 	one, err := repo.FindOne("config_name = ?", configName)
 	if err != nil {
-		ctx.Logger().Error("FindConfigByName error: %v", err.Error())
+		ctx.Logger().Errorf("FindConfigByName error: %v", err.Error())
 	}
 	return one, err
 }
@@ -42,7 +42,7 @@ func (repo MiniConfigRepo) FindConfigByName(ctx jet.Ctx, configName string) (*po
 const mx_mini_config_swiper = "mini_config_swiper"
 
 func (repo MiniConfigRepo) FindSwiperConfig(ctx jet.Ctx) (*po.MiniConfig, error) {
-	got, err := xredis.GetByString[po.MiniConfig](mx_mini_config_swiper)
+	got, err := xredis.GetByString[po.MiniConfig](ctx, mx_mini_config_swiper)
 	if err == nil {
 		return got, nil
 	}

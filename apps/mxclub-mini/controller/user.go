@@ -30,5 +30,5 @@ func (ctl UserController) GetV1User0(ctx jet.Ctx, args *jet.Args) (*api.Response
 	}
 	userId := args.CmdArgs[0]
 	user, err := ctl.userService.GetUserById(ctx, utils.ParseInt(userId))
-	return xjet.WarpperResult(ctx, user, err)
+	return xjet.WrapperResult(ctx, user, err)
 }

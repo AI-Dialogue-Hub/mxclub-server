@@ -25,5 +25,5 @@ func NewMiniConfigController(miniConfigService *service.MiniConfigService) jet.C
 
 func (ctl MiniConfigController) GetV1Swiper(ctx jet.Ctx) (*api.Response, error) {
 	result, err := ctl.miniConfigService.GetConfigByName(ctx)
-	return xjet.WarpperResult(ctx, result, err)
+	return xjet.WrapperResult(ctx, result, err)
 }

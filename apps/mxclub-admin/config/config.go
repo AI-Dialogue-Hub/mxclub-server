@@ -28,11 +28,17 @@ func init() {
 
 type Config struct {
 	Server *Server             `yaml:"server" validate:"required"`
+	File   File                `yaml:"file" validate:"required"`
 	Mysql  *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
 }
 
 type Server struct {
 	Port string `yaml:"port"`
+}
+
+type File struct {
+	Domain   string `yaml:"domain" validate:"required"`
+	FilePath string `yaml:"file_path" validate:"required"`
 }
 
 func GetConfig() *Config {

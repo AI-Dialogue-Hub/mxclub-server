@@ -1,6 +1,7 @@
 package xredis
 
 import (
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/pkg/utils"
 	"time"
 
@@ -68,9 +69,10 @@ func Get(key string) (val string, err error) {
 	return cli.Get(key)
 }
 
-func GetByString[T any](key string) (val *T, err error) {
+func GetByString[T any](ctx jet.Ctx, key string) (val *T, err error) {
 	got, err := cli.Get(key)
 	if err != nil {
+		ctx.Logger().Errorf("GetByString error:%v", err.Error())
 		return nil, err
 	}
 	return utils.JsonStrToObj[T](got)

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fengyuan-liang/GoKit v0.1.4
-	github.com/fengyuan-liang/jet-web-fasthttp v0.0.5
+	github.com/fengyuan-liang/jet-web-fasthttp v0.0.6
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/go-redsync/redsync/v4 v4.13.0
 	github.com/jinzhu/copier v0.4.0
@@ -30,7 +30,7 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/compress v1.17.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
