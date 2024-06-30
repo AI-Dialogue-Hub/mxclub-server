@@ -21,3 +21,7 @@
   - main.go - 主函数
 - infra - 基础设施组件
 
+```shell
+go run apps/mxclub-mini/main.go -f E:\\workspace\\goland\\config\\mxclub.yml
+```
+

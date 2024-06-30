@@ -1,10 +1,12 @@
 package controller
 
 import (
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/api"
+	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
 func init() {
@@ -28,8 +30,5 @@ func (ctl UserController) GetV1User0(ctx jet.Ctx, args *jet.Args) (*api.Response
 	}
 	userId := args.CmdArgs[0]
 	user, err := ctl.userService.GetUserById(ctx, utils.ParseInt(userId))
-	if err != nil {
-		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, err.Error())
-	}
-	return api.Success(ctx.Logger().ReqId, user), nil
+	return xjet.WarpperResult(ctx, user, err)
 }

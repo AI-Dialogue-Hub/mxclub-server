@@ -12,11 +12,11 @@ type IBaseRepo[T any] interface {
 	InsertBatch(entities []interface{}) (int, error)
 	InsertMany(entities []*T) (int, error)
 	RemoveByID(id interface{}) error
-	RemoveOne(filter interface{}) error
+	RemoveOne(filter any, data ...any) error
 	Update(filter interface{}, update interface{}) error
 	FindByID(id interface{}) (*T, error)
-	Find(filter interface{}) ([]*T, error)
-	FindOne(filter interface{}) (*T, error)
+	Find(filter any, data ...any) ([]*T, error)
+	FindOne(filter any, data ...any) (*T, error)
 	FindAll() ([]*T, error)
 	FindOrCreate(findFunc func() bool, t *T) (*T, error)
 	List(pageNo int64, pageSize int64, filter interface{}) ([]*T, int64, error)
@@ -56,7 +56,7 @@ func (r *BaseRepo[T]) RemoveByID(id interface{}) error {
 	return r.Db.WithContext(r.Ctx).Delete(new(T), id).Error
 }
 
-func (r *BaseRepo[T]) RemoveOne(filter interface{}) error {
+func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
 	return r.Db.WithContext(r.Ctx).Where(filter).Delete(new(T)).Error
 }
 
@@ -73,15 +73,15 @@ func (r *BaseRepo[T]) FindByID(id interface{}) (*T, error) {
 	return &t, nil
 }
 
-func (r *BaseRepo[T]) Find(filter interface{}) ([]*T, error) {
+func (r *BaseRepo[T]) Find(filter any, data ...any) ([]*T, error) {
 	var entities []*T
-	err := r.Db.WithContext(r.Ctx).Where(filter).Find(&entities).Error
+	err := r.Db.WithContext(r.Ctx).Where(filter, data).Find(&entities).Error
 	return entities, err
 }
 
-func (r *BaseRepo[T]) FindOne(filter interface{}) (*T, error) {
+func (r *BaseRepo[T]) FindOne(filter any, data ...any) (*T, error) {
 	var entity T
-	err := r.Db.WithContext(r.Ctx).Where(filter).First(&entity).Error
+	err := r.Db.WithContext(r.Ctx).Where(filter, data).First(&entity).Error
 	return &entity, err
 }
 

@@ -2,12 +2,14 @@ package config
 
 import (
 	"flag"
+	"log"
+	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/common/xredis"
+	"mxclub/pkg/utils"
+
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
-	"log"
-	"mxclub/pkg/common/xmysql"
-	"mxclub/pkg/utils"
 )
 
 var (
@@ -32,11 +34,14 @@ func init() {
 		jet.Provide(func() *gorm.DB { return db })
 
 	}
+	// redis
+	xredis.NewRedisClient(config.Redis)
 }
 
 type Config struct {
 	Server *Server             `yaml:"server" validate:"required"`
 	Mysql  *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
+	Redis  *xredis.RedisConfig `yaml:"redis" validate:"required"`
 }
 
 type Server struct {
