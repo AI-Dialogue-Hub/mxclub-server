@@ -8,12 +8,12 @@ import (
 	"mxclub/pkg/common/xmysql"
 )
 
-type IUserRepo interface {
-	xmysql.IBaseRepo[po.User]
-}
-
 func init() {
 	jet.Provide(NewUserRepo)
+}
+
+type IUserRepo interface {
+	xmysql.IBaseRepo[po.User]
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {

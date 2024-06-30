@@ -26,9 +26,8 @@ func (ctl UserController) GetV1User0(ctx jet.Ctx, args *jet.Args) (*api.Response
 	if len(args.CmdArgs) == 0 {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "userId is empty")
 	}
-	ctl.userService.Ctx = ctx
 	userId := args.CmdArgs[0]
-	user, err := ctl.userService.GetUserById(utils.ParseInt(userId))
+	user, err := ctl.userService.GetUserById(ctx, utils.ParseInt(userId))
 	if err != nil {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, err.Error())
 	}
