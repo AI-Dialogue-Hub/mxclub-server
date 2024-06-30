@@ -36,7 +36,6 @@ func NewRedisSingle(cfg *RedisConfig) RedisIface {
 	if err != nil {
 		xlog.Error(err.Error())
 		panic(err)
-		return nil
 	}
 	// redis 锁
 	pool = goredis.NewPool(client)

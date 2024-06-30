@@ -128,12 +128,3 @@ func (*DemoController) GetV1File0(ctx jet.Ctx, params *jet.Args) {
 	}
 	ctx.Response().SetBody(fileData)
 }
-
-func getLastPathComponent(uri string) string {
-	lastSlashIndex := strings.LastIndex(uri, "/")
-	if lastSlashIndex == -1 || lastSlashIndex == len(uri)-1 {
-		return ""
-	}
-
-	return uri[lastSlashIndex+1:]
-}
