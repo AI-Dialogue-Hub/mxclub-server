@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
@@ -48,8 +49,8 @@ type loginParams struct {
 }
 
 func (ctl UserController) GetLogin(ctx jet.Ctx, param *loginParams) (*api.Response, error) {
-	if err := xjet.IsAnyEmpty(param.Username, param.Password); err != nil {
-		return nil, err
+	if xjet.IsAnyEmpty(param.Username, param.Password) {
+		return xjet.WrapperResult(ctx, nil, errors.New("username or password is empty"))
 	}
 	user, err := ctl.userService.CheckUser(ctx, param.Username, param.Password)
 	if err != nil {

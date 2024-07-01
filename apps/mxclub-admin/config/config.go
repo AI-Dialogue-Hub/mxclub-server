@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
 )
 
@@ -24,19 +25,34 @@ func init() {
 		log.Fatalf("config error:%v", err.Error())
 	}
 	// mysql
-	jet.Provide(func() *xmysql.MySqlConfig { return config.Mysql })
-	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
-		panic(err)
-	} else {
-		// gorm
-		jet.Provide(func() *gorm.DB { return db })
-	}
+	// ============== 耗时加载全部异步化 =============================
+	var (
+		c1 = make(chan struct{})
+		c2 = make(chan struct{})
+	)
+	go func() {
+		if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
+			panic(err)
+		} else {
+			// gorm
+			jet.Provide(func() *gorm.DB { return db })
+		}
+		c1 <- struct{}{}
+	}()
+	go func() {
+		// redis
+		xredis.NewRedisClient(config.Redis)
+		c2 <- struct{}{}
+	}()
+	<-c2
+	<-c1
 }
 
 type Config struct {
 	Server *Server             `yaml:"server" validate:"required"`
 	File   File                `yaml:"file" validate:"required"`
 	Mysql  *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
+	Redis  *xredis.RedisConfig `yaml:"redis" validate:"required"`
 }
 
 type Server struct {

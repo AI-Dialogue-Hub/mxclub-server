@@ -8,6 +8,7 @@ package utils
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/jinzhu/copier"
 	"reflect"
 )
@@ -29,10 +30,18 @@ func CopySlice[In any, Out any](in []In) []Out {
 	return outs
 }
 
-func MustCopy[T any](ctx jet.Ctx, in any) (t *T) {
+func MustCopyByCtx[T any](ctx jet.Ctx, in any) (t *T) {
 	var err error
 	if t, err = Copy[T](in); err != nil {
-		ctx.Logger().Errorf("MustCopy error: %v", err.Error())
+		ctx.Logger().Errorf("MustCopyByCtx error: %v", err.Error())
+	}
+	return
+}
+
+func MustCopy[T any](in any) (t *T) {
+	var err error
+	if t, err = Copy[T](in); err != nil {
+		xlog.Errorf("MustCopy error: %v", err.Error())
 	}
 	return
 }

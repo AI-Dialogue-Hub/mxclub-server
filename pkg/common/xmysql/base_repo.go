@@ -9,7 +9,7 @@ import (
 type IBaseRepo[T any] interface {
 	DB() *gorm.DB
 	InsertOne(t *T) error
-	InsertBatch(entities []interface{}) (int, error)
+	InsertBatch(entities []any) (int, error)
 	InsertMany(entities []*T) (int, error)
 	RemoveByID(id interface{}) error
 	RemoveOne(filter any, data ...any) error
@@ -19,8 +19,8 @@ type IBaseRepo[T any] interface {
 	FindOne(filter any, data ...any) (*T, error)
 	FindAll() ([]*T, error)
 	FindOrCreate(findFunc func() bool, t *T) (*T, error)
-	List(pageNo int64, pageSize int64, filter interface{}) ([]*T, int64, error)
-	Count(filter interface{}) (int64, error)
+	List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error)
+	Count(filter any, data ...any) (int64, error)
 }
 
 type BaseRepo[T any] struct {
@@ -101,7 +101,7 @@ func (r *BaseRepo[T]) FindOrCreate(findFunc func() bool, t *T) (*T, error) {
 	return t, nil
 }
 
-func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any) ([]*T, int64, error) {
+func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error) {
 	if filter == nil {
 		filter = map[string]interface{}{}
 	}
@@ -112,17 +112,22 @@ func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any) ([]*T, int6
 	if pageSize <= 0 {
 		pageSize = 10
 	}
-	err := r.Db.WithContext(r.Ctx).Where(filter).Offset(int((pageNo - 1) * pageSize)).Limit(int(pageSize)).Find(&entities).Error
+	err := r.Db.WithContext(r.Ctx).
+		Where(filter, data...).
+		Offset(int((pageNo - 1) * pageSize)).
+		Limit(int(pageSize)).
+		Find(&entities).
+		Error
 	if err != nil {
 		return nil, 0, err
 	}
 	var count int64
-	err = r.Db.WithContext(r.Ctx).Where(filter).Count(&count).Error
+	err = r.Db.WithContext(r.Ctx).Where(filter, data...).Count(&count).Error
 	return entities, count, err
 }
 
-func (r *BaseRepo[T]) Count(filter any) (int64, error) {
+func (r *BaseRepo[T]) Count(filter any, data ...any) (int64, error) {
 	var count int64
-	err := r.Db.WithContext(r.Ctx).Where(filter).Count(&count).Error
+	err := r.Db.WithContext(r.Ctx).Where(filter, data...).Count(&count).Error
 	return count, err
 }

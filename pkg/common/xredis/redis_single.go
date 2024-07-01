@@ -368,6 +368,10 @@ func (r *RedisSingle) SMembers(key string) []string {
 	return r.client.SMembers(context.Background(), key).Val()
 }
 
+func (r *RedisSingle) Eval(script string, keys []string, args ...interface{}) error {
+	return r.client.Eval(context.Background(), script, keys, args...).Err()
+}
+
 func (r *RedisSingle) EvalSha(sha string, keys []string, args []interface{}) error {
 	return r.client.EvalSha(context.Background(), sha, keys, args).Err()
 }

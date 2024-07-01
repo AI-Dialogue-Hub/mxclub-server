@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"gorm.io/gorm"
 	"log"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/go-playground/validator/v10"
-	"gorm.io/gorm"
 )
 
 var (
@@ -27,14 +27,27 @@ func init() {
 	}
 	// mysql
 	jet.Provide(func() *xmysql.MySqlConfig { return config.Mysql })
-	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
-		panic(err)
-	} else {
-		// gorm
-		jet.Provide(func() *gorm.DB { return db })
-	}
-	// redis
-	xredis.NewRedisClient(config.Redis)
+	// ============== 耗时加载全部异步化 =============================
+	var (
+		c1 = make(chan struct{})
+		c2 = make(chan struct{})
+	)
+	go func() {
+		if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
+			panic(err)
+		} else {
+			// gorm
+			jet.Provide(func() *gorm.DB { return db })
+		}
+		c1 <- struct{}{}
+	}()
+	go func() {
+		// redis
+		xredis.NewRedisClient(config.Redis)
+		c2 <- struct{}{}
+	}()
+	<-c2
+	<-c1
 }
 
 type Config struct {

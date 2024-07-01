@@ -31,9 +31,9 @@ const (
 )
 
 type PageParams struct {
-	Page      int64  `json:"page" form:"page" validate:"gte=0" reg_error_info:"参数有误"`           // 页码
-	PageSize  int64  `json:"page_size" form:"page_size" validate:"gte=0" reg_error_info:"参数有误"` // 分页大小
-	PageToken string `json:"page_token" form:"page_token"`                                      // 分页标识，PageToken 时，不使用page 参数
+	Page      int64  `json:"page" form:"page" validate:"gt=0" reg_error_info:"参数有误"`           // 页码
+	PageSize  int64  `json:"page_size" form:"page_size" validate:"gt=0" reg_error_info:"参数有误"` // 分页大小
+	PageToken string `json:"page_token" form:"page_token"`                                     // 分页标识，PageToken 时，不使用page 参数
 	Sort      string `form:"sort" validate:"oneof=desc asc ''" reg_error_info:"只能选desc/asc"`
 }
 
@@ -43,6 +43,15 @@ type PageResult struct {
 	PageSize   int64       `json:"page_size"`   // 分页大小
 	PageToken  string      `json:"page_token"`  // 分页token，下一页时传递该游标，推荐使用
 	List       interface{} `json:"list"`
+}
+
+func WrapPageResult(params *PageParams, data any, totalCount int64) *PageResult {
+	return &PageResult{
+		TotalCount: totalCount,
+		List:       data,
+		Page:       params.Page,
+		PageSize:   params.PageSize,
+	}
 }
 
 func (p *PageParams) Offset() int64 {

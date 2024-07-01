@@ -41,6 +41,24 @@ func MustByteToMap(buf []byte) map[string]any {
 	return toMap
 }
 
+func MustByteToMapSlice(buf []byte) []map[string]any {
+	toMapSlice, err := ByteToMapSlice(buf)
+	if err != nil {
+		xlog.Errorf("MustByteToMapSlice error: %v", err)
+		return []map[string]any{}
+	}
+	return toMapSlice
+}
+
+func ByteToMapSlice(buf []byte) ([]map[string]any, error) {
+	var toMapSlice []map[string]any
+	err := json.Unmarshal(buf, &toMapSlice)
+	if err != nil {
+		return nil, err
+	}
+	return toMapSlice, nil
+}
+
 func ByteToMap(buf []byte) (map[string]any, error) {
 	var (
 		maps map[string]any

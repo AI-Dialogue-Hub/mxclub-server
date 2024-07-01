@@ -24,7 +24,7 @@ func NewUserService(repo repo.IUserRepo) *UserService {
 
 func (svc UserService) GetUserById(ctx jet.Ctx, id int) (*vo.UserVO, error) {
 	userPO, err := svc.userRepo.FindByID(id)
-	return utils.MustCopy[vo.UserVO](ctx, userPO), err
+	return utils.MustCopyByCtx[vo.UserVO](ctx, userPO), err
 }
 
 func (svc UserService) CheckUser(ctx jet.Ctx, username string, password string) (*po.User, error) {

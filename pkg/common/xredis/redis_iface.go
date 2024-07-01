@@ -49,6 +49,7 @@ type RedisIface interface {
 	SAdd(key string, members ...interface{}) (err error)
 	SRem(key string, members ...interface{}) (err error)
 	SMembers(key string) []string
+	Eval(script string, keys []string, args ...interface{}) error
 	EvalSha(sha string, keys []string, args []interface{}) error
 	EvalShaResult(sha string, keys []string, args []interface{}) (interface{}, error)
 	ZAdd(key string, score float64, member string) (err error)

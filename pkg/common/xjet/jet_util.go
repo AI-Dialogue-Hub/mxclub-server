@@ -29,14 +29,21 @@ func Error(ctx jet.Ctx, msg string, statusCode int) {
 	ctx.Response().SetBodyString(msg)
 }
 
-func IsAnyEmpty(strs ...string) *api.Response {
+func IsAnyEmpty(strs ...string) bool {
 	if strs == nil || len(strs) == 0 {
-		return api.ErrorBadRequest("", "empty value")
+		return true
 	}
 	for _, str := range strs {
 		if str == "" {
-			return api.ErrorBadRequest("", "empty value")
+			return true
 		}
 	}
-	return nil
+	return false
+}
+
+func IsNil(val any) bool {
+	if val == nil {
+		return true
+	}
+	return false
 }
