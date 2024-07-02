@@ -35,3 +35,11 @@ func (ctr *MiniConfigCtr) GetV1ConfigList(ctx jet.Ctx, params *api.PageParams) (
 func (ctr *MiniConfigCtr) PutV1Config(ctx jet.Ctx, params *putConfigParam) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "ok", ctr.miniConfigService.Add(ctx, params.ConfigName, params.Content))
 }
+
+func (ctr *MiniConfigCtr) DeleteV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
+	id := args.CmdArgs[0]
+	if xjet.IsAnyEmpty(id) {
+		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "id is empty")
+	}
+	return xjet.WrapperResult(ctx, "ok", ctr.miniConfigService.Delete(ctx, id))
+}

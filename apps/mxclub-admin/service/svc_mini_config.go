@@ -6,8 +6,10 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/domain/common/entity/enum"
+	"mxclub/domain/common/po"
 	"mxclub/domain/common/repo"
 	"mxclub/pkg/api"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -27,15 +29,7 @@ func (svc MiniConfigService) List(ctx jet.Ctx, params *api.PageParams) ([]*vo.Mi
 	if err != nil {
 		return nil, 0, err
 	}
-	vos := make([]*vo.MiniConfigVO, 0, len(list))
-	for _, val := range list {
-		vos = append(vos, &vo.MiniConfigVO{
-			ID:         val.ID,
-			ConfigName: val.ConfigName,
-			Content:    val.Content,
-		})
-	}
-	return vos, count, nil
+	return utils.CopySlice[*po.MiniConfig, *vo.MiniConfigVO](list), count, nil
 }
 
 func (svc MiniConfigService) Get(id int64) (*vo.MiniConfigVO, error) {
@@ -43,11 +37,7 @@ func (svc MiniConfigService) Get(id int64) (*vo.MiniConfigVO, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &vo.MiniConfigVO{
-		ID:         val.ID,
-		ConfigName: val.ConfigName,
-		Content:    val.Content,
-	}, nil
+	return utils.Copy[vo.MiniConfigVO](val)
 }
 
 func (svc MiniConfigService) Add(ctx jet.Ctx, configName string, content []map[string]any) error {
@@ -62,4 +52,8 @@ func (svc MiniConfigService) Add(ctx jet.Ctx, configName string, content []map[s
 		return errors.New(fmt.Sprintf("配置文件类型[%s]不存在", configName))
 	}
 	return svc.miniConfigRepo.AddConfig(ctx, configName, content)
+}
+
+func (svc MiniConfigService) Delete(ctx jet.Ctx, id string) error {
+	return svc.miniConfigRepo.DeleteById(ctx, id)
 }

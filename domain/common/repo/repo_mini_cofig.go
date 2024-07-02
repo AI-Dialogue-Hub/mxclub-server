@@ -23,6 +23,7 @@ type IMiniConfigRepo interface {
 	AddConfig(ctx jet.Ctx, configName string, content []map[string]any) error
 	ExistConfig(ctx jet.Ctx, configName string) (bool, error)
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.MiniConfig, int64, error)
+	DeleteById(ctx jet.Ctx, id string) error
 }
 
 func NewIMiniConfigRepo(db *gorm.DB) IMiniConfigRepo {
@@ -38,6 +39,14 @@ type MiniConfigRepo struct {
 
 const configCachePrefix = "mini_config_"
 const configListCachePrefix = "mini_config_list_"
+
+func buildListDataCacheKey(params *api.PageParams) string {
+	return fmt.Sprintf("%sListData:Page%d:Size%d", configListCachePrefix, params.Page, params.PageSize)
+}
+
+func buildListCountCacheKey() string {
+	return configListCachePrefix + "ListCount"
+}
 
 func (repo MiniConfigRepo) FindConfigByName(ctx jet.Ctx, configName string) (*po.MiniConfig, error) {
 	got, err := xredis.GetOrDefault[po.MiniConfig](ctx, configCachePrefix+configName, func() (*po.MiniConfig, error) {
@@ -55,7 +64,7 @@ func (repo MiniConfigRepo) FindSwiperConfig(ctx jet.Ctx) (*po.MiniConfig, error)
 
 func (repo MiniConfigRepo) AddConfig(ctx jet.Ctx, configName string, content []map[string]any) error {
 	// 删除分页缓存
-	err := xredis.DelMatchingKeys(configListCachePrefix)
+	err := xredis.DelMatchingKeys(ctx, configListCachePrefix)
 	if err != nil {
 		xlog.Errorf(err.Error())
 	}
@@ -97,10 +106,7 @@ func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) 
 	return list, count, nil
 }
 
-func buildListDataCacheKey(params *api.PageParams) string {
-	return fmt.Sprintf("%sListData:Page%d:Size%d", configListCachePrefix, params.Page, params.PageSize)
-}
-
-func buildListCountCacheKey() string {
-	return configListCachePrefix + "ListCount"
+func (repo MiniConfigRepo) DeleteById(ctx jet.Ctx, id string) error {
+	_ = xredis.DelMatchingKeys(ctx, configListCachePrefix)
+	return repo.RemoveByID(id)
 }
