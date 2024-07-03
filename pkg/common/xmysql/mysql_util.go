@@ -17,8 +17,8 @@ func (j JSONArray) Value() (driver.Value, error) {
 
 func (j *JSONArray) Scan(value interface{}) error {
 	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+	if !ok || len(bytes) == 0 {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSONArray value:", value))
 	}
 	data, err := utils.ByteToMapSlice(bytes)
 	if err != nil {

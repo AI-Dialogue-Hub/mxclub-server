@@ -61,7 +61,7 @@ func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
 }
 
 func (r *BaseRepo[T]) Update(filter interface{}, update interface{}) error {
-	return r.Db.WithContext(r.Ctx).Model(new(T)).Where(filter).Updates(update).Error
+	return r.Db.WithContext(r.Ctx).Where(filter).Updates(update).Error
 }
 
 func (r *BaseRepo[T]) FindByID(id interface{}) (*T, error) {

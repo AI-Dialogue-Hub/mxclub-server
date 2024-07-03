@@ -7,6 +7,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"mxclub/apps/mxclub-mini/config"
 	_ "mxclub/apps/mxclub-mini/controller"
+	"mxclub/apps/mxclub-mini/middleware"
 	_ "mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/common/xjet"
 )
@@ -15,6 +16,7 @@ func main() {
 	xlog.SetOutputLevel(xlog.Ldebug)
 	jet.AddMiddleware(
 		xjet.CorsMiddleware,
+		middleware.AuthMiddleware,
 		jet.TraceJetMiddleware,
 		jet.RecoverJetMiddleware,
 	)

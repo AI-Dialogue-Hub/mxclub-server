@@ -51,21 +51,28 @@ func init() {
 }
 
 type Config struct {
-	Server *Server `yaml:"server" validate:"required"`
-	File   File    `yaml:"file" validate:"required"`
+	Server   *Server   `yaml:"server" validate:"required"`
+	WxConfig *WxConfig `yaml:"wx_config" validate:"required"`
+	File     File      `yaml:"file" validate:"required"`
 
 	Mysql *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
 	Redis *xredis.RedisConfig `yaml:"redis" validate:"required"`
 }
 
 type Server struct {
-	Port string `yaml:"port"`
+	Port   string `yaml:"port"`
+	JwtKey string `yaml:"jwt_key" validate:"required"`
 }
 
 type File struct {
 	Domain             string `yaml:"domain" validate:"required"`
 	FilePath           string `yaml:"file_path" validate:"required"`
 	MaxRequestBodySize int    `yaml:"max_request_body_size" validate:"lte=1200,gte=1" reg_err_info:"不合法"`
+}
+
+type WxConfig struct {
+	Ak string `yaml:"ak" validate:"required"`
+	Sk string `yaml:"sk" validate:"required"`
 }
 
 func GetConfig() *Config {

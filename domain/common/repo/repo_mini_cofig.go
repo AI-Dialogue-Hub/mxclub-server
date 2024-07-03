@@ -64,7 +64,7 @@ func (repo MiniConfigRepo) FindSwiperConfig(ctx jet.Ctx) (*po.MiniConfig, error)
 
 func (repo MiniConfigRepo) AddConfig(ctx jet.Ctx, configName string, content []map[string]any) error {
 	// 删除分页缓存
-	err := xredis.DelMatchingKeys(ctx, configListCachePrefix)
+	err := xredis.DelMatchingKeys(ctx, configCachePrefix)
 	if err != nil {
 		xlog.Errorf(err.Error())
 	}
@@ -107,6 +107,6 @@ func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) 
 }
 
 func (repo MiniConfigRepo) DeleteById(ctx jet.Ctx, id string) error {
-	_ = xredis.DelMatchingKeys(ctx, configListCachePrefix)
+	_ = xredis.DelMatchingKeys(ctx, configCachePrefix)
 	return repo.RemoveByID(id)
 }

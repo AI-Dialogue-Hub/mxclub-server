@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/service"
+	"mxclub/domain/common/entity/enum"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
 )
@@ -27,19 +28,31 @@ type putConfigParam struct {
 	Content    []map[string]any `json:"content"`
 }
 
-func (ctr *MiniConfigCtr) GetV1ConfigList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
-	list, count, err := ctr.miniConfigService.List(ctx, params)
+func (ctl *MiniConfigCtr) GetV1ConfigList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	list, count, err := ctl.miniConfigService.List(ctx, params)
 	return xjet.WrapperResult(ctx, api.WrapPageResult(params, list, count), err)
 }
 
-func (ctr *MiniConfigCtr) PutV1Config(ctx jet.Ctx, params *putConfigParam) (*api.Response, error) {
-	return xjet.WrapperResult(ctx, "ok", ctr.miniConfigService.Add(ctx, params.ConfigName, params.Content))
+func (ctl *MiniConfigCtr) PutV1Config(ctx jet.Ctx, params *putConfigParam) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", ctl.miniConfigService.Add(ctx, params.ConfigName, params.Content))
 }
 
-func (ctr *MiniConfigCtr) DeleteV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
+func (ctl *MiniConfigCtr) DeleteV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
 	id := args.CmdArgs[0]
 	if xjet.IsAnyEmpty(id) {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "id is empty")
 	}
-	return xjet.WrapperResult(ctx, "ok", ctr.miniConfigService.Delete(ctx, id))
+	return xjet.WrapperResult(ctx, "ok", ctl.miniConfigService.Delete(ctx, id))
+}
+
+func (ctl *MiniConfigCtr) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
+	if xjet.IsNil(args) || xjet.IsAnyEmpty(args.CmdArgs...) {
+		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "configName is empty")
+	}
+	configName := args.CmdArgs[0]
+	if enum.MiniConfigEnum(configName).IsNotValid() {
+		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "config type is not valid")
+	}
+	result, err := ctl.miniConfigService.GetConfigByName(ctx, configName)
+	return xjet.WrapperResult(ctx, result, err)
 }

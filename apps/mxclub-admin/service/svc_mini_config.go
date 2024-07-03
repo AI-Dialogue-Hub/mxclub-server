@@ -57,3 +57,15 @@ func (svc MiniConfigService) Add(ctx jet.Ctx, configName string, content []map[s
 func (svc MiniConfigService) Delete(ctx jet.Ctx, id string) error {
 	return svc.miniConfigRepo.DeleteById(ctx, id)
 }
+
+func (svc MiniConfigService) GetConfigByName(ctx jet.Ctx, configName string) (*vo.MiniConfigVO, error) {
+	configPO, err := svc.miniConfigRepo.FindConfigByName(ctx, configName)
+	if err != nil {
+		return nil, err
+	}
+	return &vo.MiniConfigVO{
+		ID:         configPO.ID,
+		ConfigName: configPO.ConfigName,
+		Content:    configPO.Content,
+	}, err
+}

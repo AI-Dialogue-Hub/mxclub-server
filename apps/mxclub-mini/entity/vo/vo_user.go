@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	Name     string        `gorm:"name"`
-	WxNumber string        `gorm:"wx_number"`
-	Role     enum.RoleType `gorm:"role"`
+	WxNumber string        `json:"wx_number"`
+	WxName   string        `json:"wx_name"`
+	Role     enum.RoleType `json:"role"`
 }
