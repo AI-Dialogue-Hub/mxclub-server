@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"gorm.io/gorm"
@@ -39,14 +38,6 @@ type MiniConfigRepo struct {
 
 const configCachePrefix = "mini_config_"
 const configListCachePrefix = "mini_config_list_"
-
-func buildListDataCacheKey(params *api.PageParams) string {
-	return fmt.Sprintf("%sListData:Page%d:Size%d", configListCachePrefix, params.Page, params.PageSize)
-}
-
-func buildListCountCacheKey() string {
-	return configListCachePrefix + "ListCount"
-}
 
 func (repo MiniConfigRepo) FindConfigByName(ctx jet.Ctx, configName string) (*po.MiniConfig, error) {
 	got, err := xredis.GetOrDefault[po.MiniConfig](ctx, configCachePrefix+configName, func() (*po.MiniConfig, error) {
@@ -87,8 +78,8 @@ func (repo MiniConfigRepo) ExistConfig(ctx jet.Ctx, configName string) (bool, er
 
 func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.MiniConfig, int64, error) {
 	// 根据页码参数生成唯一的缓存键
-	cacheListKey := buildListDataCacheKey(params)
-	cacheCountKey := buildListCountCacheKey()
+	cacheListKey := xredis.BuildListDataCacheKey(configCachePrefix, params)
+	cacheCountKey := xredis.BuildListCountCacheKey(configListCachePrefix)
 
 	list, count, err := xredis.GetListOrDefault[po.MiniConfig](ctx, cacheListKey, cacheCountKey, func() ([]*po.MiniConfig, int64, error) {
 		// 如果缓存中未找到，则从数据库中获取

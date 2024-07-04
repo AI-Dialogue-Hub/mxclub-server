@@ -1,7 +1,9 @@
 package xredis
 
 import (
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/pkg/api"
 	"mxclub/pkg/constant"
 )
 
@@ -42,4 +44,12 @@ func GetListOrDefault[T any](ctx jet.Ctx, listKey string, countKey string, defau
 		ctx.Logger().Errorf("SetJSONStr error:%v", err.Error())
 	}
 	return gotList, gotCount, nil
+}
+
+func BuildListDataCacheKey(prefix string, params *api.PageParams) string {
+	return fmt.Sprintf("%sListData:Page%d:Size%d", prefix, params.Page, params.PageSize)
+}
+
+func BuildListCountCacheKey(prefix string) string {
+	return prefix + "_ListCount"
 }

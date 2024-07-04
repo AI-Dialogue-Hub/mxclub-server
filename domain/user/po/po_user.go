@@ -13,6 +13,7 @@ type User struct {
 	WxName       string         `gorm:"wx_name"`
 	WxOpenId     string         `gorm:"wx_open_id"`
 	WxIcon       string         `gorm:"wx_icon"`
+	WxGrade      string         `gorm:"wx_grade"`
 	Role         enum.RoleType  `gorm:"role"`
 	MemberNumber sql.NullString `gorm:"member_number"` // 编号
 	ActivatedAt  sql.NullTime   `gorm:"activated_at"`  // 最近一次上线
