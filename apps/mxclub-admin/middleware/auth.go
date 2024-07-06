@@ -28,7 +28,7 @@ func AuthMiddleware(next router.IJetRouter) (router.IJetRouter, error) {
 }
 
 func handleJwtAuth(ctx *fasthttp.RequestCtx) (err error) {
-	if string(ctx.Path()) == "/login" {
+	if config.IsOpenApi(string(ctx.Path())) {
 		return nil
 	}
 	jwtToken := string(ctx.Request.Header.Peek(AuthHeaderKey))

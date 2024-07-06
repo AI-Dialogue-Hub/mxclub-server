@@ -32,6 +32,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 	openId, err := miniUtil.GetWxOpenId(code)
 	if err != nil || xjet.IsAnyEmpty(openId) {
 		ctx.Logger().Errorf("get user id err:%v", err)
+		return "", err
 	}
 	jwtToken, _ := middleware.GenAuthTokenByOpenId(openId)
 	if !svc.userRepo.ExistsByOpenId(ctx, openId) {

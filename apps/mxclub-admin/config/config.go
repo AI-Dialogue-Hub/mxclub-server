@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"github.com/fengyuan-liang/GoKit/collection/sets"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
@@ -56,8 +57,9 @@ type Config struct {
 }
 
 type Server struct {
-	Port   string `yaml:"port" validate:"required"`
-	JwtKey string `yaml:"jwt_key" validate:"required"`
+	Port    string   `yaml:"port" validate:"required"`
+	JwtKey  string   `yaml:"jwt_key" validate:"required"`
+	OpenApi []string `yaml:"open_api"`
 }
 
 type File struct {
@@ -67,4 +69,18 @@ type File struct {
 
 func GetConfig() *Config {
 	return config
+}
+
+var openApiSet = sets.NewHashSet[string]()
+
+func IsOpenApi(url string) bool {
+	if config.Server.OpenApi == nil {
+		return false
+	}
+	if openApiSet.IsEmpty() {
+		for _, path := range config.Server.OpenApi {
+			openApiSet.Add(path)
+		}
+	}
+	return openApiSet.Contains(url)
 }

@@ -23,6 +23,7 @@ type IMiniConfigRepo interface {
 	ExistConfig(ctx jet.Ctx, configName string) (bool, error)
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.MiniConfig, int64, error)
 	DeleteById(ctx jet.Ctx, id string) error
+	UpdateConfigByConfigName(ctx jet.Ctx, configName string, content []map[string]any) error
 }
 
 func NewIMiniConfigRepo(db *gorm.DB) IMiniConfigRepo {
@@ -100,4 +101,14 @@ func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) 
 func (repo MiniConfigRepo) DeleteById(ctx jet.Ctx, id string) error {
 	_ = xredis.DelMatchingKeys(ctx, configCachePrefix)
 	return repo.RemoveByID(id)
+}
+
+func (repo MiniConfigRepo) UpdateConfigByConfigName(ctx jet.Ctx, configName string, content []map[string]any) error {
+	_ = xredis.DelMatchingKeys(ctx, configCachePrefix)
+	updateMap := map[string]any{"content": xmysql.JSONArray(content)}
+	err := repo.Update(updateMap, "config_name = ?", configName)
+	if err != nil {
+		ctx.Logger().Errorf("[UpdateConfigByConfigName]error: %v", err.Error())
+	}
+	return err
 }

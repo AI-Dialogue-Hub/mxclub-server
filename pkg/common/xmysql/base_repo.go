@@ -13,7 +13,7 @@ type IBaseRepo[T any] interface {
 	InsertMany(entities []*T) (int, error)
 	RemoveByID(id interface{}) error
 	RemoveOne(filter any, data ...any) error
-	Update(filter interface{}, update interface{}) error
+	Update(update any, filter any, data ...any) error
 	FindByID(id interface{}) (*T, error)
 	Find(filter any, data ...any) ([]*T, error)
 	FindOne(filter any, data ...any) (*T, error)
@@ -61,8 +61,8 @@ func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
 	return r.Db.WithContext(r.Ctx).Where(filter, data...).Delete(new(T)).Error
 }
 
-func (r *BaseRepo[T]) Update(filter interface{}, update interface{}) error {
-	return r.Db.WithContext(r.Ctx).Where(filter).Updates(update).Error
+func (r *BaseRepo[T]) Update(update any, filter any, data ...any) error {
+	return r.Db.WithContext(r.Ctx).Where(filter, data...).Updates(update).Error
 }
 
 func (r *BaseRepo[T]) FindByID(id interface{}) (*T, error) {

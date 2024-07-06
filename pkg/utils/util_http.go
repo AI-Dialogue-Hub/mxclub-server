@@ -105,6 +105,7 @@ func baseReq[T any](f func() *http.Request) (*T, error) {
 	// 发送请求并获取响应
 	resp, err := client.Do(req)
 	if resp == nil {
+		xlog.Errorf("err:%v", err)
 		return nil, errors.New("resp is empty")
 	}
 	if err != nil || resp.StatusCode != 200 {

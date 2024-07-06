@@ -40,13 +40,14 @@ func (svc MiniConfigService) Get(id int64) (*vo.MiniConfigVO, error) {
 	return utils.Copy[vo.MiniConfigVO](val)
 }
 
-func (svc MiniConfigService) Add(ctx jet.Ctx, configName string, content []map[string]any) error {
+func (svc MiniConfigService) AddOrUpdate(ctx jet.Ctx, configName string, content []map[string]any) error {
 	exists, err := svc.miniConfigRepo.ExistConfig(ctx, configName)
 	if err != nil {
 		return err
 	}
 	if exists {
-		return errors.New("配置文件已经存在")
+		// update
+		return svc.miniConfigRepo.UpdateConfigByConfigName(ctx, configName, content)
 	}
 	if enum.MiniConfigEnum(configName).IsNotValid() {
 		return errors.New(fmt.Sprintf("配置文件类型[%s]不存在", configName))

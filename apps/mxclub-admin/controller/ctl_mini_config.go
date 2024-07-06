@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/service"
 	"mxclub/domain/common/entity/enum"
@@ -24,8 +25,8 @@ func NewMiniConfigController(miniConfigService *service.MiniConfigService) jet.C
 }
 
 type putConfigParam struct {
-	ConfigName string           `json:"config_name"`
-	Content    []map[string]any `json:"content"`
+	ConfigName string           `json:"config_name" validate:"required"`
+	Content    []map[string]any `json:"content" validate:"required"`
 }
 
 func (ctl *MiniConfigCtr) GetV1ConfigList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
@@ -34,7 +35,10 @@ func (ctl *MiniConfigCtr) GetV1ConfigList(ctx jet.Ctx, params *api.PageParams) (
 }
 
 func (ctl *MiniConfigCtr) PutV1Config(ctx jet.Ctx, params *putConfigParam) (*api.Response, error) {
-	return xjet.WrapperResult(ctx, "ok", ctl.miniConfigService.Add(ctx, params.ConfigName, params.Content))
+	if enum.MiniConfigEnum(params.ConfigName).IsNotValid() {
+		return xjet.WrapperResult(ctx, nil, errors.New("ConfigName is not valid"))
+	}
+	return xjet.WrapperResult(ctx, "ok", ctl.miniConfigService.AddOrUpdate(ctx, params.ConfigName, params.Content))
 }
 
 func (ctl *MiniConfigCtr) DeleteV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
