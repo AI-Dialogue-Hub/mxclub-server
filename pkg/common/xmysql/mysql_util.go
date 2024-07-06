@@ -2,6 +2,7 @@ package xmysql
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mxclub/pkg/utils"
@@ -26,4 +27,15 @@ func (j *JSONArray) Scan(value interface{}) error {
 	}
 	*j = data
 	return nil
+}
+
+// JSON type to handle JSON encoding/decoding
+type JSON []string
+
+func (j *JSON) Scan(value interface{}) error {
+	return json.Unmarshal(value.([]byte), j)
+}
+
+func (j JSON) Value() (driver.Value, error) {
+	return json.Marshal(j)
 }

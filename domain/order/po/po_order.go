@@ -10,6 +10,7 @@ type Order struct {
 	gorm.Model
 	PurchaseId      uint             `gorm:"column:purchase_id"`
 	OrderName       string           `gorm:"column:order_name"`
+	OrderIcon       string           `gorm:"column:icon"`
 	OrderStatus     enum.OrderStatus `gorm:"column:order_status"`
 	OriginalPrice   float64          `gorm:"column:original_price"`
 	ProductID       uint             `gorm:"column:product_id"`

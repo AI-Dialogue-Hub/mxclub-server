@@ -20,6 +20,7 @@ type IBaseRepo[T any] interface {
 	FindAll() ([]*T, error)
 	FindOrCreate(findFunc func() bool, t *T) (*T, error)
 	List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error)
+	ListNoCount(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, error)
 	Count(filter any, data ...any) (int64, error)
 }
 
@@ -102,6 +103,15 @@ func (r *BaseRepo[T]) FindOrCreate(findFunc func() bool, t *T) (*T, error) {
 }
 
 func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error) {
+	entities, err := r.ListNoCount(pageNo, pageNo, filter, data...)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := r.Count(filter, data...)
+	return entities, count, err
+}
+
+func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, error) {
 	if filter == nil {
 		filter = map[string]interface{}{}
 	}
@@ -118,12 +128,7 @@ func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any
 		Limit(int(pageSize)).
 		Find(&entities).
 		Error
-	if err != nil {
-		return nil, 0, err
-	}
-	var count int64
-	err = r.Db.WithContext(r.Ctx).Where(filter, data...).Count(&count).Error
-	return entities, count, err
+	return entities, err
 }
 
 func (r *BaseRepo[T]) Count(filter any, data ...any) (int64, error) {

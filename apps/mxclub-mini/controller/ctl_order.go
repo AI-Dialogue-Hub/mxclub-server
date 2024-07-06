@@ -23,7 +23,7 @@ func NewOrderController(orderService *service.OrderService) jet.ControllerResult
 	})
 }
 
-func (c *OrderController) GetV1OrderList(ctx jet.Ctx, params *req.OrderListReq) (*api.Response, error) {
+func (c *OrderController) PostV1OrderList(ctx jet.Ctx, params *req.OrderListReq) (*api.Response, error) {
 	if !params.OrderStatus.Valid() {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "params OrderStatus invalid")
 	}

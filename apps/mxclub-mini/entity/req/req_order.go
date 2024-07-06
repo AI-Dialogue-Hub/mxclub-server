@@ -10,5 +10,7 @@ type OrderReq struct {
 
 type OrderListReq struct {
 	api.PageParams
-	OrderStatus enum.OrderStatus `json:"order_status"`
+	OrderStatus enum.OrderStatus `json:"status"`
+	Ge          string           `json:"search_GE_createTime"` // start time
+	Le          string           `json:"search_LE_createTime"` // end time
 }

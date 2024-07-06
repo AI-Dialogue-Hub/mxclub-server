@@ -27,6 +27,6 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 }
 
 func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {
-	list, count, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams)
-	return api.WrapPageResult(&req.PageParams, utils.CopySlice[*po.Order, *vo.OrderVO](list), count), err
+	list, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams, req.Ge, req.Le)
+	return api.WrapPageResult(&req.PageParams, utils.CopySlice[*po.Order, *vo.OrderVO](list), 0), err
 }

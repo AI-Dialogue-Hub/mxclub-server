@@ -3,7 +3,8 @@ package enum
 type OrderStatus int
 
 const (
-	PROCESSING     OrderStatus = iota // 配单中
+	ALL            OrderStatus = iota // all
+	PROCESSING                        // 配单中
 	RUNNING                           // 进行中
 	SUCCESS                           // 已完成
 	ORDER_ACCEPTED                    // 已接单
@@ -12,6 +13,7 @@ const (
 )
 
 var OrderStatusMap = map[OrderStatus]string{
+	ALL:            "全部订单",
 	RUNNING:        "进行中",
 	SUCCESS:        "已完成",
 	ORDER_ACCEPTED: "已接单",
