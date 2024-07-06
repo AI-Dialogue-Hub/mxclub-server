@@ -22,7 +22,7 @@ func GetWxOpenId(authCode string) (string, error) {
 	gotMap, err := httpUtil.Get[map[string]any](reqUrl)
 	if err != nil {
 		xlog.Error("GetWxOpenId err:", err)
-		return "", err
+		return "", errors.New("获取openId失败")
 	}
 	m := *gotMap
 	if openId, ok := m["openid"]; ok {
