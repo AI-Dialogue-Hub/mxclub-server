@@ -8,9 +8,10 @@ var (
 	MyMessage     MiniConfigEnum = "mymessage"     // 我的消息
 )
 
-var miniConfigEnumMap = map[MiniConfigEnum]any{
-	Swiper:        nil,
-	Notifications: nil,
+var miniConfigEnumMap = map[MiniConfigEnum]string{
+	Swiper:        "轮播图",
+	Notifications: "通知栏",
+	MyMessage:     "我的消息",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
@@ -20,4 +21,12 @@ func (m MiniConfigEnum) IsValid() bool {
 
 func (m MiniConfigEnum) IsNotValid() bool {
 	return !m.IsValid()
+}
+
+func (m MiniConfigEnum) DisPlayName() string {
+	displayName, ok := miniConfigEnumMap[m]
+	if !ok {
+		return ""
+	}
+	return displayName
 }

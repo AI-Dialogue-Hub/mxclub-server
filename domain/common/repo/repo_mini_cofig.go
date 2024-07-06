@@ -84,7 +84,7 @@ func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) 
 
 	list, count, err := xredis.GetListOrDefault[po.MiniConfig](ctx, cacheListKey, cacheCountKey, func() ([]*po.MiniConfig, int64, error) {
 		// 如果缓存中未找到，则从数据库中获取
-		list, count, err := repo.List(params.Page, params.PageSize, nil)
+		list, count, err := repo.List(params.Page, params.PageSize, "config_name != ?", "swiper")
 		if err != nil {
 			return nil, 0, err
 		}

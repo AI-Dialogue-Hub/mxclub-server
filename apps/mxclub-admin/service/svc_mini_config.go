@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/fengyuan-liang/GoKit/collection/stream"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/domain/common/entity/enum"
@@ -29,7 +30,17 @@ func (svc MiniConfigService) List(ctx jet.Ctx, params *api.PageParams) ([]*vo.Mi
 	if err != nil {
 		return nil, 0, err
 	}
-	return utils.CopySlice[*po.MiniConfig, *vo.MiniConfigVO](list), count, nil
+	collect := stream.Of[*po.MiniConfig, *vo.MiniConfigVO](list).
+		Map(func(ele *po.MiniConfig) *vo.MiniConfigVO {
+			return &vo.MiniConfigVO{
+				ID:          ele.ID,
+				ConfigName:  ele.ConfigName,
+				DisPlayName: enum.MiniConfigEnum(ele.ConfigName).DisPlayName(),
+				Content:     ele.Content,
+			}
+		}).
+		CollectToSlice()
+	return collect, count, nil
 }
 
 func (svc MiniConfigService) Get(id int64) (*vo.MiniConfigVO, error) {

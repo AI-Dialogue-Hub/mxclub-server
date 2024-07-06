@@ -24,6 +24,8 @@ func NewMiniConfigController(miniConfigService *service.MiniConfigService) jet.C
 	})
 }
 
+// ====================================================================================
+
 type putConfigParam struct {
 	ConfigName string           `json:"config_name" validate:"required"`
 	Content    []map[string]any `json:"content" validate:"required"`

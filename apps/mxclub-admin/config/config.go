@@ -32,18 +32,18 @@ func init() {
 		c2 = make(chan struct{})
 	)
 	go func() {
+		defer func() { c1 <- struct{}{} }()
 		if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
 			panic(err)
 		} else {
 			// gorm
 			jet.Provide(func() *gorm.DB { return db })
 		}
-		c1 <- struct{}{}
 	}()
 	go func() {
+		defer func() { c2 <- struct{}{} }()
 		// redis
 		xredis.NewRedisClient(config.Redis)
-		c2 <- struct{}{}
 	}()
 	<-c2
 	<-c1

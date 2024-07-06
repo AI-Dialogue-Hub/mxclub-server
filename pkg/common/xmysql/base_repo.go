@@ -103,7 +103,7 @@ func (r *BaseRepo[T]) FindOrCreate(findFunc func() bool, t *T) (*T, error) {
 }
 
 func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error) {
-	entities, err := r.ListNoCount(pageNo, pageNo, filter, data...)
+	entities, err := r.ListNoCount(pageNo, pageSize, filter, data...)
 	if err != nil {
 		return nil, 0, err
 	}
