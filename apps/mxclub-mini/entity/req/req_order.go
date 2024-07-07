@@ -1,7 +1,7 @@
 package req
 
 import (
-	"mxclub/domain/order/entity/enum"
+	"mxclub/domain/product/entity/enum"
 	"mxclub/pkg/api"
 )
 

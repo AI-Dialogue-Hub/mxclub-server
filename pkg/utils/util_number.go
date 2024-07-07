@@ -8,6 +8,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"log"
 	"math/rand"
 	"reflect"
@@ -104,6 +105,16 @@ func ParseInt(args interface{}) int {
 	return ParseDefaultInt(args, func(str string) (interface{}, error) {
 		return strconv.Atoi(str)
 	}).(int)
+}
+
+func ParseFloat64(str string) (result float64) {
+	floatVal, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		xlog.Errorf("ParseFloat64 ERROR:%v", err)
+		return
+	}
+	result = floatVal
+	return
 }
 
 func ParseDefaultInt(args interface{}, callBack func(str string) (interface{}, error)) interface{} {

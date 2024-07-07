@@ -2,7 +2,7 @@ package po
 
 import (
 	"gorm.io/gorm"
-	"mxclub/domain/order/entity/enum"
+	"mxclub/domain/product/entity/enum"
 	"time"
 )
 

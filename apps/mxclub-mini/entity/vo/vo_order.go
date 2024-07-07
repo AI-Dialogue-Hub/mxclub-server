@@ -1,7 +1,7 @@
 package vo
 
 import (
-	"mxclub/domain/order/entity/enum"
+	"mxclub/domain/product/entity/enum"
 	"mxclub/pkg/common/xmysql"
 	"time"
 )

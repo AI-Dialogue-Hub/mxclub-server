@@ -2,9 +2,10 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
-	"mxclub/domain/order/po"
+	"mxclub/domain/product/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
@@ -17,6 +18,9 @@ func init() {
 type IProductRepo interface {
 	xmysql.IBaseRepo[po.Product]
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.Product, int64, error)
+	UpdateProduct(ctx jet.Ctx, updateMap map[string]any) error
+	DeleteById(ctx jet.Ctx, id int64) error
+	Add(ctx jet.Ctx, po *po.Product) error
 }
 
 func NewProductRepo(db *gorm.DB) IProductRepo {
@@ -54,4 +58,31 @@ func (repo ProductRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]
 	}
 
 	return list, count, nil
+}
+
+func (repo ProductRepo) UpdateProduct(ctx jet.Ctx, updateMap map[string]any) error {
+	_ = xredis.DelMatchingKeys(ctx, productCachePrefix)
+	id := updateMap["id"]
+	delete(updateMap, "id")
+	return repo.Update(updateMap, "id = ?", id)
+}
+
+func (repo ProductRepo) DeleteById(ctx jet.Ctx, id int64) error {
+	_ = xredis.DelMatchingKeys(ctx, productCachePrefix)
+	err := repo.RemoveByID(id)
+	if err != nil {
+		ctx.Logger().Errorf("[ProductRepo]DeleteById ERROR:%v", err.Error())
+		return errors.New("删除失败")
+	}
+	return nil
+}
+
+func (repo ProductRepo) Add(ctx jet.Ctx, po *po.Product) error {
+	_ = xredis.DelMatchingKeys(ctx, productCachePrefix)
+	err := repo.InsertOne(po)
+	if err != nil {
+		ctx.Logger().Errorf("[ProductRepo]Add ERROR:%v", err.Error())
+		return errors.New("添加失败")
+	}
+	return nil
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
-	"mxclub/domain/order/entity/enum"
-	"mxclub/domain/order/po"
+	"mxclub/domain/product/entity/enum"
+	"mxclub/domain/product/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
 )

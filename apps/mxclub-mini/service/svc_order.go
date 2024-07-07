@@ -4,8 +4,8 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
-	"mxclub/domain/order/po"
-	"mxclub/domain/order/repo"
+	"mxclub/domain/product/po"
+	"mxclub/domain/product/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 )
