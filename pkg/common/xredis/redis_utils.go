@@ -47,7 +47,7 @@ func GetListOrDefault[T any](ctx jet.Ctx, listKey string, countKey string, defau
 }
 
 func BuildListDataCacheKey(prefix string, params *api.PageParams) string {
-	return fmt.Sprintf("%sListData:Page%d:Size%d", prefix, params.Page, params.PageSize)
+	return fmt.Sprintf("%s_ListData:Page%d:Size%d", prefix, params.Page, params.PageSize)
 }
 
 func BuildListCountCacheKey(prefix string) string {

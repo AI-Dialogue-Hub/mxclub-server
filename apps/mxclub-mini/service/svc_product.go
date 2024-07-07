@@ -21,11 +21,11 @@ func NewProductService(repo repo.IProductRepo) *ProductService {
 }
 
 func (svc ProductService) FindById(id uint) (*vo.ProductVO, error) {
-	po, err := svc.ProductRepo.FindByID(id)
+	productPO, err := svc.ProductRepo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
-	return utils.Copy[vo.ProductVO](po)
+	return utils.Copy[vo.ProductVO](productPO)
 }
 
 func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {

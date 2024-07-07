@@ -6,5 +6,5 @@ import (
 )
 
 func TestMiniConfigEnum_IsValid(t *testing.T) {
-	assert.True(t, MiniConfigEnum("Swiper").IsValid())
+	assert.True(t, MiniConfigEnum("swiper").IsValid())
 }

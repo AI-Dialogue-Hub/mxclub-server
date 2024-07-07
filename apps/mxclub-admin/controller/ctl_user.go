@@ -3,9 +3,11 @@ package controller
 import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
 	"mxclub/apps/mxclub-admin/service"
+	"mxclub/domain/user/entity/enum"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
@@ -25,6 +27,8 @@ func NewUserController(_userService *service.UserService) jet.ControllerResult {
 		userService: _userService,
 	})
 }
+
+// =========================================================================
 
 func (ctl UserController) GetV1User0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
 	if len(args.CmdArgs) == 0 {
@@ -56,10 +60,23 @@ func (ctl UserController) GetLogin(ctx jet.Ctx, param *loginParams) (*api.Respon
 	if err != nil {
 		return xjet.WrapperResult(ctx, nil, err)
 	}
-	userVO := &vo.UserVO{
+	userVO := &vo.UserLoginVO{
 		Name:     user.Name,
 		Role:     user.Role,
-		JwtToken: middleware.MustGenAuthToken(ctx, user.Name),
+		JwtToken: middleware.MustGenAuthToken(ctx, user),
 	}
 	return xjet.WrapperResult(ctx, userVO, nil)
+}
+
+func (ctl UserController) GetV1UserList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	pageResult, err := ctl.userService.List(ctx, params)
+	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
+func (ctl UserController) PostV1UserUpdate(ctx jet.Ctx, userReq *req.UserReq) (*api.Response, error) {
+	if err := middleware.MustGetUserInfo(ctx).Role.CheckPermission(enum.PermissionAdminRead); err != nil {
+		return xjet.WrapperResult(ctx, nil, err)
+	}
+	err := ctl.userService.Update(ctx, userReq)
+	return xjet.WrapperResult(ctx, "Ok", err)
 }

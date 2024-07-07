@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"github.com/fengyuan-liang/GoKit/collection/sets"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
@@ -10,6 +9,7 @@ import (
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
+	"strings"
 )
 
 var (
@@ -71,16 +71,29 @@ func GetConfig() *Config {
 	return config
 }
 
-var openApiSet = sets.NewHashSet[string]()
+var openApiSet = make(map[string]bool)
 
 func IsOpenApi(url string) bool {
 	if config.Server.OpenApi == nil {
 		return false
 	}
-	if openApiSet.IsEmpty() {
+
+	if len(openApiSet) == 0 {
 		for _, path := range config.Server.OpenApi {
-			openApiSet.Add(path)
+			if strings.HasSuffix(path, "/*") {
+				prefix := strings.TrimSuffix(path, "/*")
+				openApiSet[prefix] = true
+			} else {
+				openApiSet[path] = true
+			}
 		}
 	}
-	return openApiSet.Contains(url)
+
+	for prefix := range openApiSet {
+		if strings.HasPrefix(url, prefix) {
+			return true
+		}
+	}
+
+	return false
 }

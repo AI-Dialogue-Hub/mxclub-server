@@ -9,6 +9,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/valyala/fasthttp"
 	"mxclub/apps/mxclub-admin/config"
+	"mxclub/domain/user/po"
 	"mxclub/pkg/api"
 	"time"
 )
@@ -27,14 +28,17 @@ func AuthMiddleware(next router.IJetRouter) (router.IJetRouter, error) {
 	}), nil
 }
 
+var logger = xlog.NewWith("auth_middleware")
+
 func handleJwtAuth(ctx *fasthttp.RequestCtx) (err error) {
-	if config.IsOpenApi(string(ctx.Path())) {
+	path := string(ctx.Path())
+	if config.IsOpenApi(path) {
 		return nil
 	}
 	jwtToken := string(ctx.Request.Header.Peek(AuthHeaderKey))
-	logger := xlog.NewWith("auth_middleware")
 	if jwtToken == "" {
 		logger.Error("empty Authorization")
+		logger.Errorf("path:%v", path)
 		err = api.ErrorUnauthorized(logger.ReqId)
 	}
 	tokenInfo, err := ParseAuthToken(jwtToken)
@@ -48,10 +52,11 @@ func handleJwtAuth(ctx *fasthttp.RequestCtx) (err error) {
 type AuthToken struct {
 	jwt.StandardClaims
 	UserName string
+	UserPO   *po.User
 }
 
-func MustGenAuthToken(ctx jet.Ctx, userName string) string {
-	token, err := GenAuthTokenByUserName(userName)
+func MustGenAuthToken(ctx jet.Ctx, userPO *po.User) string {
+	token, err := GenAuthTokenByUserName(userPO)
 	if err != nil {
 		ctx.Logger().Infof("GenAuthTokenByUserName error:%v", err.Error())
 		return ""
@@ -59,9 +64,10 @@ func MustGenAuthToken(ctx jet.Ctx, userName string) string {
 	return token
 }
 
-func GenAuthTokenByUserName(username string) (string, error) {
+func GenAuthTokenByUserName(userPO *po.User) (string, error) {
 	authToken := &AuthToken{
-		UserName: username,
+		UserName: userPO.Name,
+		UserPO:   userPO,
 	}
 	if authToken.ExpiresAt == 0 {
 		authToken.ExpiresAt = time.Now().Unix() + 7*86400
@@ -103,4 +109,9 @@ func isExpiredTokenError(err error) bool {
 func ParseAuthTokenByCtx(ctx jet.Ctx) (*AuthToken, error) {
 	jwtToken := string(ctx.Request().Header.Peek(AuthHeaderKey))
 	return ParseAuthToken(jwtToken)
+}
+
+func MustGetUserInfo(ctx jet.Ctx) *po.User {
+	authInfo, _ := ParseAuthTokenByCtx(ctx)
+	return authInfo.UserPO
 }

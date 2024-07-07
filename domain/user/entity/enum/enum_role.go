@@ -1,5 +1,9 @@
 package enum
 
+import (
+	"errors"
+)
+
 type Permission uint64
 
 const (
@@ -65,10 +69,29 @@ var rolePermissionMap = map[RoleType]Permission{
 	RoleAdministrator: RoleAdministratorPermission,
 }
 
+var roleDisPlayNameMap = map[RoleType]string{
+	RoleTS:            "技术支持",
+	RoleManager:       "管理员",
+	RoleAdministrator: "系统管理员",
+	RoleWxUser:        "微信用户",
+	RoleAssistant:     "助教 打手",
+}
+
 func (r RoleType) Permission() Permission {
 	if per, ok := rolePermissionMap[r]; ok {
 		return per
 	} else {
 		return 0
 	}
+}
+
+func (r RoleType) DisPlayName() string {
+	return roleDisPlayNameMap[r]
+}
+
+func (r RoleType) CheckPermission(requiredPermission Permission) error {
+	if r.Permission()&requiredPermission != requiredPermission {
+		return errors.New("权限不够")
+	}
+	return nil
 }
