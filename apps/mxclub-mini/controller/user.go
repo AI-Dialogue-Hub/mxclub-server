@@ -16,12 +16,14 @@ func init() {
 
 type UserController struct {
 	jet.BaseJetController
-	userService *service.UserService
+	userService    *service.UserService
+	messageService *service.MessageService
 }
 
-func NewUserController(_userService *service.UserService) jet.ControllerResult {
+func NewUserController(userService *service.UserService, svc2 *service.MessageService) jet.ControllerResult {
 	return jet.NewJetController(&UserController{
-		userService: _userService,
+		userService:    userService,
+		messageService: svc2,
 	})
 }
 
@@ -30,7 +32,7 @@ func (ctl UserController) GetV1User0(ctx jet.Ctx, args *jet.Args) (*api.Response
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "userId is empty")
 	}
 	userId := args.CmdArgs[0]
-	user, err := ctl.userService.GetUserById(ctx, utils.ParseInt(userId))
+	user, err := ctl.userService.GetUserById(ctx, utils.ParseUint(userId))
 	return xjet.WrapperResult(ctx, user, err)
 }
 
@@ -39,7 +41,7 @@ func (ctl UserController) GetV1UserOrderCount(ctx jet.Ctx, args *jet.Args) (*api
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "userId is empty")
 	}
 	userId := args.CmdArgs[0]
-	user, err := ctl.userService.GetUserById(ctx, utils.ParseInt(userId))
+	user, err := ctl.userService.GetUserById(ctx, utils.ParseUint(userId))
 	return xjet.WrapperResult(ctx, user, err)
 }
 
@@ -55,6 +57,28 @@ func (ctl UserController) PostClientLoginWx(ctx jet.Ctx, param *LoginParams) (*a
 
 func (ctl UserController) PostClientLoginMember(ctx jet.Ctx) (*api.Response, error) {
 	tokenInfo := ctx.FastHttpCtx().UserValue("tokenInfo").(*middleware.AuthToken)
-	userVO, err := ctl.userService.GetUserByOpenId(ctx, tokenInfo.OpenId)
+	userVO, err := ctl.userService.GetUserById(ctx, tokenInfo.UserId)
 	return xjet.WrapperResult(ctx, userVO, err)
+}
+
+func (ctl UserController) PostV1MessageList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	userId := middleware.MustGetUserInfo(ctx)
+	pageResponse, err := ctl.messageService.List(ctx, userId, params)
+	return xjet.WrapperResult(ctx, pageResponse, err)
+}
+
+func (ctl UserController) PostV1Message(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	userId := middleware.MustGetUserInfo(ctx)
+	pageResponse, err := ctl.messageService.List(ctx, userId, params)
+	return xjet.WrapperResult(ctx, pageResponse, err)
+}
+
+func (ctl UserController) PostV1MessageUnreadCount(ctx jet.Ctx) (*api.Response, error) {
+	countUnReadMessage, err := ctl.messageService.CountUnReadMessage(ctx)
+	return xjet.WrapperResult(ctx, countUnReadMessage, err)
+}
+
+func (ctl UserController) PostV1MessageRead(ctx jet.Ctx) (*api.Response, error) {
+	err := ctl.messageService.ReadAllMessage(ctx)
+	return xjet.WrapperResult(ctx, "ok", err)
 }

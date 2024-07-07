@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -84,6 +85,11 @@ func GetByReqFunc[T any](url string, f func(req *http.Request)) (*T, error) {
 	})
 }
 
+func init() {
+	os.Setenv("HTTP_PROXY", "")
+	os.Setenv("HTTPS_PROXY", "")
+}
+
 var (
 	client      = &http.Client{Timeout: time.Second * 20}
 	httpUtilLog = xlog.NewWith("http_util_log")
@@ -101,22 +107,15 @@ func baseReq[T any](f func() *http.Request) (*T, error) {
 		err error
 	)
 	req = f()
-	//printReq(req)
 	// 发送请求并获取响应
 	resp, err := client.Do(req)
 	if resp == nil {
 		xlog.Errorf("err:%v", err)
+		printReq(req)
 		return nil, errors.New("resp is empty")
 	}
 	if err != nil || resp.StatusCode != 200 {
-		fmt.Printf("code:%v,请求发送失败:%v\n", resp.StatusCode, err)
-		fmt.Println("================ 打印请求 ==================")
-		// 打印请求
-		printReq(req)
-		fmt.Println("=============== 打印响应 ==================")
-		// 打印响应
-		respBody := printResp(resp)
-		fmt.Println("========================================")
+		respBody := printInfo(resp, err, req)
 		if resp.StatusCode == http.StatusUnauthorized {
 			return nil, ErrUnauthorized
 		}
@@ -143,6 +142,18 @@ func baseReq[T any](f func() *http.Request) (*T, error) {
 		return nil, err
 	}
 	return t, nil
+}
+
+func printInfo(resp *http.Response, err error, req *http.Request) string {
+	fmt.Printf("code:%v,请求发送失败:%v\n", resp.StatusCode, err)
+	fmt.Println("================ 打印请求 ==================")
+	// 打印请求
+	printReq(req)
+	fmt.Println("=============== 打印响应 ==================")
+	// 打印响应
+	respBody := printResp(resp)
+	fmt.Println("========================================")
+	return respBody
 }
 
 func printResp(resp *http.Response) string {

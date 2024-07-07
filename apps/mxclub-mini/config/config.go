@@ -2,12 +2,12 @@ package config
 
 import (
 	"flag"
-	"github.com/fengyuan-liang/GoKit/collection/sets"
 	"gorm.io/gorm"
 	"log"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
+	"strings"
 
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/go-playground/validator/v10"
@@ -26,26 +26,25 @@ func init() {
 	if err := validator.New().Struct(config); err != nil {
 		log.Fatalf("config error:%v", err.Error())
 	}
-	// mysql
-	jet.Provide(func() *xmysql.MySqlConfig { return config.Mysql })
+
 	// ============== 耗时加载全部异步化 =============================
 	var (
 		c1 = make(chan struct{})
 		c2 = make(chan struct{})
 	)
 	go func() {
+		defer func() { c1 <- struct{}{} }()
 		if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
 			panic(err)
 		} else {
 			// gorm
 			jet.Provide(func() *gorm.DB { return db })
 		}
-		c1 <- struct{}{}
 	}()
 	go func() {
+		defer func() { c2 <- struct{}{} }()
 		// redis
 		xredis.NewRedisClient(config.Redis)
-		c2 <- struct{}{}
 	}()
 	<-c2
 	<-c1
@@ -81,16 +80,29 @@ func GetConfig() *Config {
 	return config
 }
 
-var openApiSet = sets.NewHashSet[string]()
+var openApiSet = make(map[string]bool)
 
 func IsOpenApi(url string) bool {
 	if config.Server.OpenApi == nil {
 		return false
 	}
-	if openApiSet.IsEmpty() {
+
+	if len(openApiSet) == 0 {
 		for _, path := range config.Server.OpenApi {
-			openApiSet.Add(path)
+			if strings.HasSuffix(path, "/*") {
+				prefix := strings.TrimSuffix(path, "/*")
+				openApiSet[prefix] = true
+			} else {
+				openApiSet[path] = true
+			}
 		}
 	}
-	return openApiSet.Contains(url)
+
+	for prefix := range openApiSet {
+		if strings.HasPrefix(url, prefix) {
+			return true
+		}
+	}
+
+	return false
 }

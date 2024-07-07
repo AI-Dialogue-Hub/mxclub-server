@@ -20,8 +20,8 @@ func init() {
 type IUserRepo interface {
 	xmysql.IBaseRepo[po.User]
 	QueryUserByAccount(username string, password string) (*po.User, error)
-	AddUserByOpenId(ctx jet.Ctx, openId string) error
-	FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error)
+	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
+	FindByUserId(ctx jet.Ctx, userId string) (*po.User, error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
@@ -42,7 +42,7 @@ func (repo *UserRepo) QueryUserByAccount(username string, password string) (*po.
 	return repo.FindOne("name = ? and password = ?", username, utils.EncryptPassword(password))
 }
 
-func (repo *UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) error {
+func (repo *UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
 	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
 	user := &po.User{
 		WxOpenId: openId,
@@ -51,18 +51,18 @@ func (repo *UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) error {
 	err := repo.InsertOne(user)
 	if err != nil {
 		ctx.Logger().Errorf("insert user err:%v", err)
-		return err
+		return 0, err
 	}
 	id := user.ID
 	err = repo.DB().Where("id = ?", id).Updates(map[string]interface{}{"wx_name": fmt.Sprintf("用户: %v", id)}).Error
 	if err != nil {
 		ctx.Logger().Errorf("update user err:%v", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return id, nil
 }
 
-func (repo *UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) {
+func (repo *UserRepo) FindByUserId(ctx jet.Ctx, openId string) (*po.User, error) {
 	one, err := repo.FindOne("wx_open_id = ?", openId)
 	if err != nil {
 		ctx.Logger().Errorf("find user err:%v", err)

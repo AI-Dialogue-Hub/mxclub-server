@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
@@ -23,7 +24,7 @@ func NewUserService(repo repo.IUserRepo) *UserService {
 	return &UserService{userRepo: repo}
 }
 
-func (svc UserService) GetUserById(ctx jet.Ctx, id int) (*vo.User, error) {
+func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.User, error) {
 	userPO, err := svc.userRepo.FindByID(id)
 	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
 }
@@ -34,14 +35,22 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 		ctx.Logger().Errorf("get user id err:%v", err)
 		return "", err
 	}
-	jwtToken, _ := middleware.GenAuthTokenByOpenId(openId)
-	if !svc.userRepo.ExistsByOpenId(ctx, openId) {
-		_ = svc.userRepo.AddUserByOpenId(ctx, openId)
+	var jwtToken string
+	user, _ := svc.userRepo.FindByUserId(ctx, openId)
+	if xjet.IsNil(user) || user.ID <= 0 {
+		id, err := svc.userRepo.AddUserByOpenId(ctx, openId)
+		if err != nil {
+			ctx.Logger().Errorf("get user id err:%v", err)
+			return "", errors.New("登录失败")
+		}
+		jwtToken, _ = middleware.GenAuthTokenByOpenIdAndUserId(id)
+
 	}
+	jwtToken, _ = middleware.GenAuthTokenByOpenIdAndUserId(user.ID)
 	return jwtToken, err
 }
 
 func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.User, error) {
-	userPO, err := svc.userRepo.FindByOpenId(ctx, openId)
+	userPO, err := svc.userRepo.FindByUserId(ctx, openId)
 	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
 }

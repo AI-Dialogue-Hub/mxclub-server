@@ -20,7 +20,8 @@ type IBaseRepo[T any] interface {
 	FindAll() ([]*T, error)
 	FindOrCreate(findFunc func() bool, t *T) (*T, error)
 	List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error)
-	ListNoCount(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, error)
+	ListAndOrder(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, int64, error)
+	ListNoCount(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, error)
 	Count(filter any, data ...any) (int64, error)
 }
 
@@ -103,7 +104,11 @@ func (r *BaseRepo[T]) FindOrCreate(findFunc func() bool, t *T) (*T, error) {
 }
 
 func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error) {
-	entities, err := r.ListNoCount(pageNo, pageSize, filter, data...)
+	return r.ListAndOrder(pageNo, pageSize, "", filter, data...)
+}
+
+func (r *BaseRepo[T]) ListAndOrder(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, int64, error) {
+	entities, err := r.ListNoCount(pageNo, pageSize, order, filter, data...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -111,7 +116,7 @@ func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any
 	return entities, count, err
 }
 
-func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, error) {
+func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, error) {
 	if filter == nil {
 		filter = map[string]interface{}{}
 	}
@@ -122,12 +127,16 @@ func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, filter any, data
 	if pageSize <= 0 {
 		pageSize = 10
 	}
-	err := r.Db.WithContext(r.Ctx).
+	var err error
+	tx := r.Db.WithContext(r.Ctx).
 		Where(filter, data...).
 		Offset(int((pageNo - 1) * pageSize)).
-		Limit(int(pageSize)).
-		Find(&entities).
-		Error
+		Limit(int(pageSize))
+	if order == "" {
+		err = tx.Find(&entities).Error
+	} else {
+		err = tx.Order(order).Find(&entities).Error
+	}
 	return entities, err
 }
 

@@ -33,7 +33,7 @@ func MapFromSliceToSlice[In any, Out any](in []In, f func(in In) []Out) []Out {
 	return out
 }
 
-func ForEach[T any](entities []*T, f func(t *T)) {
+func ForEach[T any](entities []*T, f func(ele *T)) {
 	for _, entity := range entities {
 		f(entity)
 	}

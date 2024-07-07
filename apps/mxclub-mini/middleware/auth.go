@@ -47,11 +47,11 @@ func handleJwtAuth(ctx *fasthttp.RequestCtx) (err error) {
 
 type AuthToken struct {
 	jwt.StandardClaims
-	OpenId string
+	UserId uint
 }
 
-func MustGenAuthToken(ctx jet.Ctx, userId string) string {
-	token, err := GenAuthTokenByOpenId(userId)
+func MustGenAuthToken(ctx jet.Ctx, userId uint) string {
+	token, err := GenAuthTokenByOpenIdAndUserId(userId)
 	if err != nil {
 		ctx.Logger().Infof("GenAuthTokenByUserName error:%v", err.Error())
 		return ""
@@ -59,9 +59,9 @@ func MustGenAuthToken(ctx jet.Ctx, userId string) string {
 	return token
 }
 
-func GenAuthTokenByOpenId(openId string) (string, error) {
+func GenAuthTokenByOpenIdAndUserId(userId uint) (string, error) {
 	authToken := &AuthToken{
-		OpenId: openId,
+		UserId: userId,
 	}
 	if authToken.ExpiresAt == 0 {
 		authToken.ExpiresAt = time.Now().Unix() + 7*86400
@@ -103,4 +103,9 @@ func isExpiredTokenError(err error) bool {
 func ParseAuthTokenByCtx(ctx jet.Ctx) (*AuthToken, error) {
 	jwtToken := string(ctx.Request().Header.Peek(AuthHeaderKey))
 	return ParseAuthToken(jwtToken)
+}
+
+func MustGetUserInfo(ctx jet.Ctx) (userId uint) {
+	authInfo, _ := ParseAuthTokenByCtx(ctx)
+	return authInfo.UserId
 }
