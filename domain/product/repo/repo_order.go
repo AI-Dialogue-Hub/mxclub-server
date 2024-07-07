@@ -44,9 +44,9 @@ func (repo *OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, p
 	//	return repo.List(params.Page, params.PageSize, "order_status = ?", status)
 	//})
 	if status == 0 {
-		return repo.ListNoCount(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
+		return repo.ListNoCount(params.Page, params.PageSize, "", "purchase_date >= ? and purchase_date <= ?", ge, le)
 	} else {
-		return repo.ListNoCount(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
+		return repo.ListNoCount(params.Page, params.PageSize, "", "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
 	}
 }
 
