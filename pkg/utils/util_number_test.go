@@ -8,6 +8,7 @@ package utils
 
 import (
 	"testing"
+	"time"
 )
 
 func TestGetCurrentDayStartAndEndDate(t *testing.T) {
@@ -49,4 +50,8 @@ func TestGetCurrentMonthAndDay(t *testing.T) {
 func TestGetLastMonthStartAndEnd(t *testing.T) {
 	t1, t2 := GetLastMonthStartAndEnd()
 	t.Logf("%v, %v", t1, t2)
+}
+
+func TestParseTimeString(t *testing.T) {
+	t.Logf("%v", time.Now().String())
 }
