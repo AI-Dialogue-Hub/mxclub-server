@@ -1,36 +1,12 @@
 package repo
 
 import (
-	"context"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"gorm.io/gorm"
-	"mxclub/domain/product/entity/enum"
-	"mxclub/domain/product/po"
+	"mxclub/domain/order/entity/enum"
+	"mxclub/domain/order/po"
 	"mxclub/pkg/api"
-	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 )
-
-func init() {
-	jet.Provide(NewOrderRepo)
-}
-
-type IOrderRepo interface {
-	xmysql.IBaseRepo[po.Order]
-	ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, params *api.PageParams, ge, le string) ([]*po.Order, error)
-	ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error)
-}
-
-func NewOrderRepo(db *gorm.DB) IOrderRepo {
-	repo := new(OrderRepo)
-	repo.Db = db.Model(new(po.Order))
-	repo.Ctx = context.Background()
-	return repo
-}
-
-type OrderRepo struct {
-	xmysql.BaseRepo[po.Order]
-}
 
 const cachePrefix = "_order_CachePrefix"
 const listCachePrefix = "_order_configListCachePrefix"
@@ -73,4 +49,16 @@ func (repo *OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, 
 	}
 	return list, count, nil
 
+}
+
+func (repo *OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error) {
+	var totalAmount float64
+
+	sql := "select COALESCE(sum(executor_price), 0) from orders where executor_id = ? and order_status = ?"
+
+	if err := repo.Db.Raw(sql, dasherId, enum.SUCCESS).Scan(&totalAmount).Error; err != nil {
+		ctx.Logger().Errorf("[OrderWithdrawAbleAmount]ERROR:%v", err.Error())
+		return 0, err
+	}
+	return totalAmount, nil
 }

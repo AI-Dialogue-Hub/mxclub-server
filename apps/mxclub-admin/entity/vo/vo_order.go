@@ -1,7 +1,7 @@
 package vo
 
 import (
-	"mxclub/domain/product/entity/enum"
+	"mxclub/domain/order/entity/enum"
 	"time"
 )
 

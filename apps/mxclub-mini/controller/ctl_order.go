@@ -23,10 +23,17 @@ func NewOrderController(orderService *service.OrderService) jet.ControllerResult
 	})
 }
 
+// ============================================================================
+
 func (c *OrderController) PostV1OrderList(ctx jet.Ctx, params *req.OrderListReq) (*api.Response, error) {
 	if !params.OrderStatus.Valid() {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "params OrderStatus invalid")
 	}
 	pageResult, err := c.orderService.List(ctx, params)
 	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
+func (c *OrderController) PostV1WithdrawInfo(ctx jet.Ctx) (*api.Response, error) {
+	withDrawVO, err := c.orderService.HistoryWithDrawAmount(ctx)
+	return xjet.WrapperResult(ctx, withDrawVO, err)
 }

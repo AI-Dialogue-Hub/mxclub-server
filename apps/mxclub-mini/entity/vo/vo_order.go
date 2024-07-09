@@ -1,7 +1,7 @@
 package vo
 
 import (
-	"mxclub/domain/product/entity/enum"
+	"mxclub/domain/order/entity/enum"
 	"mxclub/pkg/common/xmysql"
 	"time"
 )
@@ -33,4 +33,11 @@ type ProductVO struct {
 	ShortDescription string      `json:"short_description"`
 	Images           xmysql.JSON `json:"images"`
 	DetailImages     xmysql.JSON `json:"detail_images"`
+}
+
+type WithDrawVO struct {
+	HistoryWithDrawAmount float64 `json:"history_with_draw_amount"`
+	WithdrawAbleAmount    float64 `json:"withdraw_able_amount"`
+	WithdrawRangeMax      float64 `json:"withdraw_range_max"`
+	WithdrawRangeMin      float64 `json:"withdraw_range_min"`
 }

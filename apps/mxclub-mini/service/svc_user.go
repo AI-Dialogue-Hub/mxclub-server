@@ -6,6 +6,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	miniUtil "mxclub/apps/mxclub-mini/utils"
+	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
 	_ "mxclub/domain/user/repo"
 	"mxclub/pkg/common/xjet"
@@ -53,4 +54,8 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.User, error) {
 	userPO, err := svc.userRepo.FindByUserId(ctx, openId)
 	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
+}
+
+func (svc UserService) FindUserById(id uint) (*po.User, error) {
+	return svc.userRepo.FindByID(id)
 }

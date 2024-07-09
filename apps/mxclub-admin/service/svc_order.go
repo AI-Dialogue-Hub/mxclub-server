@@ -5,9 +5,9 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
-	"mxclub/domain/product/entity/enum"
-	"mxclub/domain/product/po"
-	"mxclub/domain/product/repo"
+	"mxclub/domain/order/entity/enum"
+	"mxclub/domain/order/po"
+	"mxclub/domain/order/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 )

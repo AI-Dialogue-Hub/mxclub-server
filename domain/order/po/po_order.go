@@ -2,12 +2,13 @@ package po
 
 import (
 	"gorm.io/gorm"
-	"mxclub/domain/product/entity/enum"
+	"mxclub/domain/order/entity/enum"
 	"time"
 )
 
 type Order struct {
 	gorm.Model
+	OrderId         uint64           `gorm:"column:order_id"`
 	PurchaseId      uint             `gorm:"column:purchase_id"`
 	OrderName       string           `gorm:"column:order_name"`
 	OrderIcon       string           `gorm:"column:icon"`
@@ -20,6 +21,7 @@ type Order struct {
 	Notes           string           `gorm:"column:notes"`
 	DiscountPrice   float64          `gorm:"column:discount_price"`
 	FinalPrice      float64          `gorm:"column:final_price"`
+	ExecutorPrice   float64          `gorm:"column:executor_price"`
 	PurchaseDate    *time.Time       `gorm:"column:purchase_date"`
 	CompletionDate  *time.Time       `gorm:"column:completion_date"`
 }
