@@ -38,6 +38,10 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 
 func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {
 	list, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams, req.Ge, req.Le)
+	if err != nil {
+		ctx.Logger().Errorf("[OrderService]List ERROR, %v", err.Error())
+		return nil, errors.New("查询不到数据")
+	}
 	return api.WrapPageResult(&req.PageParams, utils.CopySlice[*po.Order, *vo.OrderVO](list), 0), err
 }
 
