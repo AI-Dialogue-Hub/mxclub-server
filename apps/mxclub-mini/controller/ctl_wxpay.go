@@ -5,6 +5,7 @@ import (
 	"mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -26,12 +27,12 @@ func NewWxPayController(wxPayService *service.WxPayService, messageService *serv
 
 // ========================================================================================
 
-func (ctl WxPayController) PostWxpayNotify(ctx jet.Ctx, params map[string]any) (*api.Response, error) {
-	ctx.Logger().Infof("%v", params)
+func (ctl WxPayController) PostWxpayNotify(ctx jet.Ctx, params *map[string]any) (*api.Response, error) {
+	ctx.Logger().Infof("%v", utils.ObjToJsonStr(params))
 	return xjet.WrapperResult(ctx, "ok", nil)
 }
 
-func (ctl WxPayController) GetWxpayNotify(ctx jet.Ctx, params map[string]any) (*api.Response, error) {
-	ctx.Logger().Infof("%v", params)
+func (ctl WxPayController) GetWxpayNotify(ctx jet.Ctx, params *map[string]any) (*api.Response, error) {
+	ctx.Logger().Infof("%v", utils.ObjToJsonStr(params))
 	return xjet.WrapperResult(ctx, "ok", nil)
 }
