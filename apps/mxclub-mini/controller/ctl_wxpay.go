@@ -17,16 +17,21 @@ type WxPayController struct {
 	messageService *service.MessageService
 }
 
-func NewWxPayController(WxPayService *service.WxPayService, svc2 *service.MessageService) jet.ControllerResult {
+func NewWxPayController(wxPayService *service.WxPayService, messageService *service.MessageService) jet.ControllerResult {
 	return jet.NewJetController(&WxPayController{
-		WxPayService:   WxPayService,
-		messageService: svc2,
+		WxPayService:   wxPayService,
+		messageService: messageService,
 	})
 }
 
 // ========================================================================================
 
 func (ctl WxPayController) PostWxpayNotify(ctx jet.Ctx, params map[string]any) (*api.Response, error) {
+	ctx.Logger().Infof("%v", params)
+	return xjet.WrapperResult(ctx, "ok", nil)
+}
+
+func (ctl WxPayController) GetWxpayNotify(ctx jet.Ctx, params map[string]any) (*api.Response, error) {
 	ctx.Logger().Infof("%v", params)
 	return xjet.WrapperResult(ctx, "ok", nil)
 }

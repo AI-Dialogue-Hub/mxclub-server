@@ -5,14 +5,12 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/app"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 )
 
 var (
 	Client          *core.Client
-	paymentSVC      *app.AppApiService
 	wxPayConfig     *WxPayConfig
 	jsapiApiService *jsapi.JsapiApiService
 )

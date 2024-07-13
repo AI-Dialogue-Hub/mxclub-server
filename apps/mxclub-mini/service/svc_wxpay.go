@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"mxclub/domain/user/repo"
+	"mxclub/domain/order/repo"
 )
 
 func init() {
@@ -10,9 +10,9 @@ func init() {
 }
 
 type WxPayService struct {
-	userRepo repo.IUserRepo
+	orderRepo repo.IOrderRepo
 }
 
-func NewWxPayService(repo repo.IUserRepo) *WxPayService {
-	return &WxPayService{userRepo: repo}
+func NewWxPayService(orderRepo repo.IOrderRepo) *WxPayService {
+	return &WxPayService{orderRepo: orderRepo}
 }
