@@ -14,14 +14,13 @@ import (
 func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
 	request := jsapi.PrepayRequest{
 		Appid:         core.String(wxPayConfig.AppId),
-		Mchid:         core.String(wxPayConfig.AppId),
+		Mchid:         core.String(wxPayConfig.MchID),
 		Description:   core.String("明星电竞-代打订单"),
 		OutTradeNo:    core.String(prePayRequestDTO.OutTradeNo),
 		TimeExpire:    core.Time(time.Now().Add(time.Minute * 15)),
 		Attach:        core.String("自定义数据说明"),
 		NotifyUrl:     core.String("https://mx.fengxianhub.top/wxpay/notify"),
 		GoodsTag:      core.String("MX"),
-		LimitPay:      []string{"wx_pay"},
 		SupportFapiao: core.Bool(false),
 		Amount: &jsapi.Amount{
 			Currency: core.String("CNY"),
@@ -38,13 +37,13 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 		return
 	}
 	var (
-		timeStampStr = fmt.Sprintf("%v", time.Now().Unix()/1000)
+		timeStampStr = fmt.Sprintf("%v", time.Now().Unix())
 		nonceStr     = generateNonceStr()
-		packageStr   = fmt.Sprintf("prepay_id=%v", resp.PrepayId)
+		packageStr   = fmt.Sprintf("prepay_id=%v", *resp.PrepayId)
 	)
 	signature, err := getRSASignature([]string{
 		wxPayConfig.AppId,
-		fmt.Sprintf("%v", timeStampStr),
+		timeStampStr,
 		nonceStr,
 		packageStr,
 	})
