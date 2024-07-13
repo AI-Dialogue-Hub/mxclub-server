@@ -15,6 +15,7 @@ type User struct {
 	WxIcon       string        `gorm:"wx_icon"`
 	WxGrade      string        `gorm:"wx_grade"`
 	Role         enum.RoleType `gorm:"role"`
+	Phone        string        `gorm:"role"`
 	MemberNumber int           `gorm:"member_number"` // 编号
 	ActivatedAt  sql.NullTime  `gorm:"activated_at"`  // 最近一次上线
 }

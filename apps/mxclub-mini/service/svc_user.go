@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	miniUtil "mxclub/apps/mxclub-mini/utils"
@@ -58,4 +59,13 @@ func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.User, er
 
 func (svc UserService) FindUserById(id uint) (*po.User, error) {
 	return svc.userRepo.FindByID(id)
+}
+
+func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
+	err := svc.userRepo.ToBeAssistant(ctx, middleware.MustGetUserInfo(ctx), req.Phone, req.MemberNumber)
+	if err != nil {
+		ctx.Logger().Errorf("[ToBeAssistant]ERROR:%v", err.Error())
+		return errors.New("转换身份失败，请联系客服")
+	}
+	return nil
 }

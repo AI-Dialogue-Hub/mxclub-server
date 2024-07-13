@@ -8,7 +8,7 @@ import (
 )
 
 // Lua 脚本，删除所有模糊匹配的ky, 使用传入的 wildcardKey 进行键模式匹配
-var script = `
+var delMatchingKeysScript = `
 	local function deleteKeysByPattern(pattern)
 		local cursor = "0"
 		local totalDeleted = 0
@@ -30,11 +30,17 @@ var script = `
 	return deleteKeysByPattern(pattern)
 `
 
+var delMatchingKeysScriptHash string
+
 // DelMatchingKeys 函数，传入 wildcardKey 参数
 func DelMatchingKeys(ctx jet.Ctx, wildcardKey string) error {
 	defer utils.TraceElapsedByName(time.Now(), "DelMatchingKeys")
+	if delMatchingKeysScriptHash == "" {
+		// 加载脚本
+		delMatchingKeysScriptHash = cli.GetSingleClient().ScriptLoad(context.Background(), delMatchingKeysScript).Val()
+	}
 	// 传递参数给 Eval 方法
-	cmd := cli.GetSingleClient().Eval(context.Background(), script, []string{}, RealKey(wildcardKey)+"*")
+	cmd := cli.GetSingleClient().EvalSha(context.Background(), delMatchingKeysScriptHash, []string{}, RealKey(wildcardKey)+"*")
 	if err := cmd.Err(); err != nil {
 		ctx.Logger().Errorf("deleting wildcard keys failed: %s", err.Error())
 		return err

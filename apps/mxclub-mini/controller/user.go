@@ -30,6 +30,8 @@ func NewUserController(userService *service.UserService, messageService *service
 	})
 }
 
+// ============================================================================================================
+
 func (ctl UserController) GetV1User0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
 	if len(args.CmdArgs) == 0 {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "userId is empty")
@@ -108,4 +110,10 @@ func (ctl UserController) PostV1CaptchaVerify(ctx jet.Ctx, req *req.CaptchaReq) 
 		Result:    result,
 	}
 	return xjet.WrapperResult(ctx, captchaVerifyVO, nil)
+}
+
+// ========================
+
+func (ctl UserController) PostV1UserAssistant(ctx jet.Ctx, assistantReq req.AssistantReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", ctl.userService.ToBeAssistant(ctx, assistantReq))
 }

@@ -25,6 +25,7 @@ type IUserRepo interface {
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
+	ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64) error
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -116,4 +117,13 @@ func (repo *UserRepo) UpdateUser(ctx jet.Ctx, updateMap map[string]any) error {
 		return err
 	}
 	return nil
+}
+
+func (repo *UserRepo) ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64) error {
+	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	return repo.UpdateUser(ctx, map[string]any{
+		"id":            userId,
+		"member_number": memberNumber,
+		"phone":         phone,
+	})
 }
