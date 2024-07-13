@@ -11,3 +11,15 @@ type User struct {
 	WxGrade  string        `json:"wx_grade"`
 	Role     enum.RoleType `json:"role"`
 }
+
+type CaptchaVO struct {
+	CaptchaId string `json:"captcha_id"`
+	B64s      string `json:"b64_s"`
+	Answer    string `json:"answer"`
+}
+
+type CaptchaVerifyVO struct {
+	CaptchaId string `json:"captcha_id"`
+	Answer    string `json:"answer"`
+	Result    bool   `json:"result"`
+}

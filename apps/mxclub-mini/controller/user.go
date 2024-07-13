@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"mxclub/apps/mxclub-mini/entity/req"
+	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/api"
+	"mxclub/pkg/common/captcha"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
 
@@ -20,10 +23,10 @@ type UserController struct {
 	messageService *service.MessageService
 }
 
-func NewUserController(userService *service.UserService, svc2 *service.MessageService) jet.ControllerResult {
+func NewUserController(userService *service.UserService, messageService *service.MessageService) jet.ControllerResult {
 	return jet.NewJetController(&UserController{
 		userService:    userService,
-		messageService: svc2,
+		messageService: messageService,
 	})
 }
 
@@ -81,4 +84,28 @@ func (ctl UserController) PostV1MessageUnreadCount(ctx jet.Ctx) (*api.Response, 
 func (ctl UserController) PostV1MessageRead(ctx jet.Ctx) (*api.Response, error) {
 	err := ctl.messageService.ReadAllMessage(ctx)
 	return xjet.WrapperResult(ctx, "ok", err)
+}
+
+// ====== 验证码 ========
+
+var stringCaptcha = captcha.NewCaptcha()
+
+func (ctl UserController) GetV1CaptchaGenerate(ctx jet.Ctx) (*api.Response, error) {
+	id, base64, answer := stringCaptcha.Generate()
+	captchaVO := &vo.CaptchaVO{
+		CaptchaId: id,
+		B64s:      base64,
+		Answer:    answer,
+	}
+	return xjet.WrapperResult(ctx, captchaVO, nil)
+}
+
+func (ctl UserController) PostV1CaptchaVerify(ctx jet.Ctx, req *req.CaptchaReq) (*api.Response, error) {
+	result := stringCaptcha.Verify(req.CaptchaId, req.Answer)
+	captchaVerifyVO := &vo.CaptchaVerifyVO{
+		CaptchaId: req.CaptchaId,
+		Answer:    req.Answer,
+		Result:    result,
+	}
+	return xjet.WrapperResult(ctx, captchaVerifyVO, nil)
 }

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"gorm.io/gorm"
 	"log"
+	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
@@ -48,12 +49,15 @@ func init() {
 	}()
 	<-c2
 	<-c1
+	// wxPay
+	wxpay.NewWxPayClient(config.WxPayConfig)
 }
 
 type Config struct {
-	Server   *Server   `yaml:"server" validate:"required"`
-	WxConfig *WxConfig `yaml:"wx_config" validate:"required"`
-	File     File      `yaml:"file" validate:"required"`
+	Server      *Server            `yaml:"server" validate:"required"`
+	WxConfig    *WxConfig          `yaml:"wx_config" validate:"required"`
+	WxPayConfig *wxpay.WxPayConfig `yaml:"wx_pay_config" validate:"required"`
+	File        File               `yaml:"file" validate:"required"`
 
 	Mysql *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
 	Redis *xredis.RedisConfig `yaml:"redis" validate:"required"`

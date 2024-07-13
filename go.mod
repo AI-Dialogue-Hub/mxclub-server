@@ -19,11 +19,15 @@ require (
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/stretchr/testify v1.8.4
+	github.com/wechatpay-apiv3/wechatpay-go v0.2.18
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/mojocn/base64Captcha v1.3.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/image v0.18.0 // indirect
 )
 
 require (
@@ -51,6 +55,6 @@ require (
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
