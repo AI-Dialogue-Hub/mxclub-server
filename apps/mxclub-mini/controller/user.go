@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"errors"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/apps/mxclub-mini/service"
+	"mxclub/domain/user/entity/enum"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/captcha"
 	"mxclub/pkg/common/xjet"
@@ -133,4 +135,16 @@ func (ctl UserController) GetV1AssistantOnline(ctx jet.Ctx) (*api.Response, erro
 func (ctl UserController) GetV1AssistantCheck0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
 	memberId, _ := param.GetInt64(0)
 	return xjet.WrapperResult(ctx, ctl.userService.CheckAssistantStatus(ctx, int(memberId)), nil)
+}
+
+func (ctl UserController) PostV1Assistant0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
+	status, _ := param.GetString(0)
+	if status == "" || !enum.MemberStatus(status).IsValid() {
+		return nil, errors.New("修改失败")
+	}
+	return xjet.WrapperResult(ctx, "ok", ctl.userService.SwitchAssistantStatus(ctx, enum.MemberStatus(status)))
+}
+
+func (ctl UserController) GetV1AssistantStatus(ctx jet.Ctx) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, ctl.userService.AssistantStatus(ctx), nil)
 }

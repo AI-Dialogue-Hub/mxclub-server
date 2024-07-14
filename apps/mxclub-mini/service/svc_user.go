@@ -7,6 +7,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	miniUtil "mxclub/apps/mxclub-mini/utils"
+	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
 	_ "mxclub/domain/user/repo"
@@ -89,4 +90,18 @@ func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
 
 func (svc UserService) CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool {
 	return svc.userRepo.CheckAssistantStatus(ctx, memberNumber)
+}
+
+func (svc UserService) SwitchAssistantStatus(ctx jet.Ctx, status enum.MemberStatus) error {
+	err := svc.userRepo.UpdateAssistantStatus(ctx, middleware.MustGetUserId(ctx), status)
+	if err != nil {
+		ctx.Logger().Errorf("[SwitchAssistantStatus]ERROR:%v", err.Error())
+		return errors.New("修改在线状态失败，请联系客服")
+	}
+	return nil
+}
+
+func (svc UserService) AssistantStatus(ctx jet.Ctx) string {
+	userPO, _ := svc.userRepo.FindByID(middleware.MustGetUserId(ctx))
+	return string(userPO.MemberStatus)
 }

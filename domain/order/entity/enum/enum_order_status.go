@@ -9,8 +9,8 @@ const (
 	PROCESSING                        // 配单中
 	RUNNING                           // 进行中
 	SUCCESS                           // 已完成
-	ORDER_ACCEPTED                    // 已接单
 	PAUSED                            // 暂停中
+	ORDER_ACCEPTED                    // 已接单
 )
 
 var OrderStatusMap = map[OrderStatus]string{

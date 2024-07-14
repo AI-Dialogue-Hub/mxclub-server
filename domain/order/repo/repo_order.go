@@ -3,12 +3,14 @@ package repo
 import (
 	"context"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"gorm.io/gorm"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
+	"time"
 )
 
 func init() {
@@ -22,6 +24,8 @@ type IOrderRepo interface {
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
 	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
+	FinishOrder(ctx jet.Ctx, id uint, images []string) error
+	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -38,7 +42,7 @@ type OrderRepo struct {
 const cachePrefix = "_order_CachePrefix"
 const listCachePrefix = "_order_configListCachePrefix"
 
-func (repo *OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, params *api.PageParams, ge, le string) ([]*po.Order, error) {
+func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, params *api.PageParams, ge, le string) ([]*po.Order, error) {
 	// 根据页码参数生成唯一的缓存键
 	//cacheListKey := xredis.BuildListDataCacheKey(cachePrefix + ge, params)
 	//cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + le)
@@ -53,7 +57,7 @@ func (repo *OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, p
 	}
 }
 
-func (repo *OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error) {
+func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error) {
 	// 根据页码参数生成唯一的缓存键
 	cacheListKey := xredis.BuildListDataCacheKey(cachePrefix+ge+le+status.String(), params)
 	cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + ge + le + status.String())
@@ -78,7 +82,7 @@ func (repo *OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, 
 
 }
 
-func (repo *OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error) {
+func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error) {
 	var totalAmount float64
 
 	sql := "select COALESCE(sum(executor_price), 0) from orders where executor_id = ? and order_status = ?"
@@ -90,7 +94,7 @@ func (repo *OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float
 	return totalAmount, nil
 }
 
-func (repo *OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
+func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 	sql := `SELECT SUM(final_price) AS total_price
 		 FROM (
 		 		 SELECT DISTINCT order_id, final_price
@@ -106,4 +110,18 @@ func (repo *OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 		return 0, err
 	}
 	return totalAmount, nil
+}
+
+func (repo OrderRepo) FinishOrder(ctx jet.Ctx, orderId uint, images []string) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	updateMap := map[string]any{
+		"detail_images":   xmysql.JSON(images),
+		"completion_date": core.Time(time.Now()),
+		"order_status":    enum.SUCCESS,
+	}
+	return repo.Update(updateMap, "order_id = ?", orderId)
+}
+
+func (repo OrderRepo) QueryOrderByStatus(ctx jet.Ctx, status enum.OrderStatus) ([]*po.Order, error) {
+	return repo.Find("order_status = ? and specify_executor = ?", status, false)
 }

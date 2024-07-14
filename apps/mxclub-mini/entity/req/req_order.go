@@ -23,3 +23,8 @@ type OrderReq struct {
 	OrderName       string `json:"order_name"`
 	OrderIcon       string `json:"order_icon"`
 }
+
+type OrderFinishReq struct {
+	OrderId uint     `json:"order_id" validate:"required"` // 订单流水号
+	Images  []string `json:"images" validate:"required"`
+}

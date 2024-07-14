@@ -3,6 +3,7 @@ package po
 import (
 	"gorm.io/gorm"
 	"mxclub/domain/order/entity/enum"
+	"mxclub/pkg/common/xmysql"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type Order struct {
 	ExecutorPrice   float64          `gorm:"column:executor_price"`
 	PurchaseDate    *time.Time       `gorm:"column:purchase_date"`
 	CompletionDate  *time.Time       `gorm:"column:completion_date"`
+	DetailImages    xmysql.JSON      `gorm:"detail_images"`
 }
 
 // TableName sets the table name for the Order model.

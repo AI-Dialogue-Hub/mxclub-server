@@ -155,3 +155,21 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 		DiscountInfo:      fmt.Sprintf("会员等级:%v,折扣:%v折", userPO.WxGrade, rule.Discount*100),
 	}, nil
 }
+
+func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error {
+	err := svc.orderRepo.FinishOrder(ctx, finishReq.OrderId, finishReq.Images)
+	if err != nil {
+		ctx.Logger().Errorf("[Finish]ERROR: %v", err.Error())
+		return errors.New("订单完成失败，请联系客服")
+	}
+	return nil
+}
+
+func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {
+	orders, err := svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
+	if err != nil {
+		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
+		return nil, errors.New("订单完成失败，请联系客服")
+	}
+	return utils.CopySlice[*po.Order, *vo.OrderVO](orders), nil
+}

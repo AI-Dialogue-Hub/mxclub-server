@@ -8,4 +8,5 @@ type CaptchaReq struct {
 type AssistantReq struct {
 	MemberNumber int64  `json:"member_number" validate:"required"`
 	Phone        string `json:"phone" validate:"required"`
+	Name         string `json:"name"`
 }
