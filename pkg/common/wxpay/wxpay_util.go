@@ -89,7 +89,7 @@ func loadPrivateKeyBlock(privateKeyPath string) (*pem.Block, error) {
 	return block, nil
 }
 
-func generateUniqueOrderNumber() string {
+func GenerateUniqueOrderNumber() string {
 	// 获取当前时间戳
 	timestamp := time.Now().Unix()
 

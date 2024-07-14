@@ -29,7 +29,16 @@ func (svc ProductService) FindById(id uint) (*vo.ProductVO, error) {
 }
 
 func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {
-	list, err := svc.ProductRepo.ListNoCount(1, 1000, "created_at DESC", "type = ?", typeValue)
+	var (
+		list []*po.Product
+		err  error
+	)
+	if typeValue == 0 {
+		list, err = svc.ProductRepo.ListNoCount(1, 1000, "created_at DESC", nil)
+
+	} else {
+		list, err = svc.ProductRepo.ListNoCount(1, 1000, "created_at DESC", "type = ?", typeValue)
+	}
 	if err != nil {
 		return nil, err
 	}

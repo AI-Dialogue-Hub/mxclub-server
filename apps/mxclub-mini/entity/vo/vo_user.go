@@ -23,3 +23,8 @@ type CaptchaVerifyVO struct {
 	Answer    string `json:"answer"`
 	Result    bool   `json:"result"`
 }
+
+type AssistantOnlineVO struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}

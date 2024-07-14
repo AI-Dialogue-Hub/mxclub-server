@@ -37,3 +37,13 @@ func (c *OrderController) PostV1WithdrawInfo(ctx jet.Ctx) (*api.Response, error)
 	withDrawVO, err := c.orderService.HistoryWithDrawAmount(ctx)
 	return xjet.WrapperResult(ctx, withDrawVO, err)
 }
+
+func (c *OrderController) GetV1Preferential0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
+	productId, _ := param.GetInt64(0)
+	preferentialVO, err := c.orderService.Preferential(ctx, uint(productId))
+	return xjet.WrapperResult(ctx, preferentialVO, err)
+}
+
+func (c *OrderController) PutV1Order(ctx jet.Ctx, req *req.OrderReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", c.orderService.Add(ctx, req))
+}

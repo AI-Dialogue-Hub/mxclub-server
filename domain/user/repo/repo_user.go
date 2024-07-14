@@ -21,11 +21,15 @@ type IUserRepo interface {
 	xmysql.IBaseRepo[po.User]
 	QueryUserByAccount(username string, password string) (*po.User, error)
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
-	FindByUserId(ctx jet.Ctx, userId string) (*po.User, error)
+	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
 	ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64) error
+	ExistsAssistant(ctx jet.Ctx, phone string, memberNumber int64) bool
+	AssistantOnline(ctx jet.Ctx) ([]*po.User, error)
+	CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool
+	UpdateUserPhone(ctx jet.Ctx, id uint, phone string) error
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -63,7 +67,7 @@ func (repo *UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) 
 	return id, nil
 }
 
-func (repo *UserRepo) FindByUserId(ctx jet.Ctx, openId string) (*po.User, error) {
+func (repo *UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) {
 	one, err := repo.FindOne("wx_open_id = ?", openId)
 	if err != nil {
 		ctx.Logger().Errorf("find user err:%v", err)
@@ -125,5 +129,28 @@ func (repo *UserRepo) ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memb
 		"id":            userId,
 		"member_number": memberNumber,
 		"phone":         phone,
+	})
+}
+
+func (repo *UserRepo) ExistsAssistant(ctx jet.Ctx, phone string, memberNumber int64) bool {
+	count, _ := repo.Count("phone = ? or member_number = ?", phone, memberNumber)
+	return count >= 1
+}
+
+func (repo *UserRepo) AssistantOnline(ctx jet.Ctx) ([]*po.User, error) {
+	return repo.Find("member_status = ?", enum.Online)
+}
+
+// CheckAssistantStatus 检查打手是否可以接单, 必须是在线状态
+func (repo *UserRepo) CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool {
+	count, _ := repo.Count("member_number = ? and member_status = ?", memberNumber, enum.Online)
+	return count >= 1
+}
+
+func (repo *UserRepo) UpdateUserPhone(ctx jet.Ctx, userId uint, phone string) error {
+	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	return repo.UpdateUser(ctx, map[string]any{
+		"userId": userId,
+		"phone":  phone,
 	})
 }

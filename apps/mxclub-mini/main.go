@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/core/router"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/valyala/fasthttp"
 	"mxclub/apps/mxclub-mini/config"
 	_ "mxclub/apps/mxclub-mini/controller"
@@ -13,7 +12,6 @@ import (
 )
 
 func main() {
-	xlog.SetOutputLevel(xlog.Ldebug)
 	jet.AddMiddleware(
 		xjet.CorsMiddleware,
 		middleware.AuthMiddleware,

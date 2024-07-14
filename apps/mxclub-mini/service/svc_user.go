@@ -38,7 +38,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 		return "", err
 	}
 	var jwtToken string
-	user, _ := svc.userRepo.FindByUserId(ctx, openId)
+	user, _ := svc.userRepo.FindByOpenId(ctx, openId)
 	if xjet.IsNil(user) || user.ID <= 0 {
 		id, err := svc.userRepo.AddUserByOpenId(ctx, openId)
 		if err != nil {
@@ -53,7 +53,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 }
 
 func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.User, error) {
-	userPO, err := svc.userRepo.FindByUserId(ctx, openId)
+	userPO, err := svc.userRepo.FindByOpenId(ctx, openId)
 	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
 }
 
@@ -62,10 +62,31 @@ func (svc UserService) FindUserById(id uint) (*po.User, error) {
 }
 
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
-	err := svc.userRepo.ToBeAssistant(ctx, middleware.MustGetUserInfo(ctx), req.Phone, req.MemberNumber)
+	if svc.userRepo.ExistsAssistant(ctx, req.Phone, req.MemberNumber) {
+		return errors.New("电话或id已被使用")
+	}
+	err := svc.userRepo.ToBeAssistant(ctx, middleware.MustGetUserId(ctx), req.Phone, req.MemberNumber)
 	if err != nil {
 		ctx.Logger().Errorf("[ToBeAssistant]ERROR:%v", err.Error())
 		return errors.New("转换身份失败，请联系客服")
 	}
 	return nil
+}
+
+func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
+	userPO, err := svc.userRepo.AssistantOnline(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("[AssistantOnline]ERROR:%v", err.Error())
+		return nil
+	}
+	return utils.Map[*po.User, *vo.AssistantOnlineVO](userPO, func(in *po.User) *vo.AssistantOnlineVO {
+		return &vo.AssistantOnlineVO{
+			Id:   in.MemberNumber,
+			Name: in.Name,
+		}
+	})
+}
+
+func (svc UserService) CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool {
+	return svc.userRepo.CheckAssistantStatus(ctx, memberNumber)
 }

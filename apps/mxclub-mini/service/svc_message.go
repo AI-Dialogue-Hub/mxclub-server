@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/message/po"
@@ -36,7 +37,7 @@ func (svc MessageService) List(ctx jet.Ctx, id uint, params *api.PageParams) (*a
 }
 
 func (svc MessageService) ReadAllMessage(ctx jet.Ctx) error {
-	userId := middleware.MustGetUserInfo(ctx)
+	userId := middleware.MustGetUserId(ctx)
 	if err := svc.messageRepo.ReadAllMessage(ctx, userId); err != nil {
 		return errors.New("标记已读失败")
 	}
@@ -44,9 +45,21 @@ func (svc MessageService) ReadAllMessage(ctx jet.Ctx) error {
 }
 
 func (svc MessageService) CountUnReadMessage(ctx jet.Ctx) (int64, error) {
-	count, err := svc.messageRepo.CountUnReadMessageById(ctx, middleware.MustGetUserInfo(ctx))
+	count, err := svc.messageRepo.CountUnReadMessageById(ctx, middleware.MustGetUserId(ctx))
 	if err != nil {
 		return 0, errors.New("获取失败")
 	}
 	return count, nil
+}
+
+func (svc MessageService) PushMessage(ctx jet.Ctx, messageDTO *dto.MessageDTO) error {
+	return svc.messageRepo.InsertOne(&po.Message{
+		MessageType:   messageDTO.MessageType,
+		Title:         messageDTO.Title,
+		Content:       messageDTO.Content,
+		MessageFrom:   messageDTO.MessageFrom,
+		MessageTo:     messageDTO.MessageTo,
+		MessageStatus: messageDTO.MessageStatus,
+		Ext:           messageDTO.Ext,
+	})
 }

@@ -7,6 +7,8 @@ import (
 )
 
 type OrderVO struct {
+	ID              uint             `json:"id"`
+	OrderId         uint64           `json:"order_id"`
 	OrderName       string           `json:"order_name"`
 	OrderStatus     enum.OrderStatus `json:"order_status"`
 	OriginalPrice   float64          `json:"original_price"`
@@ -19,7 +21,7 @@ type OrderVO struct {
 	DiscountPrice   float64          `json:"discount_price"`
 	FinalPrice      float64          `json:"final_price"`
 	PurchaseDate    *time.Time       `json:"purchase_date"`
-	CompletionDate  *time.Time       `json:"completion_date"`
+	CompletionDate  *time.Time       `json:"completion_date,omitempty"`
 }
 
 type ProductVO struct {
@@ -40,4 +42,12 @@ type WithDrawVO struct {
 	WithdrawAbleAmount    float64 `json:"withdraw_able_amount"`
 	WithdrawRangeMax      float64 `json:"withdraw_range_max"`
 	WithdrawRangeMin      float64 `json:"withdraw_range_min"`
+}
+
+type PreferentialVO struct {
+	OriginalPrice     float64 `json:"original_price"`
+	DiscountedPrice   float64 `json:"discounted_price"`
+	PreferentialPrice float64 `json:"preferential_price"`
+	DiscountRate      float64 `json:"discount_rate"`
+	DiscountInfo      string  `json:"discount_info"`
 }

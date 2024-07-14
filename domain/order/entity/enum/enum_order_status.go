@@ -10,7 +10,6 @@ const (
 	RUNNING                           // 进行中
 	SUCCESS                           // 已完成
 	ORDER_ACCEPTED                    // 已接单
-	CANCELLED                         // 已取消
 	PAUSED                            // 暂停中
 )
 
@@ -19,7 +18,6 @@ var OrderStatusMap = map[OrderStatus]string{
 	RUNNING:        "进行中",
 	SUCCESS:        "已完成",
 	ORDER_ACCEPTED: "已接单",
-	CANCELLED:      "已取消",
 	PROCESSING:     "配单中",
 	PAUSED:         "暂停中",
 }
@@ -29,7 +27,6 @@ var OrderStatusStringMap = map[string]OrderStatus{
 	"RUNNING":        RUNNING,
 	"SUCCESS":        SUCCESS,
 	"ORDER_ACCEPTED": ORDER_ACCEPTED,
-	"CANCELLED":      CANCELLED,
 	"PROCESSING":     PROCESSING,
 	"PAUSED":         PAUSED,
 }

@@ -27,12 +27,13 @@ func AuthMiddleware(next router.IJetRouter) (router.IJetRouter, error) {
 	}), nil
 }
 
+var logger = xlog.NewWith("auth_middleware")
+
 func handleJwtAuth(ctx *fasthttp.RequestCtx) (err error) {
 	if config.IsOpenApi(string(ctx.Path())) {
 		return nil
 	}
 	jwtToken := string(ctx.Request.Header.Peek(AuthHeaderKey))
-	logger := xlog.NewWith("auth_middleware")
 	if jwtToken == "" {
 		logger.Error("empty Authorization")
 		err = api.ErrorUnauthorized(logger.ReqId)
@@ -105,7 +106,7 @@ func ParseAuthTokenByCtx(ctx jet.Ctx) (*AuthToken, error) {
 	return ParseAuthToken(jwtToken)
 }
 
-func MustGetUserInfo(ctx jet.Ctx) (userId uint) {
+func MustGetUserId(ctx jet.Ctx) (userId uint) {
 	authInfo, _ := ParseAuthTokenByCtx(ctx)
 	return authInfo.UserId
 }

@@ -1,7 +1,10 @@
 package wxpay
 
-import "testing"
+import (
+	"mxclub/pkg/utils"
+	"testing"
+)
 
 func TestGenerateUniqueOrderNumber(t *testing.T) {
-	t.Logf("%v", generateUniqueOrderNumber())
+	t.Logf("%v", utils.ParseInt(GenerateUniqueOrderNumber()))
 }

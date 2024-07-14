@@ -16,6 +16,7 @@ type Order struct {
 	OriginalPrice   float64          `gorm:"column:original_price"`
 	ProductID       uint             `gorm:"column:product_id"`
 	GameRegion      string           `gorm:"column:game_region"`
+	RuleId          string           `gorm:"column:role_id"`
 	SpecifyExecutor bool             `gorm:"column:specify_executor"`
 	ExecutorID      uint             `gorm:"column:executor_id"`
 	Notes           string           `gorm:"column:notes"`

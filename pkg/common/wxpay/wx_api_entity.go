@@ -8,7 +8,7 @@ type prepayRequestDTO struct {
 
 func NewPrepayRequest(amount float64, openid string) *prepayRequestDTO {
 	return &prepayRequestDTO{
-		OutTradeNo: generateUniqueOrderNumber(),
+		OutTradeNo: GenerateUniqueOrderNumber(),
 		Amount:     int64(amount * 100),
 		Openid:     openid,
 	}

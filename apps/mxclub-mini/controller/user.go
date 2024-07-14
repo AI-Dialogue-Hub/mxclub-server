@@ -67,13 +67,13 @@ func (ctl UserController) PostClientLoginMember(ctx jet.Ctx) (*api.Response, err
 }
 
 func (ctl UserController) PostV1MessageList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
-	userId := middleware.MustGetUserInfo(ctx)
+	userId := middleware.MustGetUserId(ctx)
 	pageResponse, err := ctl.messageService.List(ctx, userId, params)
 	return xjet.WrapperResult(ctx, pageResponse, err)
 }
 
 func (ctl UserController) PostV1Message(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
-	userId := middleware.MustGetUserInfo(ctx)
+	userId := middleware.MustGetUserId(ctx)
 	pageResponse, err := ctl.messageService.List(ctx, userId, params)
 	return xjet.WrapperResult(ctx, pageResponse, err)
 }
@@ -116,4 +116,21 @@ func (ctl UserController) PostV1CaptchaVerify(ctx jet.Ctx, req *req.CaptchaReq) 
 
 func (ctl UserController) PostV1UserAssistant(ctx jet.Ctx, assistantReq req.AssistantReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "ok", ctl.userService.ToBeAssistant(ctx, assistantReq))
+}
+
+func (ctl UserController) PostV1UserGrade(ctx jet.Ctx) (*api.Response, error) {
+	gradeConfig := map[string]string{
+		"v1": "https://mx.fengxianhub.top/v1/file/2024071401235543367.png",
+		"v2": "https://mx.fengxianhub.top/v1/file/2024071401241277012.png",
+	}
+	return xjet.WrapperResult(ctx, gradeConfig, nil)
+}
+
+func (ctl UserController) GetV1AssistantOnline(ctx jet.Ctx) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, ctl.userService.AssistantOnline(ctx), nil)
+}
+
+func (ctl UserController) GetV1AssistantCheck0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
+	memberId, _ := param.GetInt64(0)
+	return xjet.WrapperResult(ctx, ctl.userService.CheckAssistantStatus(ctx, int(memberId)), nil)
 }
