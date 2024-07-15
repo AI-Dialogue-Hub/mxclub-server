@@ -39,10 +39,10 @@ func (ctr ProductController) GetV1ProductType0(ctx jet.Ctx, args *api.PathParam)
 	var (
 		typeValue = "0"
 	)
-	if !xjet.IsNil(args) && len(args.CmdArgs) > 0 {
+	if args != nil && len(args.CmdArgs) > 0 {
 		typeValue = args.CmdArgs[0]
 	}
-	if xjet.IsNil(args.CmdArgs) || xjet.IsAnyEmpty(typeValue) {
+	if args.CmdArgs == nil || xjet.IsAnyEmpty(typeValue) {
 		return xjet.WrapperResult(ctx, "", errors.New("typeValue is empty"))
 	}
 	vo, err := ctr.ProductService.List(utils.ParseUint(typeValue))

@@ -25,7 +25,7 @@ func NewMiniConfigController(miniConfigService *service.MiniConfigService) jet.C
 }
 
 func (ctl MiniConfigController) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
-	if xjet.IsNil(args) || xjet.IsAnyEmpty(args.CmdArgs...) {
+	if args == nil || xjet.IsAnyEmpty(args.CmdArgs...) {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "configName is empty")
 	}
 	configName := args.CmdArgs[0]

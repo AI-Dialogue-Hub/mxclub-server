@@ -40,7 +40,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 	}
 	var jwtToken string
 	user, _ := svc.userRepo.FindByOpenId(ctx, openId)
-	if xjet.IsNil(user) || user.ID <= 0 {
+	if user == nil || user.ID <= 0 {
 		id, err := svc.userRepo.AddUserByOpenId(ctx, openId)
 		if err != nil {
 			ctx.Logger().Errorf("get user id err:%v", err)

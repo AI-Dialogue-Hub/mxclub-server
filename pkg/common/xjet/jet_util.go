@@ -40,10 +40,3 @@ func IsAnyEmpty(strs ...string) bool {
 	}
 	return false
 }
-
-func IsNil(val any) bool {
-	if val == nil {
-		return true
-	}
-	return false
-}
