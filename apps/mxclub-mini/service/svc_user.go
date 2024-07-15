@@ -47,7 +47,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 			return "", errors.New("登录失败")
 		}
 		jwtToken, _ = middleware.GenAuthTokenByOpenIdAndUserId(id)
-
+		return jwtToken, nil
 	}
 	jwtToken, _ = middleware.GenAuthTokenByOpenIdAndUserId(user.ID)
 	return jwtToken, err
