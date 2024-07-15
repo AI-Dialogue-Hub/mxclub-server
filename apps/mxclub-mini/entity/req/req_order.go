@@ -7,9 +7,10 @@ import (
 
 type OrderListReq struct {
 	api.PageParams
-	OrderStatus enum.OrderStatus `json:"status"`
-	Ge          string           `json:"search_GE_createTime"` // start time
-	Le          string           `json:"search_LE_createTime"` // end time
+	OrderStatus  enum.OrderStatus `json:"status"`
+	Ge           string           `json:"search_GE_createTime"` // start time
+	Le           string           `json:"search_LE_createTime"` // end time
+	MemberNumber int              `json:"member_number"`
 }
 
 type OrderReq struct {
@@ -27,4 +28,16 @@ type OrderReq struct {
 type OrderFinishReq struct {
 	OrderId uint     `json:"order_id" validate:"required"` // 订单流水号
 	Images  []string `json:"images" validate:"required"`
+}
+
+type OrderStartReq struct {
+	OrderId     uint   `json:"order_id" validate:"required"` // 订单流水号
+	Executor2Id uint   `json:"executor_2_id"`
+	Executor3Id uint   `json:"executor_3_id"`
+	RoleId      string `json:"role_id" validate:"required"`
+	GameRegion  string `json:"game_region" validate:"required"`
+}
+
+type WithDrawReq struct {
+	Amount float64 `json:"amount" validate:"required"`
 }

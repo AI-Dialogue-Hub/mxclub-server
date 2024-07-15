@@ -17,6 +17,7 @@ type IWithdrawalRepo interface {
 	xmysql.IBaseRepo[po.WithdrawalRecord]
 	// WithdrawnAmount 用户历史提现金额
 	WithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, error)
+	Withdrawn(ctx jet.Ctx, dasherId int, amount float64) error
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -43,4 +44,12 @@ func (repo WithdrawalRepo) WithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, 
 	}
 
 	return amount, nil
+}
+
+func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId int, amount float64) error {
+	return repo.InsertOne(&po.WithdrawalRecord{
+		DasherID:         dasherId,
+		WithdrawalAmount: amount,
+		WithdrawalStatus: "initiated",
+	})
 }

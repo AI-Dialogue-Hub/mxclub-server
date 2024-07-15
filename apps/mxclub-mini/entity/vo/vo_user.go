@@ -5,11 +5,12 @@ import (
 )
 
 type User struct {
-	WxNumber string        `json:"wx_number"`
-	WxName   string        `json:"wx_name"`
-	WxIcon   string        `json:"wx_icon,omitempty"`
-	WxGrade  string        `json:"wx_grade"`
-	Role     enum.RoleType `json:"role"`
+	WxNumber     string        `json:"wx_number"`
+	WxName       string        `json:"wx_name"`
+	WxIcon       string        `json:"wx_icon,omitempty"`
+	WxGrade      string        `json:"wx_grade"`
+	Role         enum.RoleType `json:"role"`
+	MemberNumber int           `json:"member_number"`
 }
 
 type CaptchaVO struct {

@@ -14,12 +14,18 @@ type OrderVO struct {
 	OriginalPrice   float64          `json:"original_price"`
 	OrderIcon       string           `json:"icon"`
 	ProductID       uint             `json:"product_id"`
+	Phone           string           `json:"phone"`
 	GameRegion      string           `json:"game_region"`
+	RoleId          string           `json:"role_id"`
 	SpecifyExecutor bool             `json:"specify_executor"`
 	ExecutorID      uint             `json:"executor_id"`
+	Executor2Id     uint             `json:"executor2_id"`
+	Executor3Id     uint             `json:"executor3_id"`
 	Notes           string           `json:"notes"`
 	DiscountPrice   float64          `json:"discount_price"`
 	FinalPrice      float64          `json:"final_price"`
+	Executor2Price  float64          `json:"executor_2_price"`
+	Executor3rice   float64          `json:"executor_3_price"`
 	PurchaseDate    *time.Time       `json:"purchase_date"`
 	CompletionDate  *time.Time       `json:"completion_date,omitempty"`
 }

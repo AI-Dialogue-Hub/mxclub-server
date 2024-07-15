@@ -80,7 +80,7 @@ func ParseAuthToken(token string) (*AuthToken, error) {
 	})
 	if err != nil {
 		if isExpiredTokenError(err) {
-			return nil, api.Error("", api.ErrorCodeTokenExpired, "token 已经过期")
+			return nil, api.Error("", api.ErrorCodeUnauthorized, "token 已经过期")
 		} else {
 			return nil, api.ErrorUnauthorized("")
 		}

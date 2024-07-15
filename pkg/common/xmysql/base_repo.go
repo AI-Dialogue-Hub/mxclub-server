@@ -22,6 +22,7 @@ type IBaseRepo[T any] interface {
 	List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error)
 	ListAndOrder(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, int64, error)
 	ListNoCount(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, error)
+	ListNoCountByQuery(query *MysqlQuery) ([]*T, error)
 	Count(filter any, data ...any) (int64, error)
 }
 
@@ -137,6 +138,21 @@ func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, order string, fi
 	} else {
 		err = tx.Order(order).Find(&entities).Error
 	}
+	return entities, err
+}
+
+func (r *BaseRepo[T]) ListNoCountByQuery(query *MysqlQuery) ([]*T, error) {
+	entities := make([]*T, 0)
+	if query.Limit <= 0 {
+		query.Limit = 10
+	}
+	var err error
+	err = r.Db.WithContext(r.Ctx).
+		Where(query.Query, query.Args...).
+		Offset(query.Offset).
+		Order(query.Sort).
+		Limit(query.Limit).
+		Find(&entities).Error
 	return entities, err
 }
 

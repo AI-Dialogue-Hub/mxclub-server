@@ -1,7 +1,11 @@
 package util
 
-import "testing"
+import (
+	"mxclub/pkg/utils"
+	"testing"
+)
 
 func TestGenExecutorId(t *testing.T) {
-	t.Logf("%v", generateDasherID())
+	cnt := utils.ParseInt(generateOrderID())
+	t.Logf("%v", cnt)
 }

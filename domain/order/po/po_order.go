@@ -16,14 +16,19 @@ type Order struct {
 	OrderStatus     enum.OrderStatus `gorm:"column:order_status"`
 	OriginalPrice   float64          `gorm:"column:original_price"`
 	ProductID       uint             `gorm:"column:product_id"`
+	Phone           string           `gorm:"column:phone"`
 	GameRegion      string           `gorm:"column:game_region"`
-	RuleId          string           `gorm:"column:role_id"`
+	RoleId          string           `gorm:"column:role_id"`
 	SpecifyExecutor bool             `gorm:"column:specify_executor"`
 	ExecutorID      uint             `gorm:"column:executor_id"`
+	Executor2Id     uint             `gorm:"column:executor2_id"`
+	Executor3Id     uint             `gorm:"column:executor3_id"`
 	Notes           string           `gorm:"column:notes"`
 	DiscountPrice   float64          `gorm:"column:discount_price"`
 	FinalPrice      float64          `gorm:"column:final_price"`
 	ExecutorPrice   float64          `gorm:"column:executor_price"`
+	Executor2Price  float64          `gorm:"column:executor_2_price"`
+	Executor3rice   float64          `gorm:"column:executor_3_price"`
 	PurchaseDate    *time.Time       `gorm:"column:purchase_date"`
 	CompletionDate  *time.Time       `gorm:"column:completion_date"`
 	DetailImages    xmysql.JSON      `gorm:"detail_images"`
