@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fengyuan-liang/GoKit v0.1.4
-	github.com/fengyuan-liang/jet-web-fasthttp v0.1.2
+	github.com/fengyuan-liang/jet-web-fasthttp v0.1.3
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/go-redsync/redsync/v4 v4.13.0
 	github.com/jinzhu/copier v0.4.0
@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/mojocn/base64Captcha v1.3.6
 	github.com/stretchr/testify v1.8.4
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.18
 )
@@ -25,7 +26,6 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/mojocn/base64Captcha v1.3.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/image v0.18.0 // indirect
 )
