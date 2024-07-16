@@ -53,6 +53,7 @@ func (repo UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
 	user := &po.User{
 		WxOpenId: openId,
 		Role:     enum.RoleWxUser,
+		WxIcon:   "https://mx.fengxianhub.top/v1/file/2024071621495340739.png",
 	}
 	err := repo.InsertOne(user)
 	if err != nil {
