@@ -23,12 +23,14 @@ type Order struct {
 	ExecutorID      uint             `gorm:"column:executor_id"`
 	Executor2Id     uint             `gorm:"column:executor2_id"`
 	Executor3Id     uint             `gorm:"column:executor3_id"`
+	Executor2Name   string           `gorm:"column:executor2_name"`
+	Executor3Name   string           `gorm:"column:executor3_name"`
 	Notes           string           `gorm:"column:notes"`
 	DiscountPrice   float64          `gorm:"column:discount_price"`
 	FinalPrice      float64          `gorm:"column:final_price"`
 	ExecutorPrice   float64          `gorm:"column:executor_price"`
 	Executor2Price  float64          `gorm:"column:executor_2_price"`
-	Executor3rice   float64          `gorm:"column:executor_3_price"`
+	Executor3Price  float64          `gorm:"column:executor_3_price"`
 	PurchaseDate    *time.Time       `gorm:"column:purchase_date"`
 	CompletionDate  *time.Time       `gorm:"column:completion_date"`
 	DetailImages    xmysql.JSON      `gorm:"detail_images"`

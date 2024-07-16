@@ -59,16 +59,16 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, pa
 	//	return repo.List(params.Page, params.PageSize, "order_status = ?", status)
 	//})
 	query := new(xmysql.MysqlQuery)
+	if memberNumber > 0 {
+		query.SetFilter("executor_id = ?", memberNumber)
+	} else {
+		query.SetFilter("purchase_id = ?", userId)
+	}
 	query.SetPage(int32(params.Page), int32(params.PageSize))
 	query.SetFilter("purchase_date >= ?", ge)
 	query.SetFilter("purchase_date <= ?", le)
 	if status != 0 {
 		query.SetFilter("order_status = ?", status)
-	}
-	if memberNumber > 0 {
-		query.SetFilter("executor_id = ?", memberNumber)
-	} else {
-		query.SetFilter("purchase_id = ?", userId)
 	}
 	return repo.ListNoCountByQuery(query)
 }

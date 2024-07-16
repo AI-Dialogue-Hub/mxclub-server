@@ -21,11 +21,14 @@ type OrderVO struct {
 	ExecutorID      uint             `json:"executor_id"`
 	Executor2Id     uint             `json:"executor2_id"`
 	Executor3Id     uint             `json:"executor3_id"`
+	Executor2Name   string           `json:"executor2_name"`
+	Executor3Name   string           `json:"executor3_name"`
 	Notes           string           `json:"notes"`
 	DiscountPrice   float64          `json:"discount_price"`
 	FinalPrice      float64          `json:"final_price"`
+	ExecutorPrice   float64          `json:"executor_price"`
 	Executor2Price  float64          `json:"executor_2_price"`
-	Executor3rice   float64          `json:"executor_3_price"`
+	Executor3Price  float64          `json:"executor_3_price"`
 	PurchaseDate    *time.Time       `json:"purchase_date"`
 	CompletionDate  *time.Time       `json:"completion_date,omitempty"`
 }
