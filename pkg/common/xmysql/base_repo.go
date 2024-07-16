@@ -27,23 +27,24 @@ type IBaseRepo[T any] interface {
 }
 
 type BaseRepo[T any] struct {
-	Db  *gorm.DB
-	Ctx context.Context
+	Db      *gorm.DB
+	Ctx     context.Context
+	ModelPO *T
 }
 
 func (r *BaseRepo[T]) DB() *gorm.DB {
-	return r.Db
+	return r.Db.Model(r.ModelPO)
 }
 
 func (r *BaseRepo[T]) InsertOne(t *T) error {
-	return r.Db.WithContext(r.Ctx).Create(t).Error
+	return r.Db.Model(r.ModelPO).WithContext(r.Ctx).Create(t).Error
 }
 
 func (r *BaseRepo[T]) InsertBatch(entities []interface{}) (int, error) {
 	if len(entities) == 0 {
 		return 0, errors.New("cannot insert empty array")
 	}
-	result := r.Db.WithContext(r.Ctx).Create(entities)
+	result := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Create(entities)
 	return int(result.RowsAffected), result.Error
 }
 
@@ -51,25 +52,25 @@ func (r *BaseRepo[T]) InsertMany(entities []*T) (int, error) {
 	if len(entities) == 0 {
 		return 0, errors.New("cannot insert empty array")
 	}
-	result := r.Db.WithContext(r.Ctx).Create(entities)
+	result := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Create(entities)
 	return int(result.RowsAffected), result.Error
 }
 
 func (r *BaseRepo[T]) RemoveByID(id interface{}) error {
-	return r.Db.WithContext(r.Ctx).Delete(new(T), id).Error
+	return r.Db.Model(r.ModelPO).WithContext(r.Ctx).Delete(new(T), id).Error
 }
 
 func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
-	return r.Db.WithContext(r.Ctx).Where(filter, data...).Delete(new(T)).Error
+	return r.Db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Delete(new(T)).Error
 }
 
 func (r *BaseRepo[T]) Update(update any, filter any, data ...any) error {
-	return r.Db.WithContext(r.Ctx).Where(filter, data...).Updates(update).Error
+	return r.Db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Updates(update).Error
 }
 
 func (r *BaseRepo[T]) FindByID(id interface{}) (*T, error) {
 	var t T
-	err := r.Db.WithContext(r.Ctx).First(&t, id).Error
+	err := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Take(&t, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -78,19 +79,19 @@ func (r *BaseRepo[T]) FindByID(id interface{}) (*T, error) {
 
 func (r *BaseRepo[T]) Find(filter any, data ...any) ([]*T, error) {
 	var entities []*T
-	err := r.Db.WithContext(r.Ctx).Where(filter, data...).Find(&entities).Error
+	err := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Find(&entities).Error
 	return entities, err
 }
 
 func (r *BaseRepo[T]) FindOne(filter any, data ...any) (*T, error) {
 	var entity T
-	err := r.Db.WithContext(r.Ctx).Where(filter, data...).First(&entity).Error
+	err := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Take(&entity).Error
 	return &entity, err
 }
 
 func (r *BaseRepo[T]) FindAll() ([]*T, error) {
 	var entities []*T
-	err := r.Db.WithContext(r.Ctx).Find(&entities).Error
+	err := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Find(&entities).Error
 	return entities, err
 }
 
@@ -129,7 +130,7 @@ func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, order string, fi
 		pageSize = 10
 	}
 	var err error
-	tx := r.Db.WithContext(r.Ctx).
+	tx := r.Db.Model(r.ModelPO).WithContext(r.Ctx).
 		Where(filter, data...).
 		Offset(int((pageNo - 1) * pageSize)).
 		Limit(int(pageSize))
@@ -147,7 +148,7 @@ func (r *BaseRepo[T]) ListNoCountByQuery(query *MysqlQuery) ([]*T, error) {
 		query.Limit = 10
 	}
 	var err error
-	err = r.Db.WithContext(r.Ctx).
+	err = r.Db.Model(r.ModelPO).WithContext(r.Ctx).
 		Where(query.Query, query.Args...).
 		Offset(query.Offset).
 		Order(query.Sort).
@@ -158,6 +159,6 @@ func (r *BaseRepo[T]) ListNoCountByQuery(query *MysqlQuery) ([]*T, error) {
 
 func (r *BaseRepo[T]) Count(filter any, data ...any) (int64, error) {
 	var count int64
-	err := r.Db.WithContext(r.Ctx).Where(filter, data...).Count(&count).Error
+	err := r.Db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Count(&count).Error
 	return count, err
 }

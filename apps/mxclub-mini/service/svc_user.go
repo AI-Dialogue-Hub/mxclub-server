@@ -21,10 +21,11 @@ func init() {
 
 type UserService struct {
 	userRepo repo.IUserRepo
+	apRepo   repo.IAssistantApplicationRepo
 }
 
-func NewUserService(repo repo.IUserRepo) *UserService {
-	return &UserService{userRepo: repo}
+func NewUserService(repo repo.IUserRepo, apRepo repo.IAssistantApplicationRepo) *UserService {
+	return &UserService{userRepo: repo, apRepo: apRepo}
 }
 
 func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.User, error) {
@@ -66,7 +67,22 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	if svc.userRepo.ExistsAssistant(ctx, req.Phone, req.MemberNumber) {
 		return errors.New("电话或id已被使用")
 	}
-	err := svc.userRepo.ToBeAssistant(ctx, middleware.MustGetUserId(ctx), req.Phone, req.MemberNumber)
+	// 获取当前用户ID
+	userID := middleware.MustGetUserId(ctx)
+
+	// 创建打手申请记录
+	err := svc.apRepo.CreateAssistantApplication(ctx, userID, req.Phone, req.MemberNumber)
+	if err != nil {
+		ctx.Logger().Errorf("[ToBeAssistant]ERROR:%v", err.Error())
+		return errors.New("提交打手申请失败，请联系客服")
+	}
+	return nil
+}
+
+func (svc UserService) PassAssistantApplication(ctx jet.Ctx, id uint) error {
+	application, _ := svc.apRepo.FindByID(id)
+	// 提交申请
+	err := svc.userRepo.ToBeAssistant(ctx, application.UserID, application.Phone, application.MemberNumber)
 	if err != nil {
 		ctx.Logger().Errorf("[ToBeAssistant]ERROR:%v", err.Error())
 		return errors.New("转换身份失败，请联系客服")

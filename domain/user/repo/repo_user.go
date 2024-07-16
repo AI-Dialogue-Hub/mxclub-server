@@ -35,7 +35,8 @@ type IUserRepo interface {
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
 	userRepo := new(UserRepo)
-	userRepo.Db = db.Model(new(po.User))
+	userRepo.Db = db
+	userRepo.ModelPO = new(po.User)
 	userRepo.Ctx = context.Background()
 	return userRepo
 }
@@ -53,7 +54,7 @@ func (repo UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
 	user := &po.User{
 		WxOpenId: openId,
 		Role:     enum.RoleWxUser,
-		WxIcon:   "https://mx.fengxianhub.top/v1/file/2024071621495340739.png",
+		WxIcon:   "https://mx.fengxianhub.top/v1/file/2024071622064557713.jpg",
 	}
 	err := repo.InsertOne(user)
 	if err != nil {
@@ -61,7 +62,7 @@ func (repo UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
 		return 0, err
 	}
 	id := user.ID
-	err = repo.DB().Where("id = ?", id).Updates(map[string]interface{}{"wx_name": fmt.Sprintf("用户: %v", id)}).Error
+	err = repo.DB().Where("id = ?", id).Updates(map[string]any{"wx_name": fmt.Sprintf("用户: %v", 30000+id)}).Error
 	if err != nil {
 		ctx.Logger().Errorf("update user err:%v", err)
 		return 0, err

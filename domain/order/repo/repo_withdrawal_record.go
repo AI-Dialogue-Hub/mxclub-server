@@ -22,7 +22,8 @@ type IWithdrawalRepo interface {
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
 	repo := new(WithdrawalRepo)
-	repo.Db = db.Model(new(po.WithdrawalRecord))
+	repo.Db = db
+	repo.ModelPO = new(po.WithdrawalRecord)
 	repo.Ctx = context.Background()
 	return repo
 }

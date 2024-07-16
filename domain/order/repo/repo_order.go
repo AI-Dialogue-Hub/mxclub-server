@@ -36,7 +36,8 @@ type IOrderRepo interface {
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
 	repo := new(OrderRepo)
-	repo.Db = db.Model(new(po.Order))
+	repo.Db = db
+	repo.ModelPO = new(po.Order)
 	repo.Ctx = context.Background()
 	return repo
 }
@@ -99,7 +100,7 @@ func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float6
 
 	sql := "select COALESCE(sum(executor_price), 0) from orders where executor_id = ? and order_status = ?"
 
-	if err := repo.Db.Raw(sql, dasherId, enum.SUCCESS).Scan(&totalAmount).Error; err != nil {
+	if err := repo.DB().Raw(sql, dasherId, enum.SUCCESS).Scan(&totalAmount).Error; err != nil {
 		ctx.Logger().Errorf("[OrderWithdrawAbleAmount]ERROR:%v", err.Error())
 		return 0, err
 	}
@@ -117,7 +118,7 @@ func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 
 	var totalAmount float64
 
-	if err := repo.Db.Raw(sql, userId, enum.SUCCESS).Scan(&totalAmount).Error; err != nil {
+	if err := repo.DB().Raw(sql, userId, enum.SUCCESS).Scan(&totalAmount).Error; err != nil {
 		ctx.Logger().Errorf("[OrderWithdrawAbleAmount]ERROR:%v", err.Error())
 		return 0, err
 	}

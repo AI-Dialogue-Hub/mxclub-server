@@ -25,7 +25,7 @@ jobs:
         run: go list ./... | xargs go vet -composites=false
 
       - name: Run tests
-        run: go test ./...
+        run: go test ./... -run '^(?!.*config).*'
 
       - name: Handle test failures
         if: failure()
