@@ -44,6 +44,14 @@ func (svc MessageService) ReadAllMessage(ctx jet.Ctx) error {
 	return nil
 }
 
+func (svc MessageService) ReadByMessageId(ctx jet.Ctx, messageId uint) error {
+	userId := middleware.MustGetUserId(ctx)
+	if err := svc.messageRepo.ReadByMessageId(ctx, userId, messageId); err != nil {
+		return errors.New("标记已读失败")
+	}
+	return nil
+}
+
 func (svc MessageService) CountUnReadMessage(ctx jet.Ctx) (int64, error) {
 	count, err := svc.messageRepo.CountUnReadMessageById(ctx, middleware.MustGetUserId(ctx))
 	if err != nil {

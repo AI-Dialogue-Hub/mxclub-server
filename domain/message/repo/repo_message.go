@@ -23,6 +23,7 @@ type IMessageRepo interface {
 	DeleteById(ctx jet.Ctx, id int64) error
 	Add(ctx jet.Ctx, po *po.Message) error
 	ReadAllMessage(ctx jet.Ctx, id uint) error
+	ReadByMessageId(ctx jet.Ctx, messageTo uint, messageId uint) error
 	CountUnReadMessageById(ctx jet.Ctx, id uint) (int64, error)
 }
 
@@ -43,7 +44,7 @@ type MessageRepo struct {
 const cachePrefix = "message_product"
 const listCachePrefix = cachePrefix + "_list"
 
-func (repo *MessageRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, id uint) ([]*po.Message, int64, error) {
+func (repo MessageRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, id uint) ([]*po.Message, int64, error) {
 	parseIdString := utils.ParseString(id)
 	// 根据页码参数生成唯一的缓存键
 	cacheListKey := xredis.BuildListDataCacheKey(cachePrefix+parseIdString, params)
@@ -51,7 +52,7 @@ func (repo *MessageRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, id
 
 	list, count, err := xredis.GetListOrDefault[po.Message](ctx, cacheListKey, cacheCountKey, func() ([]*po.Message, int64, error) {
 		// 如果缓存中未找到，则从数据库中获取
-		list, count, err := repo.ListAndOrder(params.Page, params.PageSize, "created_at DESC", nil)
+		list, count, err := repo.ListAndOrder(params.Page, params.PageSize, "created_at DESC", "message_to = ?", id)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -65,7 +66,7 @@ func (repo *MessageRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, id
 	return list, count, nil
 }
 
-func (repo *MessageRepo) DeleteById(ctx jet.Ctx, id int64) error {
+func (repo MessageRepo) DeleteById(ctx jet.Ctx, id int64) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	err := repo.RemoveByID(id)
 	if err != nil {
@@ -75,7 +76,7 @@ func (repo *MessageRepo) DeleteById(ctx jet.Ctx, id int64) error {
 	return nil
 }
 
-func (repo *MessageRepo) Add(ctx jet.Ctx, po *po.Message) error {
+func (repo MessageRepo) Add(ctx jet.Ctx, po *po.Message) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	err := repo.InsertOne(po)
 	if err != nil {
@@ -85,7 +86,7 @@ func (repo *MessageRepo) Add(ctx jet.Ctx, po *po.Message) error {
 	return nil
 }
 
-func (repo *MessageRepo) ReadAllMessage(ctx jet.Ctx, id uint) error {
+func (repo MessageRepo) ReadAllMessage(ctx jet.Ctx, id uint) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateMap := map[string]any{"message_status": 1}
 	err := repo.Update(updateMap, "message_to", id)
@@ -96,11 +97,22 @@ func (repo *MessageRepo) ReadAllMessage(ctx jet.Ctx, id uint) error {
 	return nil
 }
 
-func (repo *MessageRepo) CountUnReadMessageById(ctx jet.Ctx, id uint) (int64, error) {
+func (repo MessageRepo) CountUnReadMessageById(ctx jet.Ctx, id uint) (int64, error) {
 	count, err := repo.Count("message_to = ? and message_status = ?", id, enum.UN_READ)
 	if err != nil {
 		ctx.Logger().Errorf("[CountUnReadMessageById]ERROR:%v", err.Error())
 		return 0, err
 	}
 	return count, nil
+}
+
+func (repo MessageRepo) ReadByMessageId(ctx jet.Ctx, messageTo uint, messageId uint) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	updateMap := map[string]any{"message_status": 1}
+	err := repo.Update(updateMap, "id = ? and message_to = ?", messageId, messageTo)
+	if err != nil {
+		ctx.Logger().Errorf("[ReadAllMessage]ERROR:%v", err.Error())
+		return err
+	}
+	return nil
 }

@@ -90,7 +90,8 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 }
 
 func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {
-	list, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams, req.Ge, req.Le, req.MemberNumber)
+	userId := middleware.MustGetUserId(ctx)
+	list, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams, req.Ge, req.Le, req.MemberNumber, userId)
 	if err != nil {
 		ctx.Logger().Errorf("[OrderService]List ERROR, %v", err.Error())
 		return nil, errors.New("查询不到数据")

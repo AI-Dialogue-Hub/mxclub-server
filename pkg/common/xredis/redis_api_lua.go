@@ -2,6 +2,7 @@ package xredis
 
 import (
 	"context"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"time"
@@ -34,7 +35,7 @@ var delMatchingKeysScriptHash string
 
 // DelMatchingKeys 函数，传入 wildcardKey 参数
 func DelMatchingKeys(ctx jet.Ctx, wildcardKey string) error {
-	defer utils.TraceElapsedByName(time.Now(), "DelMatchingKeys")
+	defer utils.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]DelMatchingKeys", ctx.Logger().ReqId))
 	if delMatchingKeysScriptHash == "" {
 		// 加载脚本
 		delMatchingKeysScriptHash = cli.GetSingleClient().ScriptLoad(context.Background(), delMatchingKeysScript).Val()

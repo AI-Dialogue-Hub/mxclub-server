@@ -85,7 +85,17 @@ func (ctl UserController) PostV1MessageUnreadCount(ctx jet.Ctx) (*api.Response, 
 	return xjet.WrapperResult(ctx, countUnReadMessage, err)
 }
 
-func (ctl UserController) PostV1MessageRead(ctx jet.Ctx) (*api.Response, error) {
+type MessageReadReq struct {
+	Id       uint `json:"id"`
+	IsRefuse bool `json:"isRefuse"`
+}
+
+func (ctl UserController) PostV1MessageRead(ctx jet.Ctx, req *MessageReadReq) (*api.Response, error) {
+	err := ctl.messageService.ReadByMessageId(ctx, req.Id)
+	return xjet.WrapperResult(ctx, "ok", err)
+}
+
+func (ctl UserController) PostV1MessageReadAll(ctx jet.Ctx) (*api.Response, error) {
 	err := ctl.messageService.ReadAllMessage(ctx)
 	return xjet.WrapperResult(ctx, "ok", err)
 }
