@@ -55,8 +55,18 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 }
 
 func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) (*vo.User, error) {
-	userId := middleware.MustGetUserId(ctx)
-	err := svc.userRepo.UpdateUserIconAndNickName(ctx, userId, userInfo.AvatarUrl, userInfo.NickName, utils.ObjToJsonStr(userInfo))
+	var (
+		userId   = middleware.MustGetUserId(ctx)
+		imageURL string
+		err      error
+	)
+	if userInfo != nil && userInfo.AvatarUrlBase64 != "" {
+		imageURL, err = miniUtil.DecodeBase64ToImage(userInfo.AvatarUrlBase64)
+	}
+	if err != nil {
+		imageURL = ""
+	}
+	err = svc.userRepo.UpdateUserIconAndNickName(ctx, userId, imageURL, "", "")
 	if err != nil {
 		ctx.Logger().Errorf("[UpdateWxUserInfo]ERROR:%v", err.Error())
 		return nil, errors.New("用户信息更新失败")

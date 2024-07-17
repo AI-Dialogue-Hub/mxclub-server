@@ -52,7 +52,7 @@ func (ctl *MiniConfigCtr) DeleteV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Res
 }
 
 func (ctl *MiniConfigCtr) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
-	if xjet.IsNil(args) || xjet.IsAnyEmpty(args.CmdArgs...) {
+	if args == nil || xjet.IsAnyEmpty(args.CmdArgs...) {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "configName is empty")
 	}
 	configName := args.CmdArgs[0]
