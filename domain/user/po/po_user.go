@@ -14,6 +14,7 @@ type User struct {
 	WxOpenId     string            `gorm:"wx_open_id"`
 	WxIcon       string            `gorm:"wx_icon"`
 	WxGrade      string            `gorm:"wx_grade"`
+	WxUserInfo   string            `gorm:"wx_user_info"`
 	Role         enum.RoleType     `gorm:"role"`
 	Phone        string            `gorm:"role"`
 	MemberNumber int               `gorm:"member_number"` // 打手编号

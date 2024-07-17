@@ -25,6 +25,8 @@ type IUserRepo interface {
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
+	// UpdateUserIconAndNickName 如果为空会给默认的头像和昵称
+	UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error
 	ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64) error
 	ExistsAssistant(ctx jet.Ctx, phone string, memberNumber int64) bool
 	AssistantOnline(ctx jet.Ctx) ([]*po.User, error)
@@ -54,20 +56,13 @@ func (repo UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
 	user := &po.User{
 		WxOpenId: openId,
 		Role:     enum.RoleWxUser,
-		WxIcon:   "https://mx.fengxianhub.top/v1/file/2024071622064557713.jpg",
 	}
 	err := repo.InsertOne(user)
 	if err != nil {
 		ctx.Logger().Errorf("insert user err:%v", err)
 		return 0, err
 	}
-	id := user.ID
-	err = repo.DB().Where("id = ?", id).Updates(map[string]any{"wx_name": fmt.Sprintf("用户%v", 30000+id)}).Error
-	if err != nil {
-		ctx.Logger().Errorf("update user err:%v", err)
-		return 0, err
-	}
-	return id, nil
+	return user.ID, nil
 }
 
 func (repo UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) {
@@ -163,5 +158,21 @@ func (repo UserRepo) UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":            userId,
 		"member_status": status,
+	})
+}
+
+func (repo UserRepo) UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error {
+	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	if nickName == "" {
+		nickName = fmt.Sprintf("用户%v", 30000+id)
+	}
+	if icon == "" {
+		icon = "https://mx.fengxianhub.top/v1/file/2024071622064557713.jpg"
+	}
+	return repo.UpdateUser(ctx, map[string]any{
+		"id":           id,
+		"wx_icon":      icon,
+		"wx_name":      nickName,
+		"wx_user_info": userInfoJson,
 	})
 }

@@ -62,6 +62,11 @@ func (ctl UserController) PostClientLoginWx(ctx jet.Ctx, param *LoginParams) (*a
 	return xjet.WrapperResult(ctx, token, err)
 }
 
+func (ctl UserController) PostClientLoginUpdate(ctx jet.Ctx, req *req.UserInfoReq) (*api.Response, error) {
+	userVO, err := ctl.userService.UpdateWxUserInfo(ctx, req)
+	return xjet.WrapperResult(ctx, userVO, err)
+}
+
 func (ctl UserController) PostClientLoginMember(ctx jet.Ctx) (*api.Response, error) {
 	tokenInfo := ctx.FastHttpCtx().UserValue("tokenInfo").(*middleware.AuthToken)
 	userVO, err := ctl.userService.GetUserById(ctx, tokenInfo.UserId)
@@ -85,13 +90,8 @@ func (ctl UserController) PostV1MessageUnreadCount(ctx jet.Ctx) (*api.Response, 
 	return xjet.WrapperResult(ctx, countUnReadMessage, err)
 }
 
-type MessageReadReq struct {
-	Id       uint `json:"id"`
-	IsRefuse bool `json:"isRefuse"`
-}
-
-func (ctl UserController) PostV1MessageRead(ctx jet.Ctx, req *MessageReadReq) (*api.Response, error) {
-	err := ctl.messageService.ReadByMessageId(ctx, req.Id)
+func (ctl UserController) PostV1MessageRead(ctx jet.Ctx, req *req.MessageReadReq) (*api.Response, error) {
+	err := ctl.messageService.ReadByMessageId(ctx, req)
 	return xjet.WrapperResult(ctx, "ok", err)
 }
 

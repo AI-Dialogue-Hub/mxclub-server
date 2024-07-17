@@ -31,7 +31,7 @@ type OrderFinishReq struct {
 }
 
 type OrderStartReq struct {
-	OrderId     uint   `json:"order_id" validate:"required"` // 订单流水号
+	OrderId     uint   `json:"orderId" validate:"required"` // 订单流水号
 	Executor2Id uint   `json:"executor_2_id"`
 	Executor3Id uint   `json:"executor_3_id"`
 	RoleId      string `json:"role_id" validate:"required"`

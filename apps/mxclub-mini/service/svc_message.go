@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/dto"
+	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/message/po"
@@ -44,9 +45,11 @@ func (svc MessageService) ReadAllMessage(ctx jet.Ctx) error {
 	return nil
 }
 
-func (svc MessageService) ReadByMessageId(ctx jet.Ctx, messageId uint) error {
+func (svc MessageService) ReadByMessageId(ctx jet.Ctx, req *req.MessageReadReq) error {
 	userId := middleware.MustGetUserId(ctx)
-	if err := svc.messageRepo.ReadByMessageId(ctx, userId, messageId); err != nil {
+	// 接单的消息
+
+	if err := svc.messageRepo.ReadByMessageId(ctx, userId, req.Id); err != nil {
 		return errors.New("标记已读失败")
 	}
 	return nil

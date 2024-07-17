@@ -11,3 +11,9 @@ type MessageReq struct {
 	MessageStatus int              `json:"message_status"`
 	Ext           string           `json:"ext"`
 }
+
+type MessageReadReq struct {
+	Id          uint   `json:"id"`
+	MessageType string `json:"message_type"`
+	IsRefuse    bool   `json:"isRefuse"`
+}

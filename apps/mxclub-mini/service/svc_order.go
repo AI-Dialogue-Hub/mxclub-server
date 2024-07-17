@@ -164,12 +164,6 @@ func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	if req.Executor3Id > 0 {
 		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.Executor3Id, req.OrderId, req.GameRegion, req.RoleId))
 	}
-	// 2. 修改订单状态
-	err := svc.orderRepo.UpdateOrderStatus(ctx, req.OrderId, enum.PROCESSING)
-	if err != nil {
-		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
-		return errors.New("订单状态修改失败，请联系客服")
-	}
 	return nil
 }
 

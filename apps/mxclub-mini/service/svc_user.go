@@ -54,6 +54,17 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 	return jwtToken, err
 }
 
+func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) (*vo.User, error) {
+	userId := middleware.MustGetUserId(ctx)
+	err := svc.userRepo.UpdateUserIconAndNickName(ctx, userId, userInfo.AvatarUrl, userInfo.NickName, utils.ObjToJsonStr(userInfo))
+	if err != nil {
+		ctx.Logger().Errorf("[UpdateWxUserInfo]ERROR:%v", err.Error())
+		return nil, errors.New("用户信息更新失败")
+	}
+	userPO, _ := svc.GetUserById(ctx, userId)
+	return utils.MustCopyByCtx[vo.User](ctx, userPO), nil
+}
+
 func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.User, error) {
 	userPO, err := svc.userRepo.FindByOpenId(ctx, openId)
 	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
