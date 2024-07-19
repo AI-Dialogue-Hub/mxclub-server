@@ -17,3 +17,10 @@ type MessageReadReq struct {
 	MessageType string `json:"message_type"`
 	IsRefuse    bool   `json:"isRefuse"`
 }
+
+type MessageHandleReq struct {
+	MessageId         uint   `json:"message_id"`
+	OrderId           uint   `json:"order_id"`
+	MessageTypeNumber uint   `json:"message_type_number"`
+	Ext               string `json:"ext"`
+}

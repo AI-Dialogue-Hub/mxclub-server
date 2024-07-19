@@ -2,9 +2,12 @@ package repo
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"gorm.io/gorm"
+	"mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/api"
@@ -33,6 +36,8 @@ type IOrderRepo interface {
 	FinishOrder(ctx jet.Ctx, id uint, images []string) error
 	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.OrderStatus) error
+	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
+	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -147,4 +152,28 @@ func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.O
 		"order_status": status,
 	}
 	return repo.Update(updateMap, "order_id = ?", orderId)
+}
+
+func (repo OrderRepo) RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error {
+	updateWrap := xmysql.NewMysqlUpdate()
+	updateWrap.SetFilter("order_id = ?", executorDTO.OrderId)
+	executorType := executorDTO.ExecutorType
+	if executorType <= 0 {
+		return errors.New("executorType cannot empty")
+	}
+	updateWrap.Set(fmt.Sprintf("executor%v_id", executorType), 0)
+	updateWrap.Set(fmt.Sprintf("executor%v_name", executorType), "")
+	return repo.UpdateByWrapper(updateWrap)
+}
+
+func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error {
+	updateWrap := xmysql.NewMysqlUpdate()
+	updateWrap.SetFilter("order_id = ?", executorDTO.OrderId)
+	executorType := executorDTO.ExecutorType
+	if executorType <= 0 {
+		executorType = 2
+	}
+	updateWrap.Set(fmt.Sprintf("executor%v_id", executorType), executorDTO.ExecutorId)
+	updateWrap.Set(fmt.Sprintf("executor%v_name", executorType), executorDTO.ExecutorName)
+	return repo.UpdateByWrapper(updateWrap)
 }

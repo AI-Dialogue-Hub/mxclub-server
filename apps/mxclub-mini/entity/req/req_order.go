@@ -41,3 +41,10 @@ type OrderStartReq struct {
 type WithDrawReq struct {
 	Amount float64 `json:"amount" validate:"required"`
 }
+
+type OrderExecutorReq struct {
+	ExecutorType uint   `json:"executor_type" validate:"required"`
+	ExecutorName string `json:"executor_name"`
+	ExecutorId   uint   `json:"executor_id"`
+	OrderId      uint   `json:"order_id"`
+}

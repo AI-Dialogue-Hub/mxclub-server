@@ -33,7 +33,7 @@ type Order struct {
 	Executor3Price  float64          `gorm:"column:executor_3_price"`
 	PurchaseDate    *time.Time       `gorm:"column:purchase_date"`
 	CompletionDate  *time.Time       `gorm:"column:completion_date"`
-	DetailImages    xmysql.JSON      `gorm:"detail_images"`
+	DetailImages    xmysql.JSON      `gorm:"detail_images"` // 订单结束后上传的图片
 }
 
 // TableName sets the table name for the Order model.

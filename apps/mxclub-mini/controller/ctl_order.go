@@ -67,3 +67,11 @@ func (c OrderController) GetV1OrderDasher(ctx jet.Ctx) (*api.Response, error) {
 func (c OrderController) PostV1OrderStart(ctx jet.Ctx, req *req.OrderStartReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "ok", c.orderService.Start(ctx, req))
 }
+
+func (c OrderController) PostV1OrderExecutorAdd(ctx jet.Ctx, executorReq *req.OrderExecutorReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", c.orderService.AddOrRemoveExecutor(ctx, executorReq))
+}
+
+func (c OrderController) PostV1OrderExecutorDelete(ctx jet.Ctx, executorReq *req.OrderExecutorReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", c.orderService.AddOrRemoveExecutor(ctx, executorReq))
+}

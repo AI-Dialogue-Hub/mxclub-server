@@ -10,6 +10,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	orderDTO "mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -165,6 +166,19 @@ func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.Executor3Id, req.OrderId, req.GameRegion, req.RoleId))
 	}
 	return nil
+}
+
+func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExecutorReq) (err error) {
+	if orderReq.ExecutorName == "" && orderReq.ExecutorId == 0 {
+		err = svc.orderRepo.RemoveAssistant(ctx, utils.MustCopy[orderDTO.OrderExecutorDTO](orderReq))
+	} else {
+		err = svc.orderRepo.AddAssistant(ctx, utils.MustCopy[orderDTO.OrderExecutorDTO](orderReq))
+	}
+	if err != nil {
+		ctx.Logger().Errorf("AddOrRemoveExecutor ERROR:%v", err.Error())
+		return errors.New("拒绝失败")
+	}
+	return
 }
 
 // ==================== 提现相关  ====================
