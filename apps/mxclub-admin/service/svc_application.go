@@ -20,10 +20,17 @@ func init() {
 type ApplicationService struct {
 	applicationRepo repo.IAssistantApplicationRepo
 	userService     *UserService
+	messageService  *MessageService
 }
 
-func NewApplicationService(applicationRepo repo.IAssistantApplicationRepo, userService *UserService) *ApplicationService {
-	return &ApplicationService{applicationRepo: applicationRepo, userService: userService}
+func NewApplicationService(applicationRepo repo.IAssistantApplicationRepo,
+	userService *UserService,
+	messageService *MessageService) *ApplicationService {
+	return &ApplicationService{
+		applicationRepo: applicationRepo,
+		userService:     userService,
+		messageService:  messageService,
+	}
 }
 
 func (svc ApplicationService) List(ctx jet.Ctx, params *req.ApplicationListReq) (*api.PageResult, error) {
@@ -49,6 +56,10 @@ func (svc ApplicationService) UpdateStatus(ctx jet.Ctx, req *req.ApplicationReq)
 			ctx.Logger().Errorf("ERROR:%v", err.Error())
 			return errors.New("更新失败")
 		}
+		// 1. 给用户发消息
+		_ = svc.messageService.PushSystemMessage(ctx, req.UserID, "您的打手申请已审核通过，请重新进入小程序")
+	} else if req.Status == "REJECT" {
+		_ = svc.messageService.PushSystemMessage(ctx, req.UserID, "您的打手申请被拒绝，详情请联系客服")
 	}
 	// 2. 修改申请记录
 	err = svc.applicationRepo.UpdateStatus(ctx, req.ID, req.Status)

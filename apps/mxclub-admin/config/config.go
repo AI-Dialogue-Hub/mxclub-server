@@ -10,6 +10,7 @@ import (
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
 	"strings"
+	"sync"
 )
 
 var (
@@ -71,9 +72,14 @@ func GetConfig() *Config {
 	return config
 }
 
-var openApiSet = make(map[string]bool)
+var (
+	openApiSet = make(map[string]bool)
+	mu         = new(sync.Mutex)
+)
 
 func IsOpenApi(url string) bool {
+	mu.Lock()
+	defer mu.Unlock()
 	if config.Server.OpenApi == nil {
 		return false
 	}
