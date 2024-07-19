@@ -3,6 +3,7 @@ package xmysql
 import (
 	"context"
 	"errors"
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +22,7 @@ type IBaseRepo[T any] interface {
 	FindAll() ([]*T, error)
 	FindOrCreate(findFunc func() bool, t *T) (*T, error)
 	List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error)
+	ListByWrapper(ctx jet.Ctx, query *MysqlQuery) ([]*T, int64, error)
 	ListAndOrder(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, int64, error)
 	ListNoCount(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, error)
 	ListNoCountByQuery(query *MysqlQuery) ([]*T, error)
@@ -112,6 +114,25 @@ func (r *BaseRepo[T]) FindOrCreate(findFunc func() bool, t *T) (*T, error) {
 
 func (r *BaseRepo[T]) List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error) {
 	return r.ListAndOrder(pageNo, pageSize, "", filter, data...)
+}
+
+func (r *BaseRepo[T]) ListByWrapper(ctx jet.Ctx, query *MysqlQuery) ([]*T, int64, error) {
+	entities := make([]*T, 0)
+	if query.Limit <= 0 {
+		query.Limit = 10
+	}
+	err := r.Db.Model(r.ModelPO).WithContext(r.Ctx).
+		Where(query.Query, query.Args...).
+		Offset(query.Offset).
+		Order(query.Sort).
+		Limit(query.Limit).
+		Find(&entities).Error
+	if err != nil {
+		ctx.Logger().Errorf("ERROR:%v", err.Error())
+		return nil, 0, err
+	}
+	count, _ := r.Count(query.Query, query.Args...)
+	return entities, count, nil
 }
 
 func (r *BaseRepo[T]) ListAndOrder(pageNo int64, pageSize int64, order string, filter any, data ...any) ([]*T, int64, error) {

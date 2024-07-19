@@ -116,7 +116,7 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 	if productVO.Price < 100 {
 		return &vo.PreferentialVO{
 			OriginalPrice:   productVO.Price,
-			DiscountedPrice: 0,
+			DiscountedPrice: productVO.Price,
 			DiscountRate:    1.0,
 			DiscountInfo:    "商品金额大于100，不触发优惠",
 		}, nil

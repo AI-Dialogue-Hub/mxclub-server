@@ -20,12 +20,13 @@ func init() {
 }
 
 type UserService struct {
-	userRepo repo.IUserRepo
-	apRepo   repo.IAssistantApplicationRepo
+	userRepo       repo.IUserRepo
+	apRepo         repo.IAssistantApplicationRepo
+	messageService *MessageService
 }
 
-func NewUserService(repo repo.IUserRepo, apRepo repo.IAssistantApplicationRepo) *UserService {
-	return &UserService{userRepo: repo, apRepo: apRepo}
+func NewUserService(repo repo.IUserRepo, apRepo repo.IAssistantApplicationRepo, messageService *MessageService) *UserService {
+	return &UserService{userRepo: repo, apRepo: apRepo, messageService: messageService}
 }
 
 func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.User, error) {
@@ -92,10 +93,15 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	userID := middleware.MustGetUserId(ctx)
 
 	// 创建打手申请记录
-	err := svc.apRepo.CreateAssistantApplication(ctx, userID, req.Phone, req.MemberNumber)
+	err := svc.apRepo.CreateAssistantApplication(ctx, userID, req.Phone, req.MemberNumber, req.Name)
 	if err != nil {
 		ctx.Logger().Errorf("[ToBeAssistant]ERROR:%v", err.Error())
 		return errors.New("提交打手申请失败，请联系客服")
+	}
+	// 发送申请消息
+	err = svc.messageService.PushSystemMessage(ctx, userID, "您成为打手的申请已提交，请联系管理员审核")
+	if err != nil {
+		ctx.Logger().Errorf("[ToBeAssistant]消息发送失败:%v", err.Error())
 	}
 	return nil
 }

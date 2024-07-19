@@ -75,7 +75,7 @@ func (ctl UserController) GetV1UserList(ctx jet.Ctx, params *api.PageParams) (*a
 
 func (ctl UserController) PostV1UserUpdate(ctx jet.Ctx, userReq *req.UserReq) (*api.Response, error) {
 	if err := middleware.MustGetUserInfo(ctx).Role.CheckPermission(enum.PermissionAdminRead); err != nil {
-		return xjet.WrapperResult(ctx, nil, err)
+		return xjet.WrapperResult(ctx, nil, errors.New("权限不够"))
 	}
 	err := ctl.userService.Update(ctx, userReq)
 	return xjet.WrapperResult(ctx, "Ok", err)

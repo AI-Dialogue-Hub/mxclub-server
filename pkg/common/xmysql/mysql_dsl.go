@@ -46,7 +46,7 @@ type MysqlQuery struct {
 
 func NewMysqlQuery() *MysqlQuery {
 	return &MysqlQuery{
-		Query: "deleted_ts=0",
+		Query: "",
 		Args:  make([]interface{}, 0),
 	}
 }

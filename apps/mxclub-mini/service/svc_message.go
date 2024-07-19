@@ -74,3 +74,7 @@ func (svc MessageService) PushMessage(ctx jet.Ctx, messageDTO *dto.MessageDTO) e
 		Ext:           messageDTO.Ext,
 	})
 }
+
+func (svc MessageService) PushSystemMessage(ctx jet.Ctx, messageTo uint, content string) error {
+	return svc.messageRepo.PushNormalMessage(ctx, messageTo, "系统通知", content)
+}

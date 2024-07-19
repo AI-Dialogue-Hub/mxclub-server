@@ -10,9 +10,14 @@ type AssistantApplication struct {
 	UserID       uint
 	Phone        string
 	MemberNumber int64
-	Status       string `gorm:"default:PENDING"`
+	Name         string
+	Status       string `gorm:"default:PENDING"` // PENDING PASS REJECT
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (AssistantApplication) TableName() string {
+	return "assistant_application"
 }

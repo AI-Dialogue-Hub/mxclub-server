@@ -148,6 +148,7 @@ func (repo OrderRepo) QueryOrderByStatus(ctx jet.Ctx, status enum.OrderStatus) (
 }
 
 func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.OrderStatus) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateMap := map[string]any{
 		"order_status": status,
 	}
@@ -155,6 +156,7 @@ func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.O
 }
 
 func (repo OrderRepo) RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateWrap := xmysql.NewMysqlUpdate()
 	updateWrap.SetFilter("order_id = ?", executorDTO.OrderId)
 	executorType := executorDTO.ExecutorType
@@ -167,6 +169,7 @@ func (repo OrderRepo) RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecuto
 }
 
 func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateWrap := xmysql.NewMysqlUpdate()
 	updateWrap.SetFilter("order_id = ?", executorDTO.OrderId)
 	executorType := executorDTO.ExecutorType

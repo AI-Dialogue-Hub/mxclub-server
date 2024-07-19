@@ -55,8 +55,8 @@ type WithDrawVO struct {
 
 type PreferentialVO struct {
 	OriginalPrice     float64 `json:"original_price"`
-	DiscountedPrice   float64 `json:"discounted_price"`
-	PreferentialPrice float64 `json:"preferential_price"`
+	DiscountedPrice   float64 `json:"discounted_price"`   // 折扣后价格
+	PreferentialPrice float64 `json:"preferential_price"` // 优惠价格
 	DiscountRate      float64 `json:"discount_rate"`
 	DiscountInfo      string  `json:"discount_info"`
 }
