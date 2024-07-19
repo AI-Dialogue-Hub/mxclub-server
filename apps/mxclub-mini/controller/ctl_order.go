@@ -3,9 +3,11 @@ package controller
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
+	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -51,6 +53,7 @@ func (c OrderController) GetV1Preferential0(ctx jet.Ctx, param *api.PathParam) (
 }
 
 func (c OrderController) PutV1Order(ctx jet.Ctx, req *req.OrderReq) (*api.Response, error) {
+	ctx.Logger().Infof("user:%v pay success:%v", middleware.MustGetUserId(ctx), utils.ObjToJsonStr(req))
 	return xjet.WrapperResult(ctx, "ok", c.orderService.Add(ctx, req))
 }
 

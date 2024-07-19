@@ -14,13 +14,13 @@ type OrderListReq struct {
 }
 
 type OrderReq struct {
-	ExecutorId      uint   `json:"executor_id" validate:"required"`
-	GameRegion      string `json:"game_region" validate:"required"`
-	Notes           string `json:"notes" validate:"required"`
-	ProductId       uint   `json:"product_id" validate:"required"`
-	Phone           string `json:"phone" validate:"required"`
-	SpecifyExecutor bool   `json:"specify_executor" validate:"required"`
-	RoleId          string `json:"role_id" validate:"required"`
+	ExecutorId      uint   `json:"executor_id"`
+	GameRegion      string `json:"game_region"`
+	Notes           string `json:"notes"`
+	ProductId       uint   `json:"product_id"`
+	Phone           string `json:"phone"`
+	SpecifyExecutor bool   `json:"specify_executor"`
+	RoleId          string `json:"role_id"`
 	OrderName       string `json:"order_name"`
 	OrderIcon       string `json:"order_icon"`
 }
