@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"math"
 	"mxclub/apps/mxclub-mini/entity/dto"
@@ -11,6 +12,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	orderDTO "mxclub/domain/order/entity/dto"
+
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -158,14 +160,29 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 }
 
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
+	if req.Executor2Id == 0 && req.Executor3Id == 0 {
+		// 直接开始
+		err := svc.startOrder(ctx, req.OrderId, req.ExecutorId)
+		if err != nil {
+			ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
+			return errors.New("订单开始失败，请联系客服")
+		}
+		return nil
+	}
 	// 1. 给其他两个打手发消息
 	if req.Executor2Id > 0 {
-		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.Executor2Id, req.OrderId, req.GameRegion, req.RoleId))
+		user1, _ := svc.userService.FindUserByDashId(req.Executor2Id)
+		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(user1.ID, req.OrderId, req.GameRegion, req.RoleId))
 	}
 	if req.Executor3Id > 0 {
-		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.Executor3Id, req.OrderId, req.GameRegion, req.RoleId))
+		user2, _ := svc.userService.FindUserByDashId(req.Executor3Id)
+		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(user2.ID, req.OrderId, req.GameRegion, req.RoleId))
 	}
 	return nil
+}
+
+func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId uint) error {
+	return svc.orderRepo.UpdateOrderByDasher(ctx, orderId, executorId, enum.RUNNING)
 }
 
 func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExecutorReq) (err error) {
@@ -214,4 +231,37 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 		return errors.New("提现失败，请联系管理员")
 	}
 	return nil
+}
+
+// GrabOrder 抢单逻辑
+func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error {
+	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("%s GrabOrder", ctx.Logger().ReqId))
+	// 1. 抢单
+	err := svc.orderRepo.GrabOrder(ctx, grabReq.OrderId, grabReq.ExecutorId)
+	if err != nil {
+		ctx.Logger().Errorf("[GrabOrder]ERROR, err:%v", err.Error())
+		return errors.New("抢单失败，请刷新订单列表")
+	}
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		// 2. 给买家发送消息
+		orderPO, _ := svc.orderRepo.FindByID(grabReq.OrderId)
+		dasherPO, _ := svc.userService.FindUserByDashId(grabReq.ExecutorId)
+		toUserMessage := fmt.Sprintf(
+			"您的订单:%v，已被打手:%v(%v)接受，可前往订单，选中日期%v进行查看",
+			orderPO.OrderName, dasherPO.MemberNumber, dasherPO.Name, formatDate(orderPO.PurchaseDate),
+		)
+		_ = svc.messageService.PushSystemMessage(ctx, orderPO.PurchaseId, toUserMessage)
+		// 3. 给打手发消息
+		toDasherMessage := fmt.Sprintf(
+			"您的订单:%v，已抢单成功，可前往订单，选中日期%v进行查看，请尽快组件队伍开始订单",
+			orderPO.OrderName, formatDate(orderPO.PurchaseDate),
+		)
+		_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, toDasherMessage)
+	}()
+	return nil
+}
+
+func formatDate(date *time.Time) string {
+	return date.Format("2006-01-02")
 }

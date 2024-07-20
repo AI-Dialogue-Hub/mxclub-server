@@ -1,6 +1,8 @@
 package req
 
-import "mxclub/pkg/common/xmysql"
+import (
+	"mxclub/pkg/common/xmysql"
+)
 
 type ProductReq struct {
 	ID               uint64      `json:"id,omitempty"`
@@ -14,4 +16,12 @@ type ProductReq struct {
 	ShortDescription string      `json:"short_description,omitempty"`
 	Images           xmysql.JSON `json:"images,omitempty"`
 	DetailImages     xmysql.JSON `json:"detail_images"`
+	Thumbnail        string      `json:"thumbnail"`
+}
+
+// ProductListReq get嵌套结构体解析不出来
+type ProductListReq struct {
+	Page        int64 `json:"page" form:"page" validate:"gt=0" reg_error_info:"参数有误"`           // 页码
+	PageSize    int64 `json:"page_size" form:"page_size" validate:"gt=0" reg_error_info:"参数有误"` // 分页大小
+	ProductType uint  `form:"product_type"`
 }

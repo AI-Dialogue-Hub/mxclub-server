@@ -4,7 +4,7 @@ import "mxclub/pkg/common/xmysql"
 
 type ProductVO struct {
 	ID               uint64      `json:"id,omitempty"`
-	Type             uint        `json:"type,omitempty"`
+	Type             uint        `json:"type"`
 	Title            string      `json:"title,omitempty"`
 	Price            float64     `json:"price,omitempty"`
 	DiscountRuleID   int         `json:"discount_rule_id,omitempty"`
@@ -14,4 +14,5 @@ type ProductVO struct {
 	ShortDescription string      `json:"short_description,omitempty"`
 	Images           xmysql.JSON `json:"images,omitempty"`
 	DetailImages     xmysql.JSON `json:"detail_images"`
+	Thumbnail        string      `json:"thumbnail"`
 }

@@ -22,7 +22,6 @@ func NewDispatchMessage(messageTo uint, orderId uint, region string, roleId stri
 		MessageType:   enum.DISPATCH_MESSAGE,
 		Title:         "新派单",
 		Content:       fmt.Sprintf("新订单，区域：%v，角色：%v", region, roleId),
-		MessageFrom:   0,
 		MessageTo:     messageTo,
 		MessageStatus: enum.UN_READ,
 		Ext:           utils.ParseString(orderId),

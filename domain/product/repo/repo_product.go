@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
 	"mxclub/domain/product/po"
@@ -17,7 +18,7 @@ func init() {
 
 type IProductRepo interface {
 	xmysql.IBaseRepo[po.Product]
-	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.Product, int64, error)
+	ListAroundCache(ctx jet.Ctx, params *api.PageParams, productType uint) ([]*po.Product, int64, error)
 	UpdateProduct(ctx jet.Ctx, updateMap map[string]any) error
 	DeleteById(ctx jet.Ctx, id int64) error
 	Add(ctx jet.Ctx, po *po.Product) error
@@ -40,14 +41,19 @@ type ProductRepo struct {
 const productCachePrefix = "mini_product"
 const productListCachePrefix = productCachePrefix + "_list"
 
-func (repo ProductRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.Product, int64, error) {
+func (repo ProductRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, productType uint) ([]*po.Product, int64, error) {
 	// 根据页码参数生成唯一的缓存键
-	cacheListKey := xredis.BuildListDataCacheKey(productCachePrefix, params)
-	cacheCountKey := xredis.BuildListCountCacheKey(productListCachePrefix)
+	cacheListKey := xredis.BuildListDataCacheKey(fmt.Sprintf("%v_type_%v", productCachePrefix, productType), params)
+	cacheCountKey := xredis.BuildListCountCacheKey(fmt.Sprintf("%v_type_%v", productListCachePrefix, productType))
 
 	list, count, err := xredis.GetListOrDefault[po.Product](ctx, cacheListKey, cacheCountKey, func() ([]*po.Product, int64, error) {
 		// 如果缓存中未找到，则从数据库中获取
-		list, count, err := repo.List(params.Page, params.PageSize, nil)
+		query := xmysql.NewMysqlQuery()
+		query.SetPage(params.Page, params.PageSize)
+		if productType != 0 {
+			query.SetFilter("type = ?", productType)
+		}
+		list, count, err := repo.ListByWrapper(ctx, query)
 		if err != nil {
 			return nil, 0, err
 		}

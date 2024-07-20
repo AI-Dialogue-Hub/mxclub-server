@@ -125,9 +125,9 @@ func (m *MysqlQuery) SetLimit(limit int32) {
 	m.Limit = int(limit)
 }
 
-func (m *MysqlQuery) SetPage(page, pageSize int32) {
+func (m *MysqlQuery) SetPage(page, pageSize int64) {
 	m.SetOffset(int((page - 1) * pageSize))
-	m.SetLimit(pageSize)
+	m.SetLimit(int32(pageSize))
 }
 
 func (m *MysqlQuery) AndQuery(query string) {

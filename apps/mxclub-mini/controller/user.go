@@ -100,15 +100,13 @@ func (ctl UserController) PostV1MessageReadAll(ctx jet.Ctx) (*api.Response, erro
 	return xjet.WrapperResult(ctx, "ok", err)
 }
 
-// 发送消息相关
-
+// PostV1MessageHandle 发送消息相关
 func (ctl UserController) PostV1MessageHandle(ctx jet.Ctx, req *req.MessageHandleReq) (*api.Response, error) {
 	ctx.Logger().Infof("messageType:%v", utils.ObjToJsonStr(req))
-	return xjet.WrapperResult(ctx, "ok", nil)
+	return xjet.WrapperResult(ctx, "ok", ctl.userService.HandleMessage(ctx, req))
 }
 
 // ====== 验证码 ========
-
 var stringCaptcha = captcha.NewCaptcha()
 
 func (ctl UserController) GetV1CaptchaGenerate(ctx jet.Ctx) (*api.Response, error) {

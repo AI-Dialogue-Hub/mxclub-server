@@ -22,6 +22,7 @@ type IUserRepo interface {
 	QueryUserByAccount(username string, password string) (*po.User, error)
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
 	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
+	FindByMemberNumber(memberNumber uint) (*po.User, error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
@@ -72,6 +73,10 @@ func (repo UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) 
 		return nil, err
 	}
 	return one, err
+}
+
+func (repo UserRepo) FindByMemberNumber(memberNumber uint) (*po.User, error) {
+	return repo.FindOne("member_number = ?", memberNumber)
 }
 
 func (repo UserRepo) ExistsByOpenId(ctx jet.Ctx, openId string) bool {

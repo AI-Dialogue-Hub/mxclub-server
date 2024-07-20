@@ -6,7 +6,7 @@ type OrderStatus int
 
 const (
 	ALL            OrderStatus = iota // all
-	PROCESSING                        // 配单中
+	PROCESSING                        // 配单中 一个订单提交后就变成配单状态，如果没有指定打手会投到订单池中
 	RUNNING                           // 进行中
 	SUCCESS                           // 已完成
 	PAUSED                            // 暂停中

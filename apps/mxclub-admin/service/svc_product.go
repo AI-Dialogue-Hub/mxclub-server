@@ -25,12 +25,13 @@ func NewProductService(repo repo.IProductRepo) *ProductService {
 
 // =============================================================
 
-func (s ProductService) List(ctx jet.Ctx, params *api.PageParams) (*api.PageResult, error) {
-	list, count, err := s.productRepo.ListAroundCache(ctx, params)
+func (s ProductService) List(ctx jet.Ctx, params *req.ProductListReq) (*api.PageResult, error) {
+	pageParams := &api.PageParams{Page: params.Page, PageSize: params.PageSize}
+	list, count, err := s.productRepo.ListAroundCache(ctx, pageParams, utils.ParseUint(params.ProductType))
 	if err != nil {
 		return nil, err
 	}
-	return api.WrapPageResult(params, utils.CopySlice[*po.Product, *vo.ProductVO](list), count), nil
+	return api.WrapPageResult(pageParams, utils.CopySlice[*po.Product, *vo.ProductVO](list), count), nil
 }
 
 func (s ProductService) Update(ctx jet.Ctx, req *req.ProductReq) error {

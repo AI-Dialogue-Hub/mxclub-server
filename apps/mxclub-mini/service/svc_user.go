@@ -85,6 +85,10 @@ func (svc UserService) FindUserById(id uint) (*po.User, error) {
 	return svc.userRepo.FindByID(id)
 }
 
+func (svc UserService) FindUserByDashId(memberNumber uint) (*po.User, error) {
+	return svc.userRepo.FindByMemberNumber(memberNumber)
+}
+
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	if svc.userRepo.ExistsAssistant(ctx, req.Phone, req.MemberNumber) {
 		return errors.New("电话或id已被使用")
@@ -147,4 +151,14 @@ func (svc UserService) SwitchAssistantStatus(ctx jet.Ctx, status enum.MemberStat
 func (svc UserService) AssistantStatus(ctx jet.Ctx) string {
 	userPO, _ := svc.userRepo.FindByID(middleware.MustGetUserId(ctx))
 	return string(userPO.MemberStatus)
+}
+
+func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleReq) error {
+	switch handleReq.MessageTypeNumber {
+	case 101:
+	// 订单进行中 移除队友操作 ext为打手编号
+	case 201:
+		// 邀请打手操作，ext为订单id
+	}
+	return nil
 }

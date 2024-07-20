@@ -25,8 +25,8 @@ func NewProductController(productService *service.ProductService) jet.Controller
 
 // =========================================================================
 
-func (ctl ProductController) GetV1ProductList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
-	pageResult, err := ctl.productService.List(ctx, params)
+func (ctl ProductController) GetV1ProductList(ctx jet.Ctx, req *req.ProductListReq) (*api.Response, error) {
+	pageResult, err := ctl.productService.List(ctx, req)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 

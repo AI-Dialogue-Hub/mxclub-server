@@ -35,7 +35,7 @@ func NewApplicationService(applicationRepo repo.IAssistantApplicationRepo,
 
 func (svc ApplicationService) List(ctx jet.Ctx, params *req.ApplicationListReq) (*api.PageResult, error) {
 	query := xmysql.NewMysqlQuery()
-	query.SetPage(int32(params.Page), int32(params.PageSize))
+	query.SetPage(params.Page, params.PageSize)
 	if params.Status != "" {
 		query.SetFilter("status = ?", params.Status)
 	}

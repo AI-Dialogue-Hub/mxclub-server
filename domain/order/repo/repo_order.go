@@ -2,9 +2,11 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"gorm.io/gorm"
 	"mxclub/domain/order/entity/dto"
@@ -38,6 +40,8 @@ type IOrderRepo interface {
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
+	GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error
+	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -69,7 +73,7 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, pa
 	} else {
 		query.SetFilter("purchase_id = ?", userId)
 	}
-	query.SetPage(int32(params.Page), int32(params.PageSize))
+	query.SetPage(params.Page, params.PageSize)
 	query.SetFilter("purchase_date >= ?", ge)
 	query.SetFilter("purchase_date <= ?", le)
 	if status != 0 {
@@ -179,4 +183,44 @@ func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDT
 	updateWrap.Set(fmt.Sprintf("executor%v_id", executorType), executorDTO.ExecutorId)
 	updateWrap.Set(fmt.Sprintf("executor%v_name", executorType), executorDTO.ExecutorName)
 	return repo.UpdateByWrapper(updateWrap)
+}
+
+func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error {
+	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]OrderRepo GrabOrder", ctx.Logger().ReqId))
+	tx := repo.Db.Begin()
+	// 1. 读取一个未被抢单的订单，并锁定该行（读取锁）
+	var lockOrderId uint
+	row := tx.Raw(
+		"SELECT id FROM orders WHERE id = ? and order_status = ? AND executor_id = 0 LIMIT 1 FOR UPDATE",
+		ordersId, enum.PROCESSING,
+	)
+	if err := row.Scan(&lockOrderId).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, sql.ErrNoRows) {
+			ctx.Logger().Errorf("ERROR:%v", err.Error())
+			return errors.New("no pending orders available")
+		}
+	}
+	// 2. 更新该订单的状态为已抢单，并设置执行者 Id
+	err := tx.Exec(
+		"UPDATE orders SET order_status = ?, executor_id = ?, specify_executor = ? WHERE id = ?",
+		enum.PROCESSING, executorId, true, ordersId,
+	).Error
+	if err != nil {
+		tx.Rollback()
+		ctx.Logger().Errorf("ERROR:%v", err.Error())
+		return errors.New("update orders failed")
+	}
+	// 3. 提交事物
+	tx.Commit()
+	ctx.Logger().Infof("Order %d has been claimed by executor %d\n", ordersId, executorId)
+	return nil
+}
+
+func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", ordersId)
+	update.Set("executor_id = ?", executorId)
+	update.Set("order_status = ?", status)
+	return repo.UpdateByWrapper(update)
 }
