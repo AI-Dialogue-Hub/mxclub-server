@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/domain/message/entity/enum"
 	"mxclub/domain/message/repo"
 )
 
@@ -18,5 +19,5 @@ func NeMessageService(repo repo.IMessageRepo) *MessageService {
 }
 
 func (svc MessageService) PushSystemMessage(ctx jet.Ctx, messageTo uint, content string) error {
-	return svc.messageRepo.PushNormalMessage(ctx, messageTo, "系统通知", content)
+	return svc.messageRepo.PushNormalMessage(ctx, enum.SYSTEM_NOTIFICATION, messageTo, "系统通知", content)
 }

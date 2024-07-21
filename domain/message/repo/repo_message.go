@@ -25,7 +25,10 @@ type IMessageRepo interface {
 	ReadAllMessage(ctx jet.Ctx, id uint) error
 	ReadByMessageId(ctx jet.Ctx, messageTo uint, messageId uint) error
 	CountUnReadMessageById(ctx jet.Ctx, id uint) (int64, error)
-	PushNormalMessage(ctx jet.Ctx, messageTo uint, title, content string) error
+	// PushNormalMessage messageTo 是
+	PushNormalMessage(ctx jet.Ctx, messageType enum.MessageType, messageTo uint, title, content string) error
+	PushOrderMessage(ctx jet.Ctx, ordersId uint, messageType enum.MessageType, messageTo uint, title, content string) error
+	ClearCache(ctx jet.Ctx)
 }
 
 func NewMessageRepo(db *gorm.DB) IMessageRepo {
@@ -118,14 +121,31 @@ func (repo MessageRepo) ReadByMessageId(ctx jet.Ctx, messageTo uint, messageId u
 	return nil
 }
 
-func (repo MessageRepo) PushNormalMessage(ctx jet.Ctx, messageTo uint, title, content string) error {
+func (repo MessageRepo) PushNormalMessage(ctx jet.Ctx, messageType enum.MessageType, messageTo uint, title, content string) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	messagePO := &po.Message{
-		MessageType:   enum.SYSTEM_NOTIFICATION,
+		MessageType:   messageType,
 		Title:         title,
 		Content:       content,
 		MessageTo:     messageTo,
 		MessageStatus: enum.UN_READ,
 	}
 	return repo.InsertOne(messagePO)
+}
+
+func (repo MessageRepo) PushOrderMessage(ctx jet.Ctx, ordersId uint, messageType enum.MessageType, messageTo uint, title, content string) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	messagePO := &po.Message{
+		MessageType:   messageType,
+		Title:         title,
+		OrderId:       ordersId,
+		Content:       content,
+		MessageTo:     messageTo,
+		MessageStatus: enum.UN_READ,
+	}
+	return repo.InsertOne(messagePO)
+}
+
+func (repo MessageRepo) ClearCache(ctx jet.Ctx) {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 }

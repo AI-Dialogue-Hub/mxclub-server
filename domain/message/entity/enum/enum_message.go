@@ -9,6 +9,7 @@ const (
 	SYSTEM_NOTIFICATION MessageType = "system_notification"
 	DISPATCH_MESSAGE    MessageType = "dispatch_message"
 	ACCEPTANCE_MESSAGE  MessageType = "acceptance_message"
+	REMOVE_MESSAGE      MessageType = "remove_message" // 移除在进行中的队友
 )
 
 var MessageType2DisPlayNameMap = map[MessageType]string{
@@ -16,6 +17,7 @@ var MessageType2DisPlayNameMap = map[MessageType]string{
 	SYSTEM_NOTIFICATION: "系统通知", // 系统通知
 	DISPATCH_MESSAGE:    "新派单",
 	ACCEPTANCE_MESSAGE:  "接单成功",
+	REMOVE_MESSAGE:      "移除在进行中的订单",
 }
 
 var DisPlayName2MessageTypeMap = func() maps.IMap[string, MessageType] {

@@ -33,15 +33,19 @@ type IOrderRepo interface {
 		userId uint) ([]*po.Order, error)
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error)
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
-	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error)
+	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
 	FinishOrder(ctx jet.Ctx, id uint, images []string) error
 	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
-	UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.OrderStatus) error
+	// UpdateOrderStatus 这里的orderId为订单流水号
+	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error
+	// UpdateOrderByDasher 通过车头进行更新
 	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error
+	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id uint, executor2Name string) error
+	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id uint, executor3Name string) error
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -107,7 +111,7 @@ func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, l
 
 }
 
-func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error) {
+func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (float64, error) {
 	var totalAmount float64
 
 	sql := "select COALESCE(sum(executor_price), 0) from orders where executor_id = ? and order_status = ?"
@@ -151,7 +155,7 @@ func (repo OrderRepo) QueryOrderByStatus(ctx jet.Ctx, status enum.OrderStatus) (
 	return repo.Find("order_status = ? and specify_executor = ?", status, false)
 }
 
-func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint, status enum.OrderStatus) error {
+func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateMap := map[string]any{
 		"order_status": status,
@@ -220,7 +224,21 @@ func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) err
 func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
-	update.Set("executor_id = ?", executorId)
-	update.Set("order_status = ?", status)
+	update.Set("executor_id", executorId)
+	update.Set("order_status", status)
+	return repo.UpdateByWrapper(update)
+}
+func (repo OrderRepo) UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id uint, executor2Name string) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", ordersId)
+	update.Set("executor2_id", executor2Id)
+	update.Set("executor2_name", executor2Name)
+	return repo.UpdateByWrapper(update)
+}
+func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id uint, executor3Name string) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", ordersId)
+	update.Set("executor3_id", executor3Id)
+	update.Set("executor3_name", executor3Name)
 	return repo.UpdateByWrapper(update)
 }

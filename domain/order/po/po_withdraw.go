@@ -4,7 +4,7 @@ import "time"
 
 type WithdrawalRecord struct {
 	ID               uint       `gorm:"primaryKey"`
-	DasherID         int        `gorm:"not null"`
+	DasherID         uint       `gorm:"not null"`
 	PayerID          int        `gorm:"default:null"`
 	WithdrawalAmount float64    `gorm:"not null"`
 	WithdrawalStatus string     `gorm:"type:enum('initiated', 'completed'); not null"`

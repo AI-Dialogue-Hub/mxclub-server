@@ -87,7 +87,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	}
 	// 4. 如果指定订单，给打手发送接单消息
 	if req.SpecifyExecutor {
-		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId))
+		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId, ""))
 	}
 	return nil
 }
@@ -169,14 +169,24 @@ func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 		}
 		return nil
 	}
+	// 指定打手的数量
+	executorNumber := 0
+	if req.Executor2Id > 0 {
+		executorNumber++
+	}
+	if req.Executor3Id > 0 {
+		executorNumber++
+	}
 	// 1. 给其他两个打手发消息
 	if req.Executor2Id > 0 {
 		user1, _ := svc.userService.FindUserByDashId(req.Executor2Id)
-		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(user1.ID, req.OrderId, req.GameRegion, req.RoleId))
+		message := dto.NewDispatchMessage(user1.ID, req.OrderId, req.GameRegion, req.RoleId, utils.ParseString(executorNumber))
+		_ = svc.messageService.PushMessage(ctx, message)
 	}
 	if req.Executor3Id > 0 {
 		user2, _ := svc.userService.FindUserByDashId(req.Executor3Id)
-		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(user2.ID, req.OrderId, req.GameRegion, req.RoleId))
+		message := dto.NewDispatchMessage(user2.ID, req.OrderId, req.GameRegion, req.RoleId, utils.ParseString(executorNumber))
+		_ = svc.messageService.PushMessage(ctx, message)
 	}
 	return nil
 }
@@ -221,7 +231,7 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 }
 
 func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
-	// 1. 发消息，已提交提现申请
+	// TODO 1. 发消息，已提交提现申请
 
 	// 2. 添加提现记录
 	userPO, _ := svc.userService.FindUserById(middleware.MustGetUserId(ctx))

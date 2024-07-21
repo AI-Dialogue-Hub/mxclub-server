@@ -19,8 +19,9 @@ type MessageReadReq struct {
 }
 
 type MessageHandleReq struct {
-	MessageId         uint   `json:"message_id"`
-	OrderId           uint   `json:"order_id"`
-	MessageTypeNumber uint   `json:"message_type_number"`
-	Ext               string `json:"ext"`
+	MessageId         uint             `json:"message_id"`
+	OrdersId          uint             `json:"order_id"` // 这里的id是db的主键
+	MessageTypeNumber uint             `json:"message_type_number"`
+	MessageType       enum.MessageType `json:"message_type"`
+	Ext               string           `json:"ext"`
 }

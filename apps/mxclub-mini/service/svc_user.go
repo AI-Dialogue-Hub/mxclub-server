@@ -2,11 +2,15 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	miniUtil "mxclub/apps/mxclub-mini/utils"
+	messageEnum "mxclub/domain/message/entity/enum"
+	orderEnum "mxclub/domain/order/entity/enum"
+	orderRepo "mxclub/domain/order/repo"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
@@ -21,12 +25,16 @@ func init() {
 
 type UserService struct {
 	userRepo       repo.IUserRepo
+	orderRepo      orderRepo.IOrderRepo
 	apRepo         repo.IAssistantApplicationRepo
 	messageService *MessageService
 }
 
-func NewUserService(repo repo.IUserRepo, apRepo repo.IAssistantApplicationRepo, messageService *MessageService) *UserService {
-	return &UserService{userRepo: repo, apRepo: apRepo, messageService: messageService}
+func NewUserService(repo repo.IUserRepo,
+	apRepo repo.IAssistantApplicationRepo,
+	messageService *MessageService,
+	orderRepo orderRepo.IOrderRepo) *UserService {
+	return &UserService{userRepo: repo, apRepo: apRepo, messageService: messageService, orderRepo: orderRepo}
 }
 
 func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.User, error) {
@@ -113,7 +121,7 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 func (svc UserService) PassAssistantApplication(ctx jet.Ctx, id uint) error {
 	application, _ := svc.apRepo.FindByID(id)
 	// 提交申请
-	err := svc.userRepo.ToBeAssistant(ctx, application.UserID, application.Phone, application.MemberNumber)
+	err := svc.userRepo.ToBeAssistant(ctx, application.UserID, application.Phone, application.MemberNumber, application.Name)
 	if err != nil {
 		ctx.Logger().Errorf("[ToBeAssistant]ERROR:%v", err.Error())
 		return errors.New("转换身份失败，请联系客服")
@@ -156,9 +164,59 @@ func (svc UserService) AssistantStatus(ctx jet.Ctx) string {
 func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleReq) error {
 	switch handleReq.MessageTypeNumber {
 	case 101:
-	// 订单进行中 移除队友操作 ext为打手编号
+		// 订单进行中 移除队友操作 ext为打手编号
+		memberNumber := utils.ParseUint(handleReq.Ext)
+		userPO, _ := svc.userRepo.FindByMemberNumber(memberNumber)
+		message := fmt.Sprintf("您将被移除在进行中的订单，订单id:%v", handleReq.OrdersId)
+		_ = svc.messageService.PushRemoveMessage(ctx, handleReq.OrdersId, userPO.ID, message)
 	case 201:
-		// 邀请打手操作，ext为订单id
+		// 同意邀请
+		svc.handleAcceptApplication(ctx, handleReq)
+	case 301:
+		// 接单拒绝，通知打手
+		userPO, _ := svc.FindUserById(middleware.MustGetUserId(ctx))
+		if handleReq.MessageType == messageEnum.REMOVE_MESSAGE {
+			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您移除打手:%v(%v)的申请已被拒绝，请联系相关打手", userPO.MemberNumber, userPO.Name))
+		} else {
+			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已被拒绝，请联系其他打手", userPO.MemberNumber, userPO.Name))
+		}
+	case 401:
+		// 同意移除
+		svc.handleRemoveDasher(ctx, handleReq)
 	}
 	return nil
+}
+
+func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
+	orderId := handleReq.OrdersId
+	orderPO, _ := svc.orderRepo.FindByID(orderId)
+	userPO, _ := svc.FindUserById(middleware.MustGetUserId(ctx))
+	// 需要的打手
+	needExecutorNum := utils.ParseUint(handleReq.Ext)
+	if orderPO.Executor2Id == 0 {
+		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name))
+		// 更新角色
+		_ = svc.orderRepo.UpdateOrderDasher2(ctx, orderId, userPO.MemberNumber, userPO.Name)
+		if needExecutorNum == 1 {
+			// 开始订单
+			_ = svc.orderRepo.UpdateOrderStatus(ctx, orderPO.OrderId, orderEnum.RUNNING)
+		}
+	} else if orderPO.Executor3Id == 0 {
+		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name))
+		_ = svc.orderRepo.UpdateOrderDasher3(ctx, orderId, userPO.MemberNumber, userPO.Name)
+		_ = svc.orderRepo.UpdateOrderStatus(ctx, orderPO.OrderId, orderEnum.RUNNING)
+	}
+}
+
+func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
+	orderPO, _ := svc.orderRepo.FindByID(handleReq.OrdersId)
+	userPO, _ := svc.FindUserById(middleware.MustGetUserId(ctx))
+	if orderPO.Executor2Id == userPO.MemberNumber {
+		_ = svc.orderRepo.UpdateOrderDasher2(ctx, orderPO.ID, 0, "")
+	} else if orderPO.Executor3Id == userPO.MemberNumber {
+		_ = svc.orderRepo.UpdateOrderDasher3(ctx, orderPO.ID, 0, "")
+	}
+	executorPO, _ := svc.userRepo.FindByMemberNumber(orderPO.ExecutorID)
+	message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
+	_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
 }

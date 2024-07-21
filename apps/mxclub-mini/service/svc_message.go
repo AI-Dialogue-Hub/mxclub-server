@@ -7,6 +7,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/message/entity/enum"
 	"mxclub/domain/message/po"
 	"mxclub/domain/message/repo"
 	"mxclub/pkg/api"
@@ -64,6 +65,7 @@ func (svc MessageService) CountUnReadMessage(ctx jet.Ctx) (int64, error) {
 }
 
 func (svc MessageService) PushMessage(ctx jet.Ctx, messageDTO *dto.MessageDTO) error {
+	svc.messageRepo.ClearCache(ctx)
 	return svc.messageRepo.InsertOne(&po.Message{
 		MessageType:   messageDTO.MessageType,
 		Title:         messageDTO.Title,
@@ -71,10 +73,15 @@ func (svc MessageService) PushMessage(ctx jet.Ctx, messageDTO *dto.MessageDTO) e
 		MessageFrom:   messageDTO.MessageFrom,
 		MessageTo:     messageDTO.MessageTo,
 		MessageStatus: messageDTO.MessageStatus,
+		OrderId:       messageDTO.OrderId,
 		Ext:           messageDTO.Ext,
 	})
 }
 
 func (svc MessageService) PushSystemMessage(ctx jet.Ctx, messageTo uint, content string) error {
-	return svc.messageRepo.PushNormalMessage(ctx, messageTo, "系统通知", content)
+	return svc.messageRepo.PushNormalMessage(ctx, enum.SYSTEM_NOTIFICATION, messageTo, "系统通知", content)
+}
+
+func (svc MessageService) PushRemoveMessage(ctx jet.Ctx, ordersId uint, messageTo uint, content string) error {
+	return svc.messageRepo.PushOrderMessage(ctx, ordersId, enum.REMOVE_MESSAGE, messageTo, "系统通知", content)
 }

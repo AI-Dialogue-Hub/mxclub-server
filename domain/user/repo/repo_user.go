@@ -28,7 +28,7 @@ type IUserRepo interface {
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
 	// UpdateUserIconAndNickName 如果为空会给默认的头像和昵称
 	UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error
-	ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64) error
+	ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64, name string) error
 	ExistsAssistant(ctx jet.Ctx, phone string, memberNumber int64) bool
 	AssistantOnline(ctx jet.Ctx) ([]*po.User, error)
 	CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool
@@ -126,12 +126,13 @@ func (repo UserRepo) UpdateUser(ctx jet.Ctx, updateMap map[string]any) error {
 	return nil
 }
 
-func (repo UserRepo) ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64) error {
+func (repo UserRepo) ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64, name string) error {
 	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":            userId,
 		"member_number": memberNumber,
 		"phone":         phone,
+		"name":          name,
 	})
 }
 

@@ -16,8 +16,8 @@ func init() {
 type IWithdrawalRepo interface {
 	xmysql.IBaseRepo[po.WithdrawalRecord]
 	// WithdrawnAmount 用户历史提现金额
-	WithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, error)
-	Withdrawn(ctx jet.Ctx, dasherId int, amount float64) error
+	WithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error)
+	Withdrawn(ctx jet.Ctx, dasherId uint, amount float64) error
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -34,7 +34,7 @@ type WithdrawalRepo struct {
 
 // ====================================================
 
-func (repo WithdrawalRepo) WithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, error) {
+func (repo WithdrawalRepo) WithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error) {
 	var amount float64
 
 	sql := "select COALESCE(sum(withdrawal_amount), 0) from withdrawal_records where dasher_id = ? and withdrawal_status = ?"
@@ -47,7 +47,7 @@ func (repo WithdrawalRepo) WithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, 
 	return amount, nil
 }
 
-func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId int, amount float64) error {
+func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, amount float64) error {
 	return repo.InsertOne(&po.WithdrawalRecord{
 		DasherID:         dasherId,
 		WithdrawalAmount: amount,

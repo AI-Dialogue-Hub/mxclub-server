@@ -12,5 +12,7 @@ type MessageVO struct {
 	Title              string           `json:"title"`
 	Content            string           `json:"content"`
 	MessageStatus      int              `json:"message_status"`
+	OrderId            uint             `json:"order_id"`
+	Ext                string           `json:"ext"`
 	CreatedAt          time.Time        `json:"created_at"`
 }
