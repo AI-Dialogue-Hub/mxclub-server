@@ -7,30 +7,33 @@ import (
 )
 
 type OrderVO struct {
-	ID              uint             `json:"id"`
-	OrderId         uint64           `json:"order_id"`
-	OrderName       string           `json:"order_name"`
-	OrderStatus     enum.OrderStatus `json:"order_status"`
-	OriginalPrice   float64          `json:"original_price"`
-	OrderIcon       string           `json:"icon"`
-	ProductID       uint             `json:"product_id"`
-	Phone           string           `json:"phone"`
-	GameRegion      string           `json:"game_region"`
-	RoleId          string           `json:"role_id"`
-	SpecifyExecutor bool             `json:"specify_executor"`
-	ExecutorID      uint             `json:"executor_id"`
-	Executor2Id     uint             `json:"executor2_id"`
-	Executor3Id     uint             `json:"executor3_id"`
-	Executor2Name   string           `json:"executor2_name"`
-	Executor3Name   string           `json:"executor3_name"`
-	Notes           string           `json:"notes"`
-	DiscountPrice   float64          `json:"discount_price"`
-	FinalPrice      float64          `json:"final_price"`
-	ExecutorPrice   float64          `json:"executor_price"`
-	Executor2Price  float64          `json:"executor_2_price"`
-	Executor3Price  float64          `json:"executor_3_price"`
-	PurchaseDate    *time.Time       `json:"purchase_date"`
-	CompletionDate  *time.Time       `json:"completion_date,omitempty"`
+	ID                 uint             `json:"id"`
+	OrderId            uint64           `json:"order_id"`
+	OrderName          string           `json:"order_name"`
+	OrderStatus        enum.OrderStatus `json:"order_status"`
+	OriginalPrice      float64          `json:"original_price"`
+	OrderIcon          string           `json:"icon"`
+	ProductID          uint             `json:"product_id"`
+	Phone              string           `json:"phone"`
+	GameRegion         string           `json:"game_region"`
+	RoleId             string           `json:"role_id"`
+	SpecifyExecutor    bool             `json:"specify_executor"`
+	ExecutorID         uint             `json:"executor_id"`
+	Executor2Id        uint             `json:"executor2_id"`
+	Executor3Id        uint             `json:"executor3_id"`
+	Executor2Name      string           `json:"executor2_name"`
+	Executor3Name      string           `json:"executor3_name"`
+	Notes              string           `json:"notes"`
+	DiscountPrice      float64          `json:"discount_price"`
+	FinalPrice         float64          `json:"final_price"`
+	ExecutorPrice      float64          `json:"executor_price"`
+	ExecutorPriceNote  string           `json:"executor_price_note"`
+	Executor2Price     float64          `json:"executor_2_price"`
+	Executor2PriceNote string           `json:"executor2_price_note"`
+	Executor3Price     float64          `json:"executor_3_price"`
+	Executor3PriceNote string           `json:"executor3_price_note"`
+	PurchaseDate       *time.Time       `json:"purchase_date"`
+	CompletionDate     *time.Time       `json:"completion_date,omitempty"`
 }
 
 type ProductVO struct {

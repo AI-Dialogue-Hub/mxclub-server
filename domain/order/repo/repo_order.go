@@ -35,7 +35,9 @@ type IOrderRepo interface {
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
 	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
-	FinishOrder(ctx jet.Ctx, id uint, images []string) error
+	FinishOrder(ctx jet.Ctx, id uint, images []string, executorNum int, executorPrice float64) error
+	// FindByOrderId orderId 订单流水号
+	FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error)
 	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
 	// UpdateOrderStatus 这里的orderId为订单流水号
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
@@ -73,7 +75,8 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, pa
 	//})
 	query := new(xmysql.MysqlQuery)
 	if memberNumber > 0 {
-		query.SetFilter("executor_id = ?", memberNumber)
+		// 这里有可能是三个打手中的任意一个
+		query.SetFilter("(executor_id = ? or executor2_id = ? or executor3_id = ?)", memberNumber, memberNumber, memberNumber)
 	} else {
 		query.SetFilter("purchase_id = ?", userId)
 	}
@@ -111,15 +114,59 @@ func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, l
 
 }
 
-func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (float64, error) {
+func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (result float64, err error) {
+	defer traceUtil.TraceElapsedByName(time.Now(), "OrderWithdrawAbleAmount")
 	var totalAmount float64
+	var amount1, amount2, amount3 float64
+	c1 := make(chan struct{})
+	c2 := make(chan struct{})
+	c3 := make(chan struct{})
+	// 查询executor_id匹配的金额
+	go func() {
+		defer traceUtil.TraceElapsedByName(time.Now(), "c1")
+		defer func() { c1 <- struct{}{} }()
+		sql1 := `select COALESCE(sum(executor_price), 0) 
+			 from orders 
+			 where executor_id = ? and order_status = ?`
+		if err = repo.DB().Raw(sql1, dasherId, enum.SUCCESS).Scan(&amount1).Error; err != nil {
+			ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql1: %v", err.Error())
+			result = 0
+		}
+	}()
 
-	sql := "select COALESCE(sum(executor_price), 0) from orders where executor_id = ? and order_status = ?"
+	// 查询executor2_id匹配的金额
+	go func() {
+		defer traceUtil.TraceElapsedByName(time.Now(), "c2")
+		defer func() { c2 <- struct{}{} }()
+		sql2 := `select COALESCE(sum(executor2_price), 0) 
+			 from orders 
+			 where executor2_id = ? and order_status = ?`
+		if err = repo.DB().Raw(sql2, dasherId, enum.SUCCESS).Scan(&amount2).Error; err != nil {
+			ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql2: %v", err.Error())
+			result = 0
+		}
+	}()
 
-	if err := repo.DB().Raw(sql, dasherId, enum.SUCCESS).Scan(&totalAmount).Error; err != nil {
-		ctx.Logger().Errorf("[OrderWithdrawAbleAmount]ERROR:%v", err.Error())
-		return 0, err
-	}
+	// 查询executor3_id匹配的金额
+	go func() {
+		defer traceUtil.TraceElapsedByName(time.Now(), "c3")
+		defer func() { c3 <- struct{}{} }()
+		sql3 := `select COALESCE(sum(executor3_price), 0) 
+			 from orders 
+			 where executor3_id = ? and order_status = ?`
+		if err = repo.DB().Raw(sql3, dasherId, enum.SUCCESS).Scan(&amount3).Error; err != nil {
+			ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql3: %v", err.Error())
+			result = 0
+		}
+	}()
+
+	<-c1
+	<-c2
+	<-c3
+
+	// 总金额
+	totalAmount = amount1 + amount2 + amount3
+
 	return totalAmount, nil
 }
 
@@ -141,14 +188,21 @@ func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 	return totalAmount, nil
 }
 
-func (repo OrderRepo) FinishOrder(ctx jet.Ctx, orderId uint, images []string) error {
+func (repo OrderRepo) FinishOrder(ctx jet.Ctx, id uint, images []string, executorNum int, executorPrice float64) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
-	updateMap := map[string]any{
-		"detail_images":   xmysql.JSON(images),
-		"completion_date": core.Time(time.Now()),
-		"order_status":    enum.SUCCESS,
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", id)
+	update.Set("detail_images", xmysql.JSON(images))
+	update.Set("completion_date", core.Time(time.Now()))
+	update.Set("order_status", enum.SUCCESS)
+	update.Set("executor_price", executorPrice)
+	if executorNum == 2 {
+		update.Set("executor2_price", executorPrice)
+	} else if executorNum == 3 {
+		update.Set("executor2_price", executorPrice)
+		update.Set("executor3_price", executorPrice)
 	}
-	return repo.Update(updateMap, "order_id = ?", orderId)
+	return repo.UpdateByWrapper(update)
 }
 
 func (repo OrderRepo) QueryOrderByStatus(ctx jet.Ctx, status enum.OrderStatus) ([]*po.Order, error) {
@@ -241,4 +295,8 @@ func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id
 	update.Set("executor3_id", executor3Id)
 	update.Set("executor3_name", executor3Name)
 	return repo.UpdateByWrapper(update)
+}
+
+func (repo OrderRepo) FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error) {
+	return repo.FindOne("order_id = ?", orderId)
 }

@@ -3,12 +3,13 @@ package po
 import "time"
 
 type WithdrawalRecord struct {
-	ID               uint       `gorm:"primaryKey"`
-	DasherID         uint       `gorm:"not null"`
-	PayerID          int        `gorm:"default:null"`
-	WithdrawalAmount float64    `gorm:"not null"`
-	WithdrawalStatus string     `gorm:"type:enum('initiated', 'completed'); not null"`
-	ApplicationTime  time.Time  `gorm:"not null"`
+	ID               uint    `gorm:"primaryKey"`
+	DasherID         uint    `gorm:"not null"`
+	PayerID          int     `gorm:"default:null"`
+	WithdrawalAmount float64 `gorm:"not null"`
+	WithdrawalStatus string  `gorm:"type:enum('initiated', 'completed', 'reject'); not null"`
+	// 提现申请时间
+	ApplicationTime  *time.Time `gorm:"not null"`
 	PaymentTime      *time.Time `gorm:"default:null"`
 	WithdrawalMethod string     `gorm:"size:100"`
 	CreatedAt        time.Time  `gorm:"autoCreateTime"`

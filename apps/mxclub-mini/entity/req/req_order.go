@@ -26,7 +26,7 @@ type OrderReq struct {
 }
 
 type OrderFinishReq struct {
-	OrderId uint     `json:"order_id" validate:"required"` // 订单流水号
+	OrderId uint     `json:"order_id" validate:"required"` // 订单db主键
 	Images  []string `json:"images" validate:"required"`
 }
 

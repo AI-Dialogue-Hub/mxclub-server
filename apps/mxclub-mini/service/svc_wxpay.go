@@ -29,5 +29,6 @@ func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePa
 		ctx.Logger().Errorf("[WxPayService]prepay ERROR: %v\nprepayDTO:%v", err.Error(), utils.ObjToJsonStr(prepayDTO))
 		return nil, errors.New("申请微信支付失败")
 	}
+	ctx.Logger().Infof("用户:%v 付款：%v，进行中", id, amount)
 	return prepayDTO, nil
 }

@@ -142,11 +142,60 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 }
 
 func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error {
-	err := svc.orderRepo.FinishOrder(ctx, finishReq.OrderId, finishReq.Images)
+	orderPO, _ := svc.orderRepo.FindByID(finishReq.OrderId)
+	executorNum := 1
+	if orderPO.Executor2Id != 0 {
+		executorNum++
+	}
+	if orderPO.Executor3Id != 0 {
+		executorNum++
+	}
+	// 每个人分到的钱
+	executorPrice := math.Floor(orderPO.FinalPrice*0.8/float64(executorNum)*100) / 100
+	err := svc.orderRepo.FinishOrder(ctx, finishReq.OrderId, finishReq.Images, executorNum, executorPrice)
 	if err != nil {
 		ctx.Logger().Errorf("[Finish]ERROR: %v", err.Error())
 		return errors.New("订单完成失败，请联系客服")
 	}
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		// 车头
+		dashPO, _ := svc.userService.FindUserByDashId(orderPO.ExecutorID)
+		message := fmt.Sprintf(
+			"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
+			dashPO.MemberNumber,
+			dashPO.Name,
+			orderPO.OrderName,
+			orderPO.OrderId,
+			executorPrice,
+		)
+		_ = svc.messageService.PushSystemMessage(ctx, dashPO.ID, message)
+		// 给其他打手发送打钱消息
+		if orderPO.Executor2Id != 0 {
+			dash2PO, _ := svc.userService.FindUserByDashId(orderPO.Executor2Id)
+			message = fmt.Sprintf(
+				"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
+				dash2PO.MemberNumber,
+				dash2PO.Name,
+				orderPO.OrderName,
+				orderPO.OrderId,
+				executorPrice,
+			)
+			_ = svc.messageService.PushSystemMessage(ctx, dash2PO.ID, message)
+		}
+		if orderPO.Executor3Id != 0 {
+			dash3PO, _ := svc.userService.FindUserByDashId(orderPO.Executor3Id)
+			message = fmt.Sprintf(
+				"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
+				dash3PO.MemberNumber,
+				dash3PO.Name,
+				orderPO.OrderName,
+				orderPO.OrderId,
+				executorPrice,
+			)
+			_ = svc.messageService.PushSystemMessage(ctx, dash3PO.ID, message)
+		}
+	}()
 	return nil
 }
 
@@ -216,14 +265,37 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, cannot find user:%v", middleware.MustGetUserId(ctx))
 		return nil, errors.New("cannot find user info")
 	}
-	withdrawnAmount, _ := svc.withdrawalRepo.WithdrawnAmount(ctx, userPO.MemberNumber)
-	orderWithdrawAbleAmount, _ := svc.orderRepo.OrderWithdrawAbleAmount(ctx, userPO.MemberNumber)
-	if withdrawnAmount > orderWithdrawAbleAmount {
-		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, withdrawnAmount: %v gt orderWithdrawAbleAmount:%v", withdrawnAmount, orderWithdrawAbleAmount)
+	var (
+		approveWithdrawnAmount  float64
+		withdrawnAmount         float64
+		orderWithdrawAbleAmount float64
+		c1                      = make(chan struct{})
+		c2                      = make(chan struct{})
+		c3                      = make(chan struct{})
+	)
+	go func() {
+		defer func() { c1 <- struct{}{} }()
+		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userPO.MemberNumber)
+	}()
+	go func() {
+		defer func() { c2 <- struct{}{} }()
+		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userPO.MemberNumber)
+	}()
+	go func() {
+		defer func() { c3 <- struct{}{} }()
+		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userPO.MemberNumber)
+	}()
+
+	<-c1
+	<-c2
+	<-c3
+
+	if approveWithdrawnAmount > orderWithdrawAbleAmount {
+		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, approveWithdrawnAmount: %v gt orderWithdrawAbleAmount:%v", approveWithdrawnAmount, orderWithdrawAbleAmount)
 		return nil, errors.New("系统查询错误，请联系管理员")
 	}
 	return &vo.WithDrawVO{
-		HistoryWithDrawAmount: withdrawnAmount,
+		HistoryWithDrawAmount: approveWithdrawnAmount,
 		WithdrawAbleAmount:    orderWithdrawAbleAmount - withdrawnAmount,
 		WithdrawRangeMax:      20000,
 		WithdrawRangeMin:      200,
@@ -231,15 +303,17 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 }
 
 func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
-	// TODO 1. 发消息，已提交提现申请
-
-	// 2. 添加提现记录
-	userPO, _ := svc.userService.FindUserById(middleware.MustGetUserId(ctx))
+	userId := middleware.MustGetUserId(ctx)
+	// 1. 添加提现记录
+	userPO, _ := svc.userService.FindUserById(userId)
 	err := svc.withdrawalRepo.Withdrawn(ctx, userPO.MemberNumber, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
 		return errors.New("提现失败，请联系管理员")
 	}
+	// 2. 发消息，已提交提现申请
+	message := fmt.Sprintf("您提现申请已发起，管理员会在3个工作日内处理，您也可以联系管理员进行审批，提现金额为：%v元", drawReq.Amount)
+	_ = svc.messageService.PushSystemMessage(ctx, userId, message)
 	return nil
 }
 

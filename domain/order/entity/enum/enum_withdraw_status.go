@@ -9,3 +9,7 @@ func Initiated() string {
 func Completed() string {
 	return "completed"
 }
+
+func Reject() string {
+	return "reject"
+}
