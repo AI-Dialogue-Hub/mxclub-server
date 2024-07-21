@@ -23,3 +23,16 @@ type OrderVO struct {
 	PurchaseDate    *time.Time       `json:"purchase_date,omitempty"`
 	CompletionDate  *time.Time       `json:"completion_date,omitempty"`
 }
+
+type WithdrawVO struct {
+	ID               uint       `json:"id"`
+	DasherID         uint       `json:"dasher_id"`
+	DasherName       string     `json:"dasher_name"`
+	PayerID          int        `json:"payer_id"`
+	WithdrawalAmount float64    `json:"withdrawal_amount"`
+	WithdrawalStatus string     `json:"withdrawal_status"`
+	ApplicationTime  *time.Time `json:"application_time"`
+	PaymentTime      *time.Time `json:"payment_time"`
+	WithdrawalMethod string     `json:"withdrawal_method"`
+	CreatedAt        time.Time  `json:"created_at"`
+}

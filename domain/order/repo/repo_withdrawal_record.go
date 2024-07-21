@@ -20,7 +20,7 @@ type IWithdrawalRepo interface {
 	// WithdrawnAmountNotReject 用户历史提现金额，包括通过和进行中的
 	WithdrawnAmountNotReject(ctx jet.Ctx, dasherId uint) (float64, error)
 	ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error)
-	Withdrawn(ctx jet.Ctx, dasherId uint, amount float64) error
+	Withdrawn(ctx jet.Ctx, dasherId uint, dasherName string, amount float64) error
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -67,9 +67,10 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (f
 	return amount, nil
 }
 
-func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, amount float64) error {
+func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, dasherName string, amount float64) error {
 	return repo.InsertOne(&po.WithdrawalRecord{
 		DasherID:         dasherId,
+		DasherName:       dasherName,
 		WithdrawalAmount: amount,
 		WithdrawalStatus: "initiated",
 		ApplicationTime:  core.Time(time.Now()),

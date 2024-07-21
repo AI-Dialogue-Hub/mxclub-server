@@ -29,3 +29,15 @@ func (ctl OrderController) PostV1OrderList(ctx jet.Ctx, req *req.OrderListReq) (
 	pageResult, err := ctl.OrderService.List(ctx, req)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
+
+// 提现相关
+
+func (ctl OrderController) PostV1WithdrawList(ctx jet.Ctx, req *req.WitchDrawListReq) (*api.Response, error) {
+	pageResult, err := ctl.OrderService.ListWithdraw(ctx, req)
+	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
+func (ctl OrderController) PostV1WithdrawUpdate(ctx jet.Ctx, req *req.WitchDrawUpdateReq) (*api.Response, error) {
+	err := ctl.OrderService.UpdateWithdraw(ctx, req)
+	return xjet.WrapperResult(ctx, "ok", err)
+}

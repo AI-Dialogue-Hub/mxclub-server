@@ -9,6 +9,7 @@ import (
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
 	"mxclub/pkg/api"
+	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
 )
 
@@ -17,11 +18,12 @@ func init() {
 }
 
 type OrderService struct {
-	OrderRepo repo.IOrderRepo
+	OrderRepo    repo.IOrderRepo
+	withdrawRepo repo.IWithdrawalRepo
 }
 
-func NewOrderService(repo repo.IOrderRepo) *OrderService {
-	return &OrderService{OrderRepo: repo}
+func NewOrderService(repo repo.IOrderRepo, withdrawRepo repo.IWithdrawalRepo) *OrderService {
+	return &OrderService{OrderRepo: repo, withdrawRepo: withdrawRepo}
 }
 
 // =============================================================
@@ -38,4 +40,26 @@ func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.Page
 		vo.OrderStatusStr = vo.OrderStatus.String()
 	})
 	return api.WrapPageResult(orderReq.PageParams, orderVOS, count), nil
+}
+
+func (svc OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) (*api.PageResult, error) {
+	query := xmysql.NewMysqlQuery()
+	query.SetPage(params.Page, params.PageSize)
+	if params.WithdrawalStatus != "" && params.WithdrawalStatus != "ALL" {
+		query.SetFilter("withdrawal_status = ?", params.WithdrawalStatus)
+	}
+	records, count, err := svc.withdrawRepo.ListByWrapper(ctx, query)
+	if err != nil {
+		ctx.Logger().Errorf("[OrderService]ListWithdraw ERROR:%v", err.Error())
+		return nil, errors.New("获取失败")
+	}
+	return api.WrapPageResult(params.PageParams, utils.CopySlice[*po.WithdrawalRecord, *vo.WithdrawVO](records), count), nil
+}
+
+func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpdateReq) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", updateReq.Id)
+	update.Set("withdrawal_status", updateReq.WithdrawalStatus)
+	update.Set("withdrawal_method", updateReq.WithdrawalMethod)
+	return svc.withdrawRepo.UpdateByWrapper(update)
 }

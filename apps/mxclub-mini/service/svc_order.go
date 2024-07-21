@@ -306,7 +306,7 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	// 1. 添加提现记录
 	userPO, _ := svc.userService.FindUserById(userId)
-	err := svc.withdrawalRepo.Withdrawn(ctx, userPO.MemberNumber, drawReq.Amount)
+	err := svc.withdrawalRepo.Withdrawn(ctx, userPO.MemberNumber, userPO.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
 		return errors.New("提现失败，请联系管理员")
