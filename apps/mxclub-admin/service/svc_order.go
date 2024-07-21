@@ -57,6 +57,11 @@ func (svc OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) 
 }
 
 func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpdateReq) error {
+	if updateReq.WithdrawalStatus == "completed" {
+
+	} else if updateReq.WithdrawalStatus == "reject" {
+
+	}
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", updateReq.Id)
 	update.Set("withdrawal_status", updateReq.WithdrawalStatus)
