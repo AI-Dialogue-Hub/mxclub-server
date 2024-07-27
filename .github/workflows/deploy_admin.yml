@@ -39,7 +39,7 @@ jobs:
         run: |
           docker version
           # 登录阿里云镜像仓库
-          echo $DOCKER_PASSWORD | docker login --username $DOCKER_HUB_USERNAME --password-stdin registry.cn-hangzhou.aliyuncs.com          
+          docker login --username=${{ secrets.DOCKER_HUB_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }} registry.cn-hangzhou.aliyuncs.com
           ## build admin
           cp ./script/Dockerfile.admin .
           # 使用Dockerfile构建镜像
