@@ -1,4 +1,4 @@
-name: Deploy with docker
+name: Deploy mini with docker
 
 on:
   push:
