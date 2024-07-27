@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/fengyuan-liang/GoKit/future"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
@@ -16,6 +17,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
+	userPO "mxclub/domain/user/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/utils"
@@ -54,10 +56,13 @@ func NewOrderService(
 
 func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	userId := middleware.MustGetUserId(ctx)
-	_ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone)
+	go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
 	// 1. 查询商品信息
-	// 1.1 折扣信息
+	// 1.1 查询车头名称
+	f1 := future.FutureFunc[*userPO.User](svc.userService.FindUserByDashId, req.ExecutorId)
+	// 1.2 折扣信息
 	preferentialVO, _ := svc.Preferential(ctx, req.ProductId)
+	dashPO, _ := f1.Get()
 	// 2. 创建订单
 	order := &po.Order{
 		OrderId:         utils.ParseUint64(wxpay.GenerateUniqueOrderNumber()),
@@ -72,6 +77,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		RoleId:          req.RoleId,
 		SpecifyExecutor: req.SpecifyExecutor,
 		ExecutorID:      req.ExecutorId,
+		ExecutorName:    dashPO.Name,
 		Notes:           req.Notes,
 		DiscountPrice:   preferentialVO.OriginalPrice - preferentialVO.DiscountedPrice,
 		FinalPrice:      preferentialVO.DiscountedPrice,
@@ -86,9 +92,11 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		return errors.New("订单保存保存失败，请联系客服")
 	}
 	// 4. 如果指定订单，给打手发送接单消息
-	if req.SpecifyExecutor {
-		_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId, ""))
-	}
+	go func() {
+		if req.SpecifyExecutor {
+			_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId, ""))
+		}
+	}()
 	return nil
 }
 

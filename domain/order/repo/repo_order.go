@@ -171,13 +171,9 @@ func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (resul
 }
 
 func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
-	sql := `SELECT SUM(final_price) AS total_price
-		 FROM (
-		 		 SELECT DISTINCT order_id, final_price
-		 		 FROM orders
-		 		 WHERE purchase_id = ? AND order_status = ?
-		 	 ) AS unique_orders
-		 GROUP BY order_id;`
+	sql := `select COALESCE(SUM(final_price), 0) AS total_price
+			from orders
+			where purchase_id = ? and order_status = ?`
 
 	var totalAmount float64
 

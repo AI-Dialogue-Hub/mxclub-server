@@ -37,9 +37,14 @@ func NewUserService(repo repo.IUserRepo,
 	return &UserService{userRepo: repo, apRepo: apRepo, messageService: messageService, orderRepo: orderRepo}
 }
 
-func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.User, error) {
+func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.UserVO, error) {
+	// 用户信息
 	userPO, err := svc.userRepo.FindByID(id)
-	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
+	// 用户消费金额
+	totalSpent, _ := svc.orderRepo.TotalSpent(ctx, id)
+	userVO := utils.MustCopyByCtx[vo.UserVO](ctx, userPO)
+	userVO.SetCurrentPoints(totalSpent)
+	return userVO, err
 }
 
 func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
@@ -63,7 +68,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 	return jwtToken, err
 }
 
-func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) (*vo.User, error) {
+func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) (*vo.UserVO, error) {
 	var (
 		userId   = middleware.MustGetUserId(ctx)
 		imageURL string
@@ -81,12 +86,12 @@ func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) 
 		return nil, errors.New("用户信息更新失败")
 	}
 	userPO, _ := svc.GetUserById(ctx, userId)
-	return utils.MustCopyByCtx[vo.User](ctx, userPO), nil
+	return utils.MustCopyByCtx[vo.UserVO](ctx, userPO), nil
 }
 
-func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.User, error) {
+func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.UserVO, error) {
 	userPO, err := svc.userRepo.FindByOpenId(ctx, openId)
-	return utils.MustCopyByCtx[vo.User](ctx, userPO), err
+	return utils.MustCopyByCtx[vo.UserVO](ctx, userPO), err
 }
 
 func (svc UserService) FindUserById(id uint) (*po.User, error) {

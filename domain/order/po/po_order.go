@@ -21,6 +21,7 @@ type Order struct {
 	RoleId             string           `gorm:"column:role_id"`
 	SpecifyExecutor    bool             `gorm:"column:specify_executor"`
 	ExecutorID         uint             `gorm:"column:executor_id"`
+	ExecutorName       string           `gorm:"column:executor_name"`
 	Executor2Id        uint             `gorm:"column:executor2_id"`
 	Executor3Id        uint             `gorm:"column:executor3_id"`
 	Executor2Name      string           `gorm:"column:executor2_name"`

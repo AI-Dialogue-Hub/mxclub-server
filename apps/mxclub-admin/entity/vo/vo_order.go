@@ -21,6 +21,7 @@ type OrderVO struct {
 	RoleId             string           `json:"role_id"`
 	SpecifyExecutor    bool             `json:"specify_executor"`
 	ExecutorID         uint             `json:"executor_id"`
+	ExecutorName       string           `json:"executor_name"`
 	Executor2Id        uint             `json:"executor2_id"`
 	Executor3Id        uint             `json:"executor3_id"`
 	Executor2Name      string           `json:"executor2_name"`
