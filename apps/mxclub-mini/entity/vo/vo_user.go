@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"mxclub/apps/mxclub-mini/entity/bo"
 	"mxclub/domain/user/entity/enum"
 )
 
@@ -25,7 +26,7 @@ func (userVO *UserVO) SetCurrentPoints(currentPoints float64) {
 	}
 }
 
-var gradeRule = []float64{500, 2000, 5000, 10000, 20000, 50000}
+var gradeRule = bo.GradeMap.KeySet()
 
 type CaptchaVO struct {
 	CaptchaId string `json:"captcha_id"`

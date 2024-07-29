@@ -5,6 +5,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/domain/product/po"
 	"mxclub/domain/product/repo"
+	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
 )
 
@@ -33,15 +34,15 @@ func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {
 		list []*po.Product
 		err  error
 	)
-	if typeValue == 0 {
-		list, err = svc.ProductRepo.ListNoCount(1, 1000, "created_at DESC", nil)
-
+	query := xmysql.NewMysqlQuery()
+	query.SetPage(1, 1000)
+	query.SetSort("created_at DESC")
+	if typeValue == 101 {
+		query.SetFilter("isHot = ?", true)
 	} else {
-		if typeValue == 101 {
-			typeValue = 0
-		}
-		list, err = svc.ProductRepo.ListNoCount(1, 1000, "created_at DESC", "type = ?", typeValue)
+		query.SetFilter("type = ?", typeValue)
 	}
+	list, err = svc.ProductRepo.ListNoCountByQuery(query)
 	if err != nil {
 		return nil, err
 	}

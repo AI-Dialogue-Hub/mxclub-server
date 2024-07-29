@@ -17,6 +17,7 @@ type ProductReq struct {
 	Images           xmysql.JSON `json:"images,omitempty"`
 	DetailImages     xmysql.JSON `json:"detail_images"`
 	Thumbnail        string      `json:"thumbnail"`
+	IsHot            bool        `json:"isHot"`
 }
 
 // ProductListReq get嵌套结构体解析不出来

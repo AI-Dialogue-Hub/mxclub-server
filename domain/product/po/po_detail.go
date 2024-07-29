@@ -20,9 +20,11 @@ type Product struct {
 	Images           xmysql.JSON `gorm:"type:json;not null" json:"images"`
 	DetailImages     xmysql.JSON `gorm:"type:json;not null" json:"detail_images"`
 	Thumbnail        string
-	CreatedAt        time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt        time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"updated_at"`
-	DeletedAt        gorm.DeletedAt `gorm:"index" json:"deleted_at"`
+	IsHot            bool `gorm:"column:isHot"`
+
+	CreatedAt time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
 
 func (Product) TableName() string {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/bo"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
@@ -224,4 +225,18 @@ func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHan
 	executorPO, _ := svc.userRepo.FindByMemberNumber(orderPO.ExecutorID)
 	message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
 	_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
+}
+
+func (svc UserService) checkUserGrade(ctx jet.Ctx, id uint) {
+	spent, _ := svc.orderRepo.TotalSpent(ctx, id)
+	gradeByScore := bo.GetGradeByScore(spent)
+	m := map[string]any{
+		"id":       id,
+		"wx_grade": gradeByScore,
+	}
+	err := svc.userRepo.UpdateUser(ctx, m)
+
+	if err != nil {
+		ctx.Logger().Errorf("[checkUserGrade]ERROR:%v", err.Error())
+	}
 }

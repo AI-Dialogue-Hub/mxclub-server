@@ -203,6 +203,8 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 			)
 			_ = svc.messageService.PushSystemMessage(ctx, dash3PO.ID, message)
 		}
+		// 检查用户是否需要升级等级了
+		svc.userService.checkUserGrade(ctx, orderPO.PurchaseId)
 	}()
 	return nil
 }
