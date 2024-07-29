@@ -137,8 +137,8 @@ func (ctl UserController) PostV1UserAssistant(ctx jet.Ctx, assistantReq req.Assi
 
 func (ctl UserController) PostV1UserGrade(ctx jet.Ctx) (*api.Response, error) {
 	gradeConfig := map[string]string{
-		"v1": "https://mx.fengxianhub.top/v1/file/202407300231195308.png",
-		"v2": "https://mx.fengxianhub.top/v1/file/2024073003113016561.png",
+		"v1": "https://mx.fengxianhub.top/v1/file/2024073003251445731.png",
+		"v2": "https://mx.fengxianhub.top/v1/file/2024073003253084625.png",
 	}
 	return xjet.WrapperResult(ctx, gradeConfig, nil)
 }
