@@ -39,7 +39,7 @@ func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {
 	query.SetSort("created_at DESC")
 	if typeValue == 101 {
 		query.SetFilter("isHot = ?", true)
-	} else {
+	} else if typeValue != 0 {
 		query.SetFilter("type = ?", typeValue)
 	}
 	list, err = svc.ProductRepo.ListNoCountByQuery(query)
