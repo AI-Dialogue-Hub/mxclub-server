@@ -34,6 +34,10 @@ func (ctl ProductController) PostV1Product(ctx jet.Ctx, req *req.ProductReq) (*a
 	return xjet.WrapperResult(ctx, "ok", ctl.productService.Update(ctx, req))
 }
 
+func (ctl ProductController) PostV1ProductHot(ctx jet.Ctx, req *req.ProductHotReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", ctl.productService.UpdateHotInfo(ctx, req))
+}
+
 func (ctl ProductController) DeleteV1Product0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
 	got, err := param.GetInt64(0)
 	if err != nil {

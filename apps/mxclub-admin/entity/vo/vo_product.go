@@ -15,4 +15,5 @@ type ProductVO struct {
 	Images           xmysql.JSON `json:"images,omitempty"`
 	DetailImages     xmysql.JSON `json:"detail_images"`
 	Thumbnail        string      `json:"thumbnail"`
+	IsHot            bool        `json:"isHot"`
 }

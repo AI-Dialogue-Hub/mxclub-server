@@ -46,6 +46,11 @@ func (s ProductService) Update(ctx jet.Ctx, req *req.ProductReq) error {
 	return s.productRepo.UpdateProduct(ctx, updateMap)
 }
 
+func (s ProductService) UpdateHotInfo(ctx jet.Ctx, req *req.ProductHotReq) error {
+	updateMap := utils.ObjToMap(req)
+	return s.productRepo.UpdateProduct(ctx, updateMap)
+}
+
 func (s ProductService) DeleteById(ctx jet.Ctx, id int64) error {
 	return s.productRepo.DeleteById(ctx, id)
 }
