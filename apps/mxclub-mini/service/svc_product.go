@@ -26,7 +26,9 @@ func (svc ProductService) FindById(id uint) (*vo.ProductVO, error) {
 	if err != nil {
 		return nil, err
 	}
-	return utils.Copy[vo.ProductVO](productPO)
+	productVO, _ := utils.Copy[vo.ProductVO](productPO)
+	productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
+	return productVO, nil
 }
 
 func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {
