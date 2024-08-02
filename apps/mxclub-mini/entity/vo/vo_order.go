@@ -35,6 +35,7 @@ type OrderVO struct {
 	Executor3PriceNote string           `json:"executor3_price_note"`
 	PurchaseDate       *time.Time       `json:"purchase_date"`
 	CompletionDate     *time.Time       `json:"completion_date,omitempty"`
+	CutRate            float64          `json:"cut_rate"` // 抽成比例
 }
 
 type ProductVO struct {

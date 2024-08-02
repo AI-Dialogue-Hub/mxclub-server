@@ -143,6 +143,7 @@ func (ctl UserController) PostV1UserGrade(ctx jet.Ctx) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, gradeConfig, nil)
 }
 
+// GetV1AssistantOnline 获取在线打手，不包括打手自己
 func (ctl UserController) GetV1AssistantOnline(ctx jet.Ctx) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, ctl.userService.AssistantOnline(ctx), nil)
 }

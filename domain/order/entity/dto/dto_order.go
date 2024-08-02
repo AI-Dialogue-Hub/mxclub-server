@@ -10,3 +10,11 @@ type OrderExecutorDTO struct {
 type WithdrawAbleAmountDTO struct {
 	DasherID int
 }
+
+type FinishOrderDTO struct {
+	Id            uint
+	Images        []string
+	ExecutorNum   int
+	ExecutorPrice float64
+	CutRate       float64 // aka 0.2
+}

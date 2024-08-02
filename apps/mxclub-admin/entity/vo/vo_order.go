@@ -38,6 +38,7 @@ type OrderVO struct {
 	PurchaseDate       *time.Time       `json:"purchase_date"`
 	CompletionDate     *time.Time       `json:"completion_date"`
 	DetailImages       xmysql.JSON      `json:"detail_images"` // 订单结束后上传的图片
+	CutRate            float64          `json:"cut_rate"`      // 抽成比例
 }
 
 type WithdrawVO struct {

@@ -7,6 +7,7 @@
 package utils
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -54,4 +55,11 @@ func TestGetLastMonthStartAndEnd(t *testing.T) {
 
 func TestParseTimeString(t *testing.T) {
 	t.Logf("%v", time.Now().String())
+}
+
+func TestIsDigit(t *testing.T) {
+	assert.True(t, IsNumber("20"))
+	assert.True(t, IsNumber("20.5"))
+	assert.Equal(t, float64(20), ParseFloat64("20"))
+	assert.Equal(t, 20.5, ParseFloat64("20.5"))
 }

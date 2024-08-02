@@ -41,8 +41,15 @@ func NewUserService(repo repo.IUserRepo,
 func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.UserVO, error) {
 	// 用户信息
 	userPO, err := svc.userRepo.FindByID(id)
+	if err != nil || userPO == nil {
+		return nil, err
+	}
 	// 用户消费金额
 	totalSpent, _ := svc.orderRepo.TotalSpent(ctx, id)
+	// 如果是打手，名字用打手名替换
+	if userPO.Role == enum.RoleAssistant {
+		userPO.WxName = userPO.Name
+	}
 	userVO := utils.MustCopyByCtx[vo.UserVO](ctx, userPO)
 	userVO.SetCurrentPoints(totalSpent)
 	return userVO, err
@@ -136,12 +143,16 @@ func (svc UserService) PassAssistantApplication(ctx jet.Ctx, id uint) error {
 }
 
 func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
-	userPO, err := svc.userRepo.AssistantOnline(ctx)
+	userId := middleware.MustGetUserId(ctx)
+	userPOList, err := svc.userRepo.AssistantOnline(ctx)
 	if err != nil {
 		ctx.Logger().Errorf("[AssistantOnline]ERROR:%v", err.Error())
 		return nil
 	}
-	return utils.Map[*po.User, *vo.AssistantOnlineVO](userPO, func(in *po.User) *vo.AssistantOnlineVO {
+	filterUserList := utils.Filter(userPOList, func(in *po.User) bool {
+		return in.ID != userId
+	})
+	return utils.Map[*po.User, *vo.AssistantOnlineVO](filterUserList, func(in *po.User) *vo.AssistantOnlineVO {
 		return &vo.AssistantOnlineVO{
 			Id:   in.MemberNumber,
 			Name: in.Name,

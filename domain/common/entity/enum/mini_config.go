@@ -7,6 +7,7 @@ var (
 	Notifications MiniConfigEnum = "notifications" // 通知栏
 	MyMessage     MiniConfigEnum = "mymessage"     // 我的消息
 	ProductType   MiniConfigEnum = "product_type"  // 我的消息
+	CutRate       MiniConfigEnum = "cut_rate"      // 抽成比例
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -14,6 +15,7 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	Notifications: "通知栏",
 	MyMessage:     "我的消息",
 	ProductType:   "商品类型",
+	CutRate:       "抽成比例",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
@@ -31,4 +33,8 @@ func (m MiniConfigEnum) DisPlayName() string {
 		return ""
 	}
 	return displayName
+}
+
+func (m MiniConfigEnum) String() string {
+	return string(m)
 }

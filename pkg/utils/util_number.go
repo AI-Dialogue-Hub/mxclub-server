@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 )
@@ -108,7 +109,7 @@ func ParseInt(args interface{}) int {
 }
 
 func ParseFloat64(str string) (result float64) {
-	floatVal, err := strconv.ParseFloat(str, 64)
+	floatVal, err := strconv.ParseFloat(strings.TrimSpace(str), 64)
 	if err != nil {
 		xlog.Errorf("ParseFloat64 ERROR:%v", err)
 		return
@@ -167,6 +168,12 @@ func IsDigit(str string) bool {
 		}
 	}
 	return true
+}
+
+var numberRegex = regexp.MustCompile(`^[-+]?\d*\.?\d+$`)
+
+func IsNumber(s string) bool {
+	return numberRegex.MatchString(s)
 }
 
 func Max[T int | int32 | int64](a, b T) T {

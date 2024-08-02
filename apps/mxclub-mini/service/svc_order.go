@@ -14,6 +14,9 @@ import (
 	"mxclub/apps/mxclub-mini/middleware"
 	orderDTO "mxclub/domain/order/entity/dto"
 
+	commonEnum "mxclub/domain/common/entity/enum"
+	commonRepo "mxclub/domain/common/repo"
+	orderRepoDTO "mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -34,6 +37,7 @@ type OrderService struct {
 	userService    *UserService
 	productService *ProductService
 	messageService *MessageService
+	commonRepo     commonRepo.IMiniConfigRepo
 }
 
 func NewOrderService(
@@ -41,7 +45,8 @@ func NewOrderService(
 	withdrawalRepo repo.IWithdrawalRepo,
 	userService *UserService,
 	productService *ProductService,
-	messageService *MessageService) *OrderService {
+	messageService *MessageService,
+	commonRepo commonRepo.IMiniConfigRepo) *OrderService {
 
 	return &OrderService{
 		orderRepo:      repo,
@@ -49,6 +54,7 @@ func NewOrderService(
 		userService:    userService,
 		productService: productService,
 		messageService: messageService,
+		commonRepo:     commonRepo,
 	}
 }
 
@@ -158,9 +164,17 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 	if orderPO.Executor3Id != 0 {
 		executorNum++
 	}
+	// 抽成比例
+	cutRate := svc.getCutRate(ctx)
 	// 每个人分到的钱
-	executorPrice := math.Floor(orderPO.FinalPrice*0.8/float64(executorNum)*100) / 100
-	err := svc.orderRepo.FinishOrder(ctx, finishReq.OrderId, finishReq.Images, executorNum, executorPrice)
+	executorPrice := math.Floor(orderPO.FinalPrice*(1-cutRate)/float64(executorNum)*100) / 100
+	err := svc.orderRepo.FinishOrder(ctx, &orderRepoDTO.FinishOrderDTO{
+		Id:            finishReq.OrderId,
+		Images:        finishReq.Images,
+		ExecutorNum:   executorNum,
+		ExecutorPrice: executorPrice,
+		CutRate:       cutRate,
+	})
 	if err != nil {
 		ctx.Logger().Errorf("[Finish]ERROR: %v", err.Error())
 		return errors.New("订单完成失败，请联系客服")
@@ -207,6 +221,26 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 		svc.userService.checkUserGrade(ctx, orderPO.PurchaseId)
 	}()
 	return nil
+}
+
+// getCutRate 返回小数抽成比例
+func (svc OrderService) getCutRate(ctx jet.Ctx) float64 {
+	defer traceUtil.TraceElapsedByName(time.Now(), "getCutRate")
+	// 默认抽成20%
+	var cutRate = 0.2
+	cutRatePO, err := svc.commonRepo.FindConfigByName(ctx, commonEnum.CutRate.String())
+	if err != nil || cutRatePO == nil {
+		ctx.Logger().Errorf("[getCutRate]ERROR: %v", err)
+	} else if len(cutRatePO.Content) >= 1 {
+		parseString := utils.ParseString(cutRatePO.Content[0]["desc"])
+		if utils.IsNumber(parseString) {
+			cutRate = utils.ParseFloat64(parseString) / 100
+			if cutRate >= 1 {
+				cutRate = 0.2
+			}
+		}
+	}
+	return cutRate
 }
 
 func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {

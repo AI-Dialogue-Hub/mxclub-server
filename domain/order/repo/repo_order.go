@@ -35,7 +35,7 @@ type IOrderRepo interface {
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
 	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
-	FinishOrder(ctx jet.Ctx, id uint, images []string, executorNum int, executorPrice float64) error
+	FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error
 	// FindByOrderId orderId 订单流水号
 	FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error)
 	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
@@ -184,19 +184,20 @@ func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 	return totalAmount, nil
 }
 
-func (repo OrderRepo) FinishOrder(ctx jet.Ctx, id uint, images []string, executorNum int, executorPrice float64) error {
+func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	update := xmysql.NewMysqlUpdate()
-	update.SetFilter("id = ?", id)
-	update.Set("detail_images", xmysql.JSON(images))
+	update.SetFilter("id = ?", d.Id)
+	update.Set("detail_images", xmysql.JSON(d.Images))
 	update.Set("completion_date", core.Time(time.Now()))
 	update.Set("order_status", enum.SUCCESS)
-	update.Set("executor_price", executorPrice)
-	if executorNum == 2 {
-		update.Set("executor2_price", executorPrice)
-	} else if executorNum == 3 {
-		update.Set("executor2_price", executorPrice)
-		update.Set("executor3_price", executorPrice)
+	update.Set("executor_price", d.ExecutorPrice)
+	update.Set("cut_rate", d.CutRate)
+	if d.ExecutorNum == 2 {
+		update.Set("executor2_price", d.ExecutorPrice)
+	} else if d.ExecutorNum == 3 {
+		update.Set("executor2_price", d.ExecutorPrice)
+		update.Set("executor3_price", d.ExecutorPrice)
 	}
 	return repo.UpdateByWrapper(update)
 }

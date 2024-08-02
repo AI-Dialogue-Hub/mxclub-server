@@ -37,7 +37,8 @@ type Order struct {
 	Executor3PriceNote string           `gorm:"column:executor3_price_note"`
 	PurchaseDate       *time.Time       `gorm:"column:purchase_date"`
 	CompletionDate     *time.Time       `gorm:"column:completion_date"`
-	DetailImages       xmysql.JSON      `gorm:"detail_images"` // 订单结束后上传的图片
+	DetailImages       xmysql.JSON      `gorm:"detail_images"`   // 订单结束后上传的图片
+	CutRate            float64          `gorm:"column:cut_rate"` // 抽成比例
 }
 
 // TableName sets the table name for the Order model.
