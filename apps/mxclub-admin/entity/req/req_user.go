@@ -11,5 +11,5 @@ type UserReq struct {
 	WxIcon       string        `json:"wx_icon"`
 	WxGrade      string        `json:"wx_grade"`                                     // 微信等级
 	Role         enum.RoleType `json:"role" validate:"required" reg_err_info:"不能为空"` // 用户权限
-	MemberNumber string        `json:"member_number"`                                // 编号
+	MemberNumber uint          `json:"member_number"`                                // 编号
 }
