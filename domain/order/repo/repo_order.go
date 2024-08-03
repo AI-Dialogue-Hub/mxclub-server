@@ -48,11 +48,12 @@ type IOrderRepo interface {
 	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error
 	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id uint, executor2Name string) error
 	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id uint, executor3Name string) error
+	DoneEvaluation(id uint) error
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
 	repo := new(OrderRepo)
-	repo.Db = db
+	repo.SetDB(db)
 	repo.ModelPO = new(po.Order)
 	repo.Ctx = context.Background()
 	return repo
@@ -242,7 +243,8 @@ func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDT
 
 func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]OrderRepo GrabOrder", ctx.Logger().ReqId))
-	tx := repo.Db.Begin()
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	tx := repo.DB().Begin()
 	// 1. 读取一个未被抢单的订单，并锁定该行（读取锁）
 	var lockOrderId uint
 	row := tx.Raw(
@@ -296,4 +298,11 @@ func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id
 
 func (repo OrderRepo) FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error) {
 	return repo.FindOne("order_id = ?", orderId)
+}
+
+func (repo OrderRepo) DoneEvaluation(id uint) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", id)
+	update.Set("is_evaluation", true)
+	return repo.UpdateByWrapper(update)
 }

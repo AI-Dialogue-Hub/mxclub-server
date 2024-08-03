@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -18,12 +19,18 @@ func init() {
 }
 
 type OrderService struct {
-	OrderRepo    repo.IOrderRepo
-	withdrawRepo repo.IWithdrawalRepo
+	OrderRepo     repo.IOrderRepo
+	withdrawRepo  repo.IWithdrawalRepo
+	deductionRepo repo.DeductionRepo
 }
 
-func NewOrderService(repo repo.IOrderRepo, withdrawRepo repo.IWithdrawalRepo) *OrderService {
-	return &OrderService{OrderRepo: repo, withdrawRepo: withdrawRepo}
+func NewOrderService(repo repo.IOrderRepo,
+	withdrawRepo repo.IWithdrawalRepo,
+	deductionRepo repo.DeductionRepo) *OrderService {
+	return &OrderService{OrderRepo: repo,
+		withdrawRepo:  withdrawRepo,
+		deductionRepo: deductionRepo,
+	}
 }
 
 // =============================================================
@@ -67,4 +74,19 @@ func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpda
 	update.Set("withdrawal_status", updateReq.WithdrawalStatus)
 	update.Set("withdrawal_method", updateReq.WithdrawalMethod)
 	return svc.withdrawRepo.UpdateByWrapper(update)
+}
+
+func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, error) {
+	d := &dto.DeductionDTO{
+		PageParams: listReq.PageParams,
+		Ge:         listReq.Ge,
+		Le:         listReq.Le,
+		Status:     nil,
+	}
+	listDeduction, err := svc.deductionRepo.ListDeduction(ctx, d)
+	if err != nil {
+		ctx.Logger().Errorf("[OrderService]ListWithdraw ERROR:%v", err.Error())
+		return nil, errors.New("获取失败")
+	}
+	return utils.CopySlice[*po.Deduction, *vo.DeductionVO](listDeduction), nil
 }

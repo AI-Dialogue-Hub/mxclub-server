@@ -21,7 +21,7 @@ type IAssistantApplicationRepo interface {
 
 func NewAssistantApplicationRepo(db *gorm.DB) IAssistantApplicationRepo {
 	repo := new(AssistantApplicationRepo)
-	repo.Db = db
+	repo.SetDB(db)
 	repo.ModelPO = new(po.AssistantApplication)
 	repo.Ctx = context.Background()
 	return repo

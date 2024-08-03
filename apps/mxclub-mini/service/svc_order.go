@@ -38,6 +38,8 @@ type OrderService struct {
 	productService *ProductService
 	messageService *MessageService
 	commonRepo     commonRepo.IMiniConfigRepo
+	deductionRepo  repo.IDeductionRepo
+	evaluationRepo repo.IEvaluationRepo
 }
 
 func NewOrderService(
@@ -46,7 +48,9 @@ func NewOrderService(
 	userService *UserService,
 	productService *ProductService,
 	messageService *MessageService,
-	commonRepo commonRepo.IMiniConfigRepo) *OrderService {
+	commonRepo commonRepo.IMiniConfigRepo,
+	deductionRepo repo.IDeductionRepo,
+	evaluationRepo repo.IEvaluationRepo) *OrderService {
 
 	return &OrderService{
 		orderRepo:      repo,
@@ -55,6 +59,8 @@ func NewOrderService(
 		productService: productService,
 		messageService: messageService,
 		commonRepo:     commonRepo,
+		deductionRepo:  deductionRepo,
+		evaluationRepo: evaluationRepo,
 	}
 }
 
@@ -114,7 +120,23 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 		return nil, errors.New("查询不到数据")
 	}
 	orderVOS := utils.CopySlice[*po.Order, *vo.OrderVO](list)
+	// 获取老板等级
+	svc.doBuildUserGrade(ctx, orderVOS)
 	return api.WrapPageResult(&req.PageParams, orderVOS, 0), err
+}
+
+func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
+	// 1. 获取所有用户id
+	userIdList := utils.Map[*vo.OrderVO, uint](vos, func(in *vo.OrderVO) uint { return in.ProductID })
+	// 2. 查询userId对应老板的等级
+	userId2GradeMap, err := svc.userService.userRepo.FindGradeByUserIdList(userIdList)
+	if err != nil {
+		ctx.Logger().Errorf("[doBuildUserGrade]ERROR, %v", err)
+		return
+	}
+	utils.ForEach(vos, func(ele *vo.OrderVO) {
+		ele.UserGrade = userId2GradeMap.MustGet(ele.ProductID)
+	})
 }
 
 func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.PreferentialVO, error) {
@@ -219,6 +241,13 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 		}
 		// 检查用户是否需要升级等级了
 		svc.userService.checkUserGrade(ctx, orderPO.PurchaseId)
+		// 给用户发消息，并提醒其进行评价
+		message = fmt.Sprintf(
+			"尊敬的老板:您好，您的订单:%v，订单号：%v 已完成，请前往订单列表对打手进行评价",
+			orderPO.OrderName,
+			orderPO.OrderId,
+		)
+		_ = svc.messageService.PushSystemMessage(ctx, orderPO.ProductID, message)
 	}()
 	return nil
 }
@@ -392,4 +421,17 @@ func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error 
 
 func formatDate(date *time.Time) string {
 	return date.Format("2006-01-02")
+}
+
+func (svc OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) ([]*vo.WithDrawListVO, error) {
+	withdrawalRecords, err := svc.withdrawalRepo.ListWithdraw(ctx, utils.MustCopy[orderDTO.WithdrawListDTO](drawReq))
+	if err != nil {
+		ctx.Logger().Errorf("[WithDrawList]ERROR, err:%v", err.Error())
+		return nil, errors.New("查询失败")
+	}
+	vos := utils.CopySlice[*po.WithdrawalRecord, *vo.WithDrawListVO](withdrawalRecords)
+	utils.ForEach(vos, func(ele *vo.WithDrawListVO) {
+		ele.WithdrawalStatus = enum.WithdrawalStatus(ele.WithdrawalStatus).DisplayName()
+	})
+	return vos, nil
 }

@@ -43,6 +43,12 @@ type WithDrawReq struct {
 	Amount float64 `json:"amount" validate:"required"`
 }
 
+type WithDrawListReq struct {
+	*api.PageParams
+	Ge string `json:"search_GE_createTime"` // start time
+	Le string `json:"search_LE_createTime"` // end time
+}
+
 type OrderExecutorReq struct {
 	ExecutorType uint   `json:"executor_type" validate:"required"`
 	ExecutorName string `json:"executor_name"`

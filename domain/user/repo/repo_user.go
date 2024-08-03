@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
 	"mxclub/domain/user/entity/enum"
@@ -23,6 +24,7 @@ type IUserRepo interface {
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
 	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
 	FindByMemberNumber(memberNumber uint) (*po.User, error)
+	FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, string], error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
@@ -39,7 +41,7 @@ type IUserRepo interface {
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
 	userRepo := new(UserRepo)
-	userRepo.Db = db
+	userRepo.SetDB(db)
 	userRepo.ModelPO = new(po.User)
 	userRepo.Ctx = context.Background()
 	return userRepo
@@ -190,4 +192,24 @@ func (repo UserRepo) RemoveDasher(ctx jet.Ctx, id uint) error {
 	update.SetFilter("id = ?", id)
 	update.Set("role", enum.RoleWxUser)
 	return repo.UpdateByWrapper(update)
+}
+
+func (repo UserRepo) FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, string], error) {
+	type Pair struct {
+		Id      uint
+		WxGrade string `gorm:"column:wx_grade"`
+	}
+	var result []*Pair
+	err := repo.DB().
+		Raw(fmt.Sprintf("select id, wx_grade from %s where id in (?)", repo.ModelPO.TableName()), userIdList).
+		Scan(&result).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	var m = maps.NewHashMap[uint, string]()
+	for _, pair := range result {
+		m.Put(pair.Id, utils.GetOrDefault(pair.WxGrade, "LV0"))
+	}
+	return m, nil
 }

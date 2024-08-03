@@ -28,7 +28,7 @@ type IMiniConfigRepo interface {
 
 func NewIMiniConfigRepo(db *gorm.DB) IMiniConfigRepo {
 	repo := new(MiniConfigRepo)
-	repo.Db = db
+	repo.SetDB(db)
 	repo.ModelPO = new(po.MiniConfig)
 	repo.Ctx = context.Background()
 	return repo

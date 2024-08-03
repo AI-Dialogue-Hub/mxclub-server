@@ -33,7 +33,7 @@ type IMessageRepo interface {
 
 func NewMessageRepo(db *gorm.DB) IMessageRepo {
 	repo := new(MessageRepo)
-	repo.Db = db
+	repo.SetDB(db)
 	repo.ModelPO = new(po.Message)
 	repo.Ctx = context.Background()
 	return repo

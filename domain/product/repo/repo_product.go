@@ -26,7 +26,7 @@ type IProductRepo interface {
 
 func NewProductRepo(db *gorm.DB) IProductRepo {
 	repo := new(ProductRepo)
-	repo.Db = db
+	repo.SetDB(db)
 	repo.ModelPO = new(po.Product)
 	repo.Ctx = context.Background()
 	return repo

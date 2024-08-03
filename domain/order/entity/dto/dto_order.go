@@ -1,5 +1,10 @@
 package dto
 
+import (
+	"mxclub/domain/order/entity/enum"
+	"mxclub/pkg/api"
+)
+
 type OrderExecutorDTO struct {
 	ExecutorType uint // Two or three
 	ExecutorName string
@@ -17,4 +22,11 @@ type FinishOrderDTO struct {
 	ExecutorNum   int
 	ExecutorPrice float64
 	CutRate       float64 // aka 0.2
+}
+
+type WithdrawListDTO struct {
+	*api.PageParams `json:"page_params"`
+	Ge              string `json:"ge"` // GREATER THAN大于
+	Le              string `json:"le"` // LESS THAN小于
+	Status          *enum.WithdrawalStatus
 }

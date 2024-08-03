@@ -35,7 +35,9 @@ type OrderVO struct {
 	Executor3PriceNote string           `json:"executor3_price_note"`
 	PurchaseDate       *time.Time       `json:"purchase_date"`
 	CompletionDate     *time.Time       `json:"completion_date,omitempty"`
-	CutRate            float64          `json:"cut_rate"` // 抽成比例
+	CutRate            float64          `json:"cut_rate"`      // 抽成比例
+	UserGrade          string           `json:"user_grade"`    // 老板等级
+	IsEvaluation       bool             `json:"is_evaluation"` // 是否完成评价
 }
 
 type ProductVO struct {
@@ -65,4 +67,15 @@ type PreferentialVO struct {
 	PreferentialPrice float64 `json:"preferential_price"` // 优惠价格
 	DiscountRate      float64 `json:"discount_rate"`
 	DiscountInfo      string  `json:"discount_info"`
+}
+
+type WithDrawListVO struct {
+	ID               uint       `json:"id"`
+	PayerID          int        `json:"payer_id"`
+	WithdrawalAmount float64    `json:"withdrawal_amount"`
+	WithdrawalStatus string     `json:"withdrawal_status"`
+	ApplicationTime  *time.Time `json:"application_time"`
+	PaymentTime      *time.Time `json:"payment_time"`
+	WithdrawalMethod string     `json:"withdrawal_method"`
+	CreatedAt        time.Time  `json:"created_at"`
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"gorm.io/gorm"
+	"mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/common/xmysql"
@@ -21,11 +22,12 @@ type IWithdrawalRepo interface {
 	WithdrawnAmountNotReject(ctx jet.Ctx, dasherId uint) (float64, error)
 	ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error)
 	Withdrawn(ctx jet.Ctx, dasherId uint, dasherName string, amount float64) error
+	ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]*po.WithdrawalRecord, error)
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
 	repo := new(WithdrawalRepo)
-	repo.Db = db
+	repo.SetDB(db)
 	repo.ModelPO = new(po.WithdrawalRecord)
 	repo.Ctx = context.Background()
 	return repo
@@ -75,4 +77,19 @@ func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, dasherName stri
 		WithdrawalStatus: "initiated",
 		ApplicationTime:  core.Time(time.Now()),
 	})
+}
+
+func (repo WithdrawalRepo) ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]*po.WithdrawalRecord, error) {
+	query := xmysql.NewMysqlQuery()
+	query.SetPage(d.Page, d.PageSize)
+	query.SetFilter("created_at >= ? and created_at <= ?", d.Ge, d.Le)
+	if d.Status != nil {
+		query.SetFilter("status = ?", d.Status)
+	}
+	listNoCountByQuery, err := repo.ListNoCountByQuery(query)
+	if err != nil {
+		ctx.Logger().Errorf("[DeductionRepo]ListDeduction ERROR:%v", err)
+		return nil, err
+	}
+	return listNoCountByQuery, nil
 }
