@@ -21,12 +21,12 @@ func init() {
 type OrderService struct {
 	OrderRepo     repo.IOrderRepo
 	withdrawRepo  repo.IWithdrawalRepo
-	deductionRepo repo.DeductionRepo
+	deductionRepo repo.IDeductionRepo
 }
 
 func NewOrderService(repo repo.IOrderRepo,
 	withdrawRepo repo.IWithdrawalRepo,
-	deductionRepo repo.DeductionRepo) *OrderService {
+	deductionRepo repo.IDeductionRepo) *OrderService {
 	return &OrderService{OrderRepo: repo,
 		withdrawRepo:  withdrawRepo,
 		deductionRepo: deductionRepo,
