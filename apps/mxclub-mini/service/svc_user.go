@@ -251,3 +251,12 @@ func (svc UserService) checkUserGrade(ctx jet.Ctx, id uint) {
 		ctx.Logger().Errorf("[checkUserGrade]ERROR:%v", err.Error())
 	}
 }
+
+func (svc UserService) RemoveAssistant(ctx jet.Ctx) error {
+	err := svc.userRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
+	if err != nil {
+		ctx.Logger().Errorf("[RemoveAssistant]ERROR:%v", err)
+		return errors.New("注销打手失败")
+	}
+	return nil
+}

@@ -119,7 +119,7 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 
 func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.PreferentialVO, error) {
 	userId := middleware.MustGetUserId(ctx)
-	userPO, err := svc.userService.FindUserById(userId)
+	userById, err := svc.userService.FindUserById(userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
@@ -138,7 +138,7 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 		}, nil
 	}
 
-	rule, exists := enum.DiscountRules[userPO.WxGrade]
+	rule, exists := enum.DiscountRules[userById.WxGrade]
 
 	if !exists {
 		return nil, errors.New("不是会员")
@@ -151,7 +151,7 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 		DiscountedPrice:   discountedPrice,
 		PreferentialPrice: productVO.Price - discountedPrice,
 		DiscountRate:      rule.Discount,
-		DiscountInfo:      fmt.Sprintf("会员等级:%v,折扣:%v折", userPO.WxGrade, rule.Discount*100),
+		DiscountInfo:      fmt.Sprintf("会员等级:%v,折扣:%v折", userById.WxGrade, rule.Discount*100),
 	}, nil
 }
 
@@ -304,7 +304,7 @@ func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExec
 // ==================== 提现相关  ====================
 
 func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, error) {
-	userPO, err := svc.userService.FindUserById(middleware.MustGetUserId(ctx))
+	userById, err := svc.userService.FindUserById(middleware.MustGetUserId(ctx))
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, cannot find user:%v", middleware.MustGetUserId(ctx))
 		return nil, errors.New("cannot find user info")
@@ -319,15 +319,15 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	)
 	go func() {
 		defer func() { c1 <- struct{}{} }()
-		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userPO.MemberNumber)
+		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userById.MemberNumber)
 	}()
 	go func() {
 		defer func() { c2 <- struct{}{} }()
-		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userPO.MemberNumber)
+		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userById.MemberNumber)
 	}()
 	go func() {
 		defer func() { c3 <- struct{}{} }()
-		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userPO.MemberNumber)
+		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userById.MemberNumber)
 	}()
 
 	<-c1
@@ -349,8 +349,8 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	// 1. 添加提现记录
-	userPO, _ := svc.userService.FindUserById(userId)
-	err := svc.withdrawalRepo.Withdrawn(ctx, userPO.MemberNumber, userPO.Name, drawReq.Amount)
+	userById, _ := svc.userService.FindUserById(userId)
+	err := svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userById.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
 		return errors.New("提现失败，请联系管理员")

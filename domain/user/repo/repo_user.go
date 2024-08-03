@@ -34,6 +34,7 @@ type IUserRepo interface {
 	CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool
 	UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum.MemberStatus) error
 	UpdateUserPhone(ctx jet.Ctx, id uint, phone string) error
+	RemoveDasher(ctx jet.Ctx, id uint) error
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -181,4 +182,12 @@ func (repo UserRepo) UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickN
 		"wx_name":      nickName,
 		"wx_user_info": userInfoJson,
 	})
+}
+
+func (repo UserRepo) RemoveDasher(ctx jet.Ctx, id uint) error {
+	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", id)
+	update.Set("role", enum.RoleWxUser)
+	return repo.UpdateByWrapper(update)
 }
