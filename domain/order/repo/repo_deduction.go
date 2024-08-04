@@ -9,6 +9,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -18,7 +19,7 @@ func init() {
 type IDeductionRepo interface {
 	xmysql.IBaseRepo[po.Deduction]
 	TotalDeduct(ctx jet.Ctx, userId uint) (float64, error)
-	ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po.Deduction, error)
+	ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po.Deduction, int64, error)
 }
 
 func NewDeductionRepo(db *gorm.DB) IDeductionRepo {
@@ -35,8 +36,11 @@ type DeductionRepo struct {
 
 func (repo DeductionRepo) TotalDeduct(ctx jet.Ctx, userId uint) (float64, error) {
 	var result float64
-	sql := fmt.Sprintf("select COALESCE(sum(executor_price), 0) from %s where user_id = ? status = %v", repo.ModelPO.TableName(), enum.Deduct_SUCCESS)
-	err := repo.DB().Raw(sql, userId).Scan(&result).Error
+	sql := fmt.Sprintf(
+		"select COALESCE(sum(amount), 0) from %s where user_id = ? and status = ?",
+		repo.ModelPO.TableName(),
+	)
+	err := repo.DB().Raw(sql, userId, enum.Deduct_SUCCESS).Scan(&result).Error
 	if err != nil {
 		ctx.Logger().Errorf("[DeductionRepo]TotalDeduct ERROR:%v", err)
 		return 0, err
@@ -44,17 +48,23 @@ func (repo DeductionRepo) TotalDeduct(ctx jet.Ctx, userId uint) (float64, error)
 	return result, nil
 }
 
-func (repo DeductionRepo) ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po.Deduction, error) {
+func (repo DeductionRepo) ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po.Deduction, int64, error) {
 	query := xmysql.NewMysqlQuery()
 	query.SetPage(d.Page, d.PageSize)
-	query.SetFilter("created_at >= ? and created_at <= ?", d.Ge, d.Le)
+	if d.UserId > 0 {
+		query.SetFilter("user_id = ?", d.UserId)
+	}
+	if !utils.IsAnyBlank(d.Le, d.Ge) {
+		query.SetFilter("created_at >= ? and created_at <= ?", d.Ge, d.Le)
+	}
+	query.SetSort("id desc")
 	if d.Status != nil {
 		query.SetFilter("status = ?", d.Status)
 	}
-	listNoCountByQuery, err := repo.ListNoCountByQuery(query)
+	listNoCountByQuery, count, err := repo.ListByWrapper(ctx, query)
 	if err != nil {
 		ctx.Logger().Errorf("[DeductionRepo]ListDeduction ERROR:%v", err)
-		return nil, err
+		return nil, 0, err
 	}
-	return listNoCountByQuery, nil
+	return listNoCountByQuery, count, nil
 }

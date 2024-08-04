@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"gorm.io/gorm"
@@ -9,6 +10,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/common/xmysql"
+	"strings"
 	"time"
 )
 
@@ -21,8 +23,11 @@ type IWithdrawalRepo interface {
 	// WithdrawnAmountNotReject 用户历史提现金额，包括通过和进行中的
 	WithdrawnAmountNotReject(ctx jet.Ctx, dasherId uint) (float64, error)
 	ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error)
-	Withdrawn(ctx jet.Ctx, dasherId uint, dasherName string, amount float64) error
+	Withdrawn(ctx jet.Ctx, dasherId uint, userId uint, dasherName string, amount float64) error
 	ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]*po.WithdrawalRecord, error)
+	// ApproveWithdrawnAmountByDasherIds 打手们运行提现的钱
+	// @return 打手id -> 可以提现的钱
+	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []uint) (map[uint]float64, error)
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -69,9 +74,55 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (f
 	return amount, nil
 }
 
-func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, dasherName string, amount float64) error {
+func (repo WithdrawalRepo) ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []uint) (map[uint]float64, error) {
+	// 初始化结果map
+	results := make(map[uint]float64)
+
+	// 将dasherIds数组转换为逗号分隔的字符串
+	ids := make([]string, len(dasherIds))
+	for i, id := range dasherIds {
+		ids[i] = fmt.Sprintf("%d", id)
+	}
+	idsStr := strings.Join(ids, ",")
+
+	// 编写SQL查询，使用IN子句
+	sql := fmt.Sprintf(`SELECT dasher_id, COALESCE(SUM(withdrawal_amount), 0) AS amount 
+                        FROM withdrawal_records 
+                        WHERE dasher_id IN (%s) AND withdrawal_status = ? 
+                        GROUP BY dasher_id`, idsStr)
+
+	// 执行查询
+	rows, err := repo.DB().Raw(sql, enum.Completed()).Rows()
+	if err != nil {
+		ctx.Logger().Errorf("[ApproveWithdrawnAmountByDasherIds]ERROR:%v", err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	// 遍历查询结果
+	for rows.Next() {
+		var dasherId uint
+		var amount float64
+		if err = rows.Scan(&dasherId, &amount); err != nil {
+			ctx.Logger().Errorf("[ApproveWithdrawnAmountByDasherIds]ERROR:%v", err.Error())
+			return nil, err
+		}
+		results[dasherId] = amount
+	}
+
+	// 检查是否有行扫描错误
+	if err = rows.Err(); err != nil {
+		ctx.Logger().Errorf("[ApproveWithdrawnAmountByDasherIds]ERROR:%v", err.Error())
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, userId uint, dasherName string, amount float64) error {
 	return repo.InsertOne(&po.WithdrawalRecord{
 		DasherID:         dasherId,
+		DasherUserId:     userId,
 		DasherName:       dasherName,
 		WithdrawalAmount: amount,
 		WithdrawalStatus: "initiated",
@@ -82,7 +133,7 @@ func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, dasherName stri
 func (repo WithdrawalRepo) ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]*po.WithdrawalRecord, error) {
 	query := xmysql.NewMysqlQuery()
 	query.SetPage(d.Page, d.PageSize)
-	query.SetFilter("created_at >= ? and created_at <= ?", d.Ge, d.Le)
+	query.SetFilter("dasher_user_id = ? and created_at >= ? and created_at <= ?", d.UserId, d.Ge, d.Le)
 	if d.Status != nil {
 		query.SetFilter("status = ?", d.Status)
 	}

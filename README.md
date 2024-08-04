@@ -1,6 +1,6 @@
 # mxclub-server
 
-#### 目录结构
+## 目录结构
 
 - apps
   - mxclub-mini：小程序
@@ -21,7 +21,21 @@
   - main.go - 主函数
 - infra - 基础设施组件
 
-```shell
-go run apps/mxclub-mini/main.go -f E:\\workspace\\goland\\config\\mxclub.yml
-```
+## 设计逻辑
+
+### 订单完成状态状态流传逻辑设计
+
+使用BPM对订单完成之后的流程进行管理，我们可以对订单结束后的操作分为以下几个步骤
+
+1. 更新订单状态
+2. 计算并分配报酬
+3. 发送通知消息
+4. 检查用户等级
+5. 提醒用户评价
+
+
+
+
+
+
 

@@ -10,4 +10,5 @@ type DeductionDTO struct {
 	Ge              string `json:"ge"` // GREATER THAN大于
 	Le              string `json:"le"` // LESS THAN小于
 	Status          *enum.DeductStatus
+	UserId          uint
 }

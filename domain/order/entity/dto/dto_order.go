@@ -29,4 +29,5 @@ type WithdrawListDTO struct {
 	Ge              string `json:"ge"` // GREATER THAN大于
 	Le              string `json:"le"` // LESS THAN小于
 	Status          *enum.WithdrawalStatus
+	UserId          uint
 }

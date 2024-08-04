@@ -12,10 +12,9 @@ type Deduction struct {
 	Amount          float64
 	Reason          string
 	Status          enum.DeductStatus `gorm:"default:'PENDING'"`
-
-	CreatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
-	DeletedAt *time.Time `gorm:"default:NULL"`
+	CreatedAt       time.Time         `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedAt       time.Time         `gorm:"default:CURRENT_TIMESTAMP"`
+	DeletedAt       *time.Time        `gorm:"default:NULL"`
 }
 
 func (*Deduction) TableName() string {

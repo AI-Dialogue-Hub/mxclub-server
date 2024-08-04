@@ -13,6 +13,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	orderDTO "mxclub/domain/order/entity/dto"
+	"sync"
 
 	commonEnum "mxclub/domain/common/entity/enum"
 	commonRepo "mxclub/domain/common/repo"
@@ -104,11 +105,9 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		return errors.New("订单保存保存失败，请联系客服")
 	}
 	// 4. 如果指定订单，给打手发送接单消息
-	go func() {
-		if req.SpecifyExecutor {
-			_ = svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId, ""))
-		}
-	}()
+	if req.SpecifyExecutor {
+		go svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId, ""))
+	}
 	return nil
 }
 
@@ -127,7 +126,7 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 
 func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 	// 1. 获取所有用户id
-	userIdList := utils.Map[*vo.OrderVO, uint](vos, func(in *vo.OrderVO) uint { return in.ProductID })
+	userIdList := utils.Map[*vo.OrderVO, uint](vos, func(in *vo.OrderVO) uint { return in.PurchaseId })
 	// 2. 查询userId对应老板的等级
 	userId2GradeMap, err := svc.userService.userRepo.FindGradeByUserIdList(userIdList)
 	if err != nil {
@@ -135,7 +134,7 @@ func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 		return
 	}
 	utils.ForEach(vos, func(ele *vo.OrderVO) {
-		ele.UserGrade = userId2GradeMap.MustGet(ele.ProductID)
+		ele.UserGrade = userId2GradeMap.MustGet(ele.PurchaseId)
 	})
 }
 
@@ -203,46 +202,18 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 	}
 	go func() {
 		defer utils.RecoverAndLogError(ctx)
-		// 车头
-		dashPO, _ := svc.userService.FindUserByDashId(orderPO.ExecutorID)
-		message := fmt.Sprintf(
-			"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
-			dashPO.MemberNumber,
-			dashPO.Name,
-			orderPO.OrderName,
-			orderPO.OrderId,
-			executorPrice,
-		)
-		_ = svc.messageService.PushSystemMessage(ctx, dashPO.ID, message)
+		svc.SendMessagesToExecutors(ctx, orderPO, orderPO.ExecutorID, executorPrice)
 		// 给其他打手发送打钱消息
 		if orderPO.Executor2Id != 0 {
-			dash2PO, _ := svc.userService.FindUserByDashId(orderPO.Executor2Id)
-			message = fmt.Sprintf(
-				"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
-				dash2PO.MemberNumber,
-				dash2PO.Name,
-				orderPO.OrderName,
-				orderPO.OrderId,
-				executorPrice,
-			)
-			_ = svc.messageService.PushSystemMessage(ctx, dash2PO.ID, message)
+			svc.SendMessagesToExecutors(ctx, orderPO, orderPO.Executor2Id, executorPrice)
 		}
 		if orderPO.Executor3Id != 0 {
-			dash3PO, _ := svc.userService.FindUserByDashId(orderPO.Executor3Id)
-			message = fmt.Sprintf(
-				"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
-				dash3PO.MemberNumber,
-				dash3PO.Name,
-				orderPO.OrderName,
-				orderPO.OrderId,
-				executorPrice,
-			)
-			_ = svc.messageService.PushSystemMessage(ctx, dash3PO.ID, message)
+			svc.SendMessagesToExecutors(ctx, orderPO, orderPO.Executor3Id, executorPrice)
 		}
 		// 检查用户是否需要升级等级了
 		svc.userService.checkUserGrade(ctx, orderPO.PurchaseId)
 		// 给用户发消息，并提醒其进行评价
-		message = fmt.Sprintf(
+		message := fmt.Sprintf(
 			"尊敬的老板:您好，您的订单:%v，订单号：%v 已完成，请前往订单列表对打手进行评价",
 			orderPO.OrderName,
 			orderPO.OrderId,
@@ -250,6 +221,19 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 		_ = svc.messageService.PushSystemMessage(ctx, orderPO.ProductID, message)
 	}()
 	return nil
+}
+
+func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, executorID uint, executorPrice float64) {
+	dashPO, _ := svc.userService.FindUserByDashId(executorID)
+	message := fmt.Sprintf(
+		"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
+		dashPO.MemberNumber,
+		dashPO.Name,
+		orderPO.OrderName,
+		orderPO.OrderId,
+		executorPrice,
+	)
+	_ = svc.messageService.PushSystemMessage(ctx, dashPO.ID, message)
 }
 
 // getCutRate 返回小数抽成比例
@@ -333,35 +317,46 @@ func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExec
 // ==================== 提现相关  ====================
 
 func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, error) {
-	userById, err := svc.userService.FindUserById(middleware.MustGetUserId(ctx))
+	userId := middleware.MustGetUserId(ctx)
+	userById, err := svc.userService.FindUserById(userId)
 	if err != nil {
-		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, cannot find user:%v", middleware.MustGetUserId(ctx))
+		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, cannot find user:%v", userId)
 		return nil, errors.New("cannot find user info")
 	}
 	var (
 		approveWithdrawnAmount  float64
 		withdrawnAmount         float64
 		orderWithdrawAbleAmount float64
-		c1                      = make(chan struct{})
-		c2                      = make(chan struct{})
-		c3                      = make(chan struct{})
+		totalDeduct             float64
+		wg                      = new(sync.WaitGroup)
 	)
+
+	wg.Add(4)
+
 	go func() {
-		defer func() { c1 <- struct{}{} }()
+		defer wg.Done()
 		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userById.MemberNumber)
 	}()
 	go func() {
-		defer func() { c2 <- struct{}{} }()
+		defer wg.Done()
 		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userById.MemberNumber)
 	}()
 	go func() {
-		defer func() { c3 <- struct{}{} }()
+		defer wg.Done()
 		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userById.MemberNumber)
 	}()
 
-	<-c1
-	<-c2
-	<-c3
+	go func() {
+		defer wg.Done()
+		totalDeduct, _ = svc.deductionRepo.TotalDeduct(ctx, userId)
+	}()
+
+	wg.Wait()
+
+	ctx.Logger().Infof(
+		"dashId:%v, approveWithdrawnAmount:%v, withdrawnAmount:%v, orderWithdrawAbleAmount:%v,totalDeduct:%v",
+		userById.MemberNumber, approveWithdrawnAmount, withdrawnAmount, orderWithdrawAbleAmount, totalDeduct,
+	)
 
 	if approveWithdrawnAmount > orderWithdrawAbleAmount {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, approveWithdrawnAmount: %v gt orderWithdrawAbleAmount:%v", approveWithdrawnAmount, orderWithdrawAbleAmount)
@@ -369,7 +364,7 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	}
 	return &vo.WithDrawVO{
 		HistoryWithDrawAmount: approveWithdrawnAmount,
-		WithdrawAbleAmount:    orderWithdrawAbleAmount - withdrawnAmount,
+		WithdrawAbleAmount:    orderWithdrawAbleAmount - withdrawnAmount - totalDeduct,
 		WithdrawRangeMax:      20000,
 		WithdrawRangeMin:      200,
 	}, nil
@@ -379,7 +374,7 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	// 1. 添加提现记录
 	userById, _ := svc.userService.FindUserById(userId)
-	err := svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userById.Name, drawReq.Amount)
+	err := svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userId, userById.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
 		return errors.New("提现失败，请联系管理员")
@@ -424,7 +419,9 @@ func formatDate(date *time.Time) string {
 }
 
 func (svc OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) ([]*vo.WithDrawListVO, error) {
-	withdrawalRecords, err := svc.withdrawalRepo.ListWithdraw(ctx, utils.MustCopy[orderDTO.WithdrawListDTO](drawReq))
+	query := utils.MustCopy[orderDTO.WithdrawListDTO](drawReq)
+	query.UserId = middleware.MustGetUserId(ctx)
+	withdrawalRecords, err := svc.withdrawalRepo.ListWithdraw(ctx, query)
 	if err != nil {
 		ctx.Logger().Errorf("[WithDrawList]ERROR, err:%v", err.Error())
 		return nil, errors.New("查询失败")

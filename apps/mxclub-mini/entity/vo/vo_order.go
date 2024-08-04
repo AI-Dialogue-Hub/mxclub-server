@@ -7,9 +7,11 @@ import (
 )
 
 type OrderVO struct {
-	ID                 uint             `json:"id"`
-	OrderId            uint64           `json:"order_id"`
-	OrderName          string           `json:"order_name"`
+	ID         uint   `json:"id"`
+	OrderId    uint64 `json:"order_id"`
+	OrderName  string `json:"order_name"`
+	PurchaseId uint   `json:"purchase_id"`
+
 	OrderStatus        enum.OrderStatus `json:"order_status"`
 	OriginalPrice      float64          `json:"original_price"`
 	OrderIcon          string           `json:"icon"`

@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
+	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
@@ -16,9 +17,9 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 		PageParams: listReq.PageParams,
 		Ge:         listReq.Ge,
 		Le:         listReq.Le,
-		Status:     nil,
+		UserId:     middleware.MustGetUserId(ctx),
 	}
-	listDeduction, err := svc.deductionRepo.ListDeduction(ctx, d)
+	listDeduction, _, err := svc.deductionRepo.ListDeduction(ctx, d)
 	if err != nil {
 		ctx.Logger().Errorf("[OrderService]ListWithdraw ERROR:%v", err.Error())
 		return nil, errors.New("获取失败")
