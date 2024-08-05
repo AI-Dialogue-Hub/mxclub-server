@@ -35,6 +35,12 @@ func (ctl OrderController) PostV1OrderList(ctx jet.Ctx, params *req.OrderListReq
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 
+func (ctl OrderController) DeleteV1Order(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
+	orderId, _ := param.GetInt64(0)
+	err := ctl.orderService.orderRepo.RemoveByID(orderId)
+	return xjet.WrapperResult(ctx, "ok", err)
+}
+
 // PostV1WithdrawInfo 这里是查询信息
 func (ctl OrderController) PostV1WithdrawInfo(ctx jet.Ctx) (*api.Response, error) {
 	withDrawVO, err := ctl.orderService.HistoryWithDrawAmount(ctx)
