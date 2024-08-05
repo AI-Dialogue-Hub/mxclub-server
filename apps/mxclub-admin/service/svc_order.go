@@ -18,7 +18,7 @@ func init() {
 }
 
 type OrderService struct {
-	OrderRepo     repo.IOrderRepo
+	orderRepo     repo.IOrderRepo
 	withdrawRepo  repo.IWithdrawalRepo
 	deductionRepo repo.IDeductionRepo
 }
@@ -26,7 +26,7 @@ type OrderService struct {
 func NewOrderService(repo repo.IOrderRepo,
 	withdrawRepo repo.IWithdrawalRepo,
 	deductionRepo repo.IDeductionRepo) *OrderService {
-	return &OrderService{OrderRepo: repo,
+	return &OrderService{orderRepo: repo,
 		withdrawRepo:  withdrawRepo,
 		deductionRepo: deductionRepo,
 	}
@@ -36,7 +36,7 @@ func NewOrderService(repo repo.IOrderRepo,
 
 func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.PageResult, error) {
 	status := enum.ParseOrderStatusByString(orderReq.OrderStatus)
-	list, count, err := svc.OrderRepo.ListAroundCache(ctx, orderReq.PageParams, orderReq.Ge, orderReq.Le, status)
+	list, count, err := svc.orderRepo.ListAroundCache(ctx, orderReq.PageParams, orderReq.Ge, orderReq.Le, status)
 	if err != nil {
 		ctx.Logger().Errorf("[OrderService]List ERROR:%v", err.Error())
 		return nil, errors.New("获取失败")
@@ -73,4 +73,8 @@ func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpda
 	update.Set("withdrawal_status", updateReq.WithdrawalStatus)
 	update.Set("withdrawal_method", updateReq.WithdrawalMethod)
 	return svc.withdrawRepo.UpdateByWrapper(update)
+}
+
+func (svc OrderService) RemoveByID(id int64) error {
+	return svc.orderRepo.RemoveByID(id)
 }

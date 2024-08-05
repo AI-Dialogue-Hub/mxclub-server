@@ -34,7 +34,7 @@ type NotifyReq struct {
 }
 
 func (ctl WxPayController) PostWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[string, any]) (*api.Response, error) {
-	ctx.Logger().Infof("%v", utils.ObjToJsonStr(params))
+	ctx.Logger().Infof("[PostWxpayNotify] %v", utils.ObjToJsonStr(params))
 	return xjet.WrapperResult(ctx, "ok", nil)
 }
 

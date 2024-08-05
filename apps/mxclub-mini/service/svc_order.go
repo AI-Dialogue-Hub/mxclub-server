@@ -432,3 +432,7 @@ func (svc OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) 
 	})
 	return vos, nil
 }
+
+func (svc OrderService) RemoveByID(id int64) error {
+	return svc.orderRepo.RemoveByID(id)
+}

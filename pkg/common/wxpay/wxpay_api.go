@@ -60,3 +60,7 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 	}
 	return
 }
+
+// refunds 退款
+func refunds() {
+}

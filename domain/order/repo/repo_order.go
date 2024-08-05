@@ -107,8 +107,18 @@ func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, l
 	// 	}
 	// 	return list, count, nil
 	// })
-	
-	list, count, err := repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
+
+	query := xmysql.NewMysqlQuery()
+
+	query.SetPage(params.Page, params.PageSize)
+
+	query.SetFilter("purchase_date >= ? and purchase_date <= ?", ge, le)
+
+	if status != 0 {
+		query.SetFilter("order_status = ?", status)
+	}
+
+	list, count, err := repo.ListByWrapper(ctx, query)
 
 	if err != nil {
 		ctx.Logger().Errorf("ListAroundCache 错误: %v", err)
@@ -245,7 +255,7 @@ func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDT
 }
 
 func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error {
-	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]OrderRepo GrabOrder", ctx.Logger().ReqId))
+	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]orderRepo GrabOrder", ctx.Logger().ReqId))
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	tx := repo.DB().Begin()
 	// 1. 读取一个未被抢单的订单，并锁定该行（读取锁）
