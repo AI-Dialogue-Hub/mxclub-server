@@ -92,21 +92,26 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, pa
 
 func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error) {
 	// 根据页码参数生成唯一的缓存键
-	cacheListKey := xredis.BuildListDataCacheKey(cachePrefix+ge+le+status.String(), params)
-	cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + ge + le + status.String())
+	//cacheListKey := xredis.BuildListDataCacheKey(cachePrefix+ge+le+status.String(), params)
+	//cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + ge + le + status.String())
 
-	list, count, err := xredis.GetListOrDefault[po.Order](ctx, cacheListKey, cacheCountKey, func() (list []*po.Order, count int64, err error) {
-		// 如果缓存中未找到，则从数据库中获取
-		if status == 0 {
-			list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
-		} else {
-			list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
-		}
-		if err != nil {
-			return nil, 0, err
-		}
-		return list, count, nil
-	})
+	// list, count, err := xredis.GetListOrDefault[po.Order](ctx, cacheListKey, cacheCountKey, func() (list []*po.Order, count int64, err error) {
+	// 	// 如果缓存中未找到，则从数据库中获取
+	// 	if status == 0 {
+	// 		list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
+	// 	} else {
+	// 		list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
+	// 	}
+	// 	if err != nil {
+	// 		return nil, 0, err
+	// 	}
+	// 	return list, count, nil
+	// })
+	if status == 0 {
+		list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
+	} else {
+		list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
+	}
 	if err != nil {
 		ctx.Logger().Errorf("ListAroundCache 错误: %v", err)
 		return nil, 0, err
