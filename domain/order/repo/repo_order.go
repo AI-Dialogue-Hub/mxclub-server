@@ -108,9 +108,9 @@ func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, l
 	// 	return list, count, nil
 	// })
 	if status == 0 {
-		list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
+		list, count, err := repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ?", ge, le)
 	} else {
-		list, count, err = repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
+		list, count, err := repo.List(params.Page, params.PageSize, "purchase_date >= ? and purchase_date <= ? and order_status = ?", ge, le, status)
 	}
 	if err != nil {
 		ctx.Logger().Errorf("ListAroundCache 错误: %v", err)
