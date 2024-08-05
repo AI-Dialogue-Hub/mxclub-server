@@ -30,6 +30,12 @@ func (ctl OrderController) PostV1OrderList(ctx jet.Ctx, req *req.OrderListReq) (
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 
+func (ctl OrderController) DeleteV1Order(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
+	orderId, _ := param.GetInt64(0)
+	err := ctl.orderService.orderRepo.RemoveByID(orderId)
+	return xjet.WrapperResult(ctx, "ok", err)
+}
+
 // 提现相关
 
 func (ctl OrderController) PostV1WithdrawList(ctx jet.Ctx, req *req.WitchDrawListReq) (*api.Response, error) {
