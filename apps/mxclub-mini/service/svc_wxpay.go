@@ -43,10 +43,12 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx) {
 		ctx.Logger().Errorf("[DecryptWxpayCallBack] %v", err)
 		return
 	}
+	objToMap := utils.ObjToMap(*transaction)
 	err = s.wxpayCallbackRepo.InsertOne(&po.WxPayCallback{
 		OutTradeNo: *transaction.OutTradeNo,
-		RawData:    utils.ObjToMap(*transaction),
+		RawData:    objToMap,
 	})
+	ctx.Logger().Infof("%v", utils.ObjToJsonStr(objToMap))
 	if err != nil {
 		ctx.Logger().Errorf("[DecryptWxpayCallBack] %v", err)
 	}
