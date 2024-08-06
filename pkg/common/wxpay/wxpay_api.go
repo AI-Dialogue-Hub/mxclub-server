@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
+	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
+	"net/http"
 	"time"
 )
 
@@ -61,6 +65,54 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 	return
 }
 
-// refunds 退款
-func refunds() {
+// Refunds 退款 仅支持全部退款
+func Refunds(ctx jet.Ctx, transaction *payments.Transaction, outRefundNo, reason string) error {
+	log := ctx.Logger()
+	request := refunddomestic.CreateRequest{
+		TransactionId: transaction.TransactionId,
+		OutTradeNo:    transaction.OutTradeNo,
+		OutRefundNo:   core.String(outRefundNo),
+		Reason:        core.String(reason),
+		NotifyUrl:     core.String("https://mx.fengxianhub.top/refunds/refuse/notify"),
+		FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
+		Amount: &refunddomestic.AmountReq{
+			Currency: core.String("CNY"),
+			From: []refunddomestic.FundsFromItem{{
+				Account: refunddomestic.ACCOUNT_AVAILABLE.Ptr(),
+				Amount:  transaction.Amount.PayerTotal,
+			}},
+			Refund: transaction.Amount.Total,
+			Total:  transaction.Amount.Total,
+		},
+	}
+	resp, result, err := refundsApiService.Create(context.Background(), request)
+	if err != nil {
+		// 处理错误
+		log.Printf("call Create err:%s", err)
+		return err
+	} else {
+		// 处理返回结果
+		log.Printf("status=%d resp=%s", result.Response.StatusCode, resp)
+	}
+	return nil
+}
+
+// DecryptWxpayCallBack 解密支付成功后的回调
+func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
+	var (
+		req *http.Request
+		err error
+	)
+	req, err = xjet.ConvertFastHTTPRequestToStandard(ctx.Request())
+	if err != nil {
+		return nil, err
+	}
+	transaction := new(payments.Transaction)
+	notifyReq, err := notifyHandler.ParseNotifyRequest(context.Background(), req, transaction)
+	if err != nil {
+		return nil, err
+	}
+	ctx.Logger().Infof("notifyReq Summary:%v\n", notifyReq.Summary)
+	ctx.Logger().Infof("transactionId:%v", transaction.TransactionId)
+	return transaction, nil
 }

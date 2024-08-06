@@ -43,17 +43,17 @@ type OrderVO struct {
 }
 
 type ProductVO struct {
-	ID               uint        `json:"id"`
-	Title            string      `json:"title"`
-	Price            float64     `json:"price"`
-	DiscountRuleID   int         `json:"discount_rule_id"`
-	DiscountPrice    float64     `json:"discount_price"`
-	FinalPrice       float64     `json:"final_price"`
-	Description      string      `json:"description"`
-	ShortDescription string      `json:"short_description"`
-	Images           xmysql.JSON `json:"images"`
-	DetailImages     xmysql.JSON `json:"detail_images"`
-	Thumbnail        string      `json:"thumbnail"`
+	ID               uint               `json:"id"`
+	Title            string             `json:"title"`
+	Price            float64            `json:"price"`
+	DiscountRuleID   int                `json:"discount_rule_id"`
+	DiscountPrice    float64            `json:"discount_price"`
+	FinalPrice       float64            `json:"final_price"`
+	Description      string             `json:"description"`
+	ShortDescription string             `json:"short_description"`
+	Images           xmysql.StringArray `json:"images"`
+	DetailImages     xmysql.StringArray `json:"detail_images"`
+	Thumbnail        string             `json:"thumbnail"`
 }
 
 type WithDrawVO struct {

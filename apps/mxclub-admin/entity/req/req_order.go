@@ -22,3 +22,8 @@ type WitchDrawUpdateReq struct {
 	WithdrawalStatus string `json:"withdrawal_status"`
 	WithdrawalMethod string `json:"withdrawal_method"`
 }
+
+type WxPayRefundsReq struct {
+	OutTradeNo string `json:"out_trade_no,omitempty" validate:"required" reg_err_info:"不能为空"`
+	Reason     string `json:"reason"`
+}

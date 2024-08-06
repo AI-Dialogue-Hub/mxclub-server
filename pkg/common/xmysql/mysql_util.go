@@ -29,8 +29,19 @@ func (j *JSONArray) Scan(value interface{}) error {
 	return nil
 }
 
-// JSON type to handle JSON encoding/decoding
-type JSON []string
+// StringArray type to handle StringArray encoding/decoding
+type StringArray []string
+
+func (j *StringArray) Scan(value interface{}) error {
+	return json.Unmarshal(value.([]byte), j)
+}
+
+func (j StringArray) Value() (driver.Value, error) {
+	return json.Marshal(j)
+}
+
+// JSON type to handle StringArray encoding/decoding
+type JSON map[string]any
 
 func (j *JSON) Scan(value interface{}) error {
 	return json.Unmarshal(value.([]byte), j)

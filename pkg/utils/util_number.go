@@ -102,6 +102,17 @@ func ParseUint64(args interface{}) uint64 {
 	return uint64(ParseInt64(args))
 }
 
+func SafeParseUint64(args interface{}) (result uint64) {
+	defer func() {
+		if err := recover(); err != nil {
+			xlog.Errorf("SafeParseUint64 ERROR:%v", err)
+			result = 0
+		}
+	}()
+	result = uint64(ParseInt64(args))
+	return
+}
+
 func ParseInt(args interface{}) int {
 	return ParseDefaultInt(args, func(str string) (interface{}, error) {
 		return strconv.Atoi(str)

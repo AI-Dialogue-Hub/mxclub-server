@@ -20,7 +20,7 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 	}
 	listDeduction, total, err := svc.deductionRepo.ListDeduction(ctx, d)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]ListWithdraw ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]ListWithdraw ERROR:%v", err.Error())
 		return nil, 0, errors.New("获取失败")
 	}
 	vos := utils.CopySlice[*po.Deduction, *vo.DeductionVO](listDeduction)
@@ -34,7 +34,7 @@ func (svc OrderService) Add(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
 	deductPO := utils.MustCopy[po.Deduction](addReq)
 	err := svc.deductionRepo.InsertOne(deductPO)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]Add ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]Add ERROR:%v", err.Error())
 		return errors.New("添加失败")
 	}
 	return nil
@@ -48,7 +48,7 @@ func (svc OrderService) Update(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) e
 	}
 	err := svc.deductionRepo.Update(updateMap, "id = ?", updateReq.ID)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]Update ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]Update ERROR:%v", err.Error())
 		return errors.New("修改失败")
 	}
 	return nil
@@ -57,7 +57,7 @@ func (svc OrderService) Update(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) e
 func (svc OrderService) Delete(ctx jet.Ctx, id uint) error {
 	err := svc.deductionRepo.RemoveByID(id)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]Delete ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]Delete ERROR:%v", err.Error())
 		return errors.New("删除失败")
 	}
 	return nil

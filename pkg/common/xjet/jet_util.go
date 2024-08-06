@@ -1,8 +1,13 @@
 package xjet
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/valyala/fasthttp"
 	"mxclub/pkg/api"
+	"net/http"
+	"net/url"
 )
 
 func NewCommonJetController[T jet.IJetController]() {
@@ -39,4 +44,40 @@ func IsAnyEmpty(strs ...string) bool {
 		}
 	}
 	return false
+}
+
+// ConvertFastHTTPRequestToStandard converts a *fasthttp.Request to a *http.Request
+func ConvertFastHTTPRequestToStandard(fastReq *fasthttp.Request) (*http.Request, error) {
+	// 获取请求方法
+	method := string(fastReq.Header.Method())
+
+	// 获取请求URL
+	uri := fastReq.URI()
+	url := &url.URL{
+		Scheme:   string(uri.Scheme()),
+		Host:     string(uri.Host()),
+		Path:     string(uri.Path()),
+		RawPath:  string(uri.PathOriginal()),
+		RawQuery: string(uri.QueryString()),
+	}
+
+	// 获取请求头部
+	header := make(http.Header)
+	fastReq.Header.VisitAll(func(key, value []byte) {
+		header.Add(string(key), string(value))
+	})
+
+	// 获取请求正文
+	body := bytes.NewReader(fastReq.Body())
+
+	// 创建新的http.Request实例
+	req, err := http.NewRequest(method, url.String(), body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create http.Request: %w", err)
+	}
+
+	// 复制请求头部
+	req.Header = header
+
+	return req, nil
 }

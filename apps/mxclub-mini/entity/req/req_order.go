@@ -23,6 +23,7 @@ type OrderReq struct {
 	RoleId          string `json:"role_id"`
 	OrderName       string `json:"order_name"`
 	OrderIcon       string `json:"order_icon"`
+	OrderTradeNo    string `json:"out_trade_no"`
 }
 
 type OrderFinishReq struct {

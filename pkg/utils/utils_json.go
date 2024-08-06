@@ -27,6 +27,14 @@ func ObjToByte(in interface{}) (buf []byte, err error) {
 	return
 }
 
+func MustObjToByte(in interface{}) []byte {
+	buf, err := json.Marshal(in)
+	if err != nil {
+		xlog.Errorf("MustObjToByte error: %v", err)
+	}
+	return buf
+}
+
 func ByteToObj(buf []byte, out interface{}) (err error) {
 	dc := json.NewDecoder(bytes.NewReader(buf))
 	dc.UseNumber()
@@ -117,6 +125,24 @@ func MapToObj(maps map[string]interface{}, out interface{}) error {
 	}
 
 	return nil
+}
+
+func MustMapToObj[T any](maps map[string]any) *T {
+	buf, err := json.Marshal(maps)
+	if err != nil {
+		xlog.Errorf("MustMapToObj:%v", err)
+		return nil
+	}
+	t := new(T)
+	err = json.Unmarshal(buf, t)
+	if err != nil {
+		if err != nil {
+			xlog.Errorf("MustMapToObj:%v", err)
+			return nil
+		}
+		return nil
+	}
+	return t
 }
 
 func ObjToJsonStr(obj interface{}) (str string) {

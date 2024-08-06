@@ -21,7 +21,7 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 	}
 	listDeduction, _, err := svc.deductionRepo.ListDeduction(ctx, d)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]ListWithdraw ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]ListWithdraw ERROR:%v", err.Error())
 		return nil, errors.New("获取失败")
 	}
 	vos := utils.CopySlice[*po.Deduction, *vo.DeductionVO](listDeduction)

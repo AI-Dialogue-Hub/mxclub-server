@@ -202,7 +202,7 @@ func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", d.Id)
-	update.Set("detail_images", xmysql.JSON(d.Images))
+	update.Set("detail_images", xmysql.StringArray(d.Images))
 	update.Set("completion_date", core.Time(time.Now()))
 	update.Set("order_status", enum.SUCCESS)
 	update.Set("executor_price", d.ExecutorPrice)

@@ -23,7 +23,6 @@ import (
 	"mxclub/domain/order/repo"
 	userPO "mxclub/domain/user/po"
 	"mxclub/pkg/api"
-	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/utils"
 	"time"
 )
@@ -78,7 +77,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	dashPO, _ := f1.Get()
 	// 2. 创建订单
 	order := &po.Order{
-		OrderId:         utils.ParseUint64(wxpay.GenerateUniqueOrderNumber()),
+		OrderId:         utils.SafeParseUint64(req.OrderTradeNo),
 		PurchaseId:      userId,
 		OrderName:       req.OrderName,
 		OrderIcon:       req.OrderIcon,
@@ -100,7 +99,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	// 3. 保存订单
 	err := svc.orderRepo.InsertOne(order)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]Add ERROR, %v", err.Error())
+		ctx.Logger().Errorf("[orderService]Add ERROR, %v", err.Error())
 		ctx.Logger().Errorf("order:%v", utils.ObjToJsonStr(order))
 		return errors.New("订单保存保存失败，请联系客服")
 	}
@@ -115,12 +114,15 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 	userId := middleware.MustGetUserId(ctx)
 	list, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams, req.Ge, req.Le, req.MemberNumber, userId)
 	if err != nil {
-		ctx.Logger().Errorf("[OrderService]List ERROR, %v", err.Error())
+		ctx.Logger().Errorf("[orderService]List ERROR, %v", err.Error())
 		return nil, errors.New("查询不到数据")
 	}
 	orderVOS := utils.CopySlice[*po.Order, *vo.OrderVO](list)
-	// 获取老板等级
-	svc.doBuildUserGrade(ctx, orderVOS)
+	// 打手查看老板等级
+	if req.MemberNumber > 0 {
+		// 获取老板等级
+		svc.doBuildUserGrade(ctx, orderVOS)
+	}
 	return api.WrapPageResult(&req.PageParams, orderVOS, 0), err
 }
 

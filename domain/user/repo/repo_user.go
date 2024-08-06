@@ -191,6 +191,7 @@ func (repo UserRepo) RemoveDasher(ctx jet.Ctx, id uint) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", id)
 	update.Set("role", enum.RoleWxUser)
+	update.Set("member_number", 0)
 	return repo.UpdateByWrapper(update)
 }
 

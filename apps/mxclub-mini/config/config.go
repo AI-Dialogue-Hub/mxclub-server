@@ -51,7 +51,7 @@ func init() {
 	<-c2
 	<-c1
 	// wxPay
-	wxpay.NewWxPayClient(config.WxPayConfig)
+	wxpay.InitWxPay(config.WxPayConfig)
 }
 
 type Config struct {
