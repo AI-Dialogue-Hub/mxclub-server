@@ -49,6 +49,7 @@ type IOrderRepo interface {
 	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id uint, executor2Name string) error
 	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id uint, executor3Name string) error
 	DoneEvaluation(id uint) error
+	RemoveByTradeNo(orderNo string) error
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -318,4 +319,8 @@ func (repo OrderRepo) DoneEvaluation(id uint) error {
 	update.SetFilter("id = ?", id)
 	update.Set("is_evaluation", true)
 	return repo.UpdateByWrapper(update)
+}
+
+func (repo OrderRepo) RemoveByTradeNo(orderNo string) error {
+	return repo.RemoveOne("order_id = ?", orderNo)
 }

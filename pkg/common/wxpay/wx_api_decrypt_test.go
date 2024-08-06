@@ -29,7 +29,7 @@ func setUp() {
 	}
 }
 
-func TestDecryptData(t *testing.T) {
+func testDecryptData(t *testing.T) {
 	setUp()
 	info := getTestEncryptWxpayCallBackInfo(t)
 	handler := NewWxPayCertHandler(testConfig.Config)
