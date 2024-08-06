@@ -19,11 +19,12 @@ import (
 )
 
 func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
+	outTradeNo := prePayRequestDTO.OutTradeNo
 	request := jsapi.PrepayRequest{
 		Appid:         core.String(wxPayConfig.AppId),
 		Mchid:         core.String(wxPayConfig.MchID),
 		Description:   core.String("明星电竞-代打订单"),
-		OutTradeNo:    core.String(prePayRequestDTO.OutTradeNo),
+		OutTradeNo:    core.String(outTradeNo),
 		TimeExpire:    core.Time(time.Now().Add(time.Minute * 15)),
 		Attach:        core.String("自定义数据说明"),
 		NotifyUrl:     core.String("https://mx.fengxianhub.top/wxpay/notify"),
@@ -58,12 +59,13 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 		ctx.Logger().Errorf("[Prepay]getRSASignature: %v\nresp:%v\nresult:%v", err.Error(), resp, result)
 	}
 	prepayDTO = &PrePayDTO{
-		AppId:     wxPayConfig.AppId,
-		TimeStamp: timeStampStr,
-		NonceStr:  nonceStr,
-		Package:   packageStr,
-		SignType:  "RSA",
-		PaySign:   signature,
+		AppId:      wxPayConfig.AppId,
+		TimeStamp:  timeStampStr,
+		NonceStr:   nonceStr,
+		Package:    packageStr,
+		SignType:   "RSA",
+		PaySign:    signature,
+		OutTradeNo: outTradeNo,
 	}
 	return
 }

@@ -72,11 +72,11 @@ func NewWxPayCertHandler(config *WxPayConfig) *Handler {
 	// 2. 获取商户号对应的微信支付平台证书访问器
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(config.MchID)
 	// 3. 使用证书访问器初始化 `notify.Handler`
-	handler, err := NewRSANotifyHandler(config.MchAPIv3Key, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	notifyHandler, err = NewRSANotifyHandler(config.MchAPIv3Key, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
 	if err != nil {
 		xlog.Fatal("NewRSANotifyHandler error", err)
 	}
-	return handler
+	return notifyHandler
 }
 
 func NewRefundsApiService() *refunddomestic.RefundsApiService {

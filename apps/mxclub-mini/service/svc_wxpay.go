@@ -36,6 +36,7 @@ func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePa
 }
 
 func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx) {
+	defer utils.RecoverAndLogError(ctx)
 	// 解析回调参数
 	transaction, err := wxpay.DecryptWxpayCallBack(ctx)
 	if err != nil || transaction == nil {
