@@ -1,6 +1,7 @@
 package wxpay
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -9,9 +10,11 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
+	"io"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
 	"net/http"
+	"net/http/httptest"
 	"time"
 )
 
@@ -99,6 +102,7 @@ func Refunds(ctx jet.Ctx, transaction *payments.Transaction, outRefundNo, reason
 
 // DecryptWxpayCallBack 解密支付成功后的回调
 func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
+	defer utils.RecoverAndLogError(ctx)
 	var (
 		req *http.Request
 		err error
@@ -106,6 +110,12 @@ func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
 	req, err = xjet.ConvertFastHTTPRequestToStandard(ctx.Request())
 	if err != nil {
 		return nil, err
+	}
+	if req == nil {
+		req = httptest.NewRequest(
+			http.MethodGet, "http://127.0.0.1", io.NopCloser(bytes.NewBuffer(ctx.Request().Body())),
+		)
+		req.Header.Add("test", "test")
 	}
 	transaction := new(payments.Transaction)
 	notifyReq, err := notifyHandler.ParseNotifyRequest(context.Background(), req, transaction)

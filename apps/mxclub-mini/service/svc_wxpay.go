@@ -31,14 +31,14 @@ func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePa
 		ctx.Logger().Errorf("[WxPayService]prepay ERROR: %v\nprepayDTO:%v", err.Error(), utils.ObjToJsonStr(prepayDTO))
 		return nil, errors.New("申请微信支付失败")
 	}
-	ctx.Logger().Infof("用户:%v 付款：%v，进行中", id, amount)
+	ctx.Logger().Infof("用户:%v 付款：%v，进行中，prepayDTO：%v", id, amount, prepayDTO)
 	return prepayDTO, nil
 }
 
 func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx) {
 	// 解析回调参数
 	transaction, err := wxpay.DecryptWxpayCallBack(ctx)
-	if err != nil {
+	if err != nil || transaction == nil {
 		ctx.Logger().Errorf("[DecryptWxpayCallBack] %v", err)
 		return
 	}

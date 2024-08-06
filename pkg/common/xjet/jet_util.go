@@ -67,11 +67,14 @@ func ConvertFastHTTPRequestToStandard(fastReq *fasthttp.Request) (*http.Request,
 		header.Add(string(key), string(value))
 	})
 
-	// 获取请求正文
-	body := bytes.NewReader(fastReq.Body())
+	// 获取请求正文并复制
+	body := fastReq.Body()
+	bodyCopy := make([]byte, len(body))
+	copy(bodyCopy, body)
+	bodyReader := bytes.NewReader(bodyCopy)
 
 	// 创建新的http.Request实例
-	req, err := http.NewRequest(method, url.String(), body)
+	req, err := http.NewRequest(method, url.String(), bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create http.Request: %w", err)
 	}
