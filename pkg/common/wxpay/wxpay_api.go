@@ -78,7 +78,7 @@ func Refunds(ctx jet.Ctx, transaction *payments.Transaction, outRefundNo, reason
 		OutTradeNo:    transaction.OutTradeNo,
 		OutRefundNo:   core.String(outRefundNo),
 		Reason:        core.String(reason),
-		NotifyUrl:     core.String("https://mx.fengxianhub.top/refunds/refuse/notify"),
+		NotifyUrl:     core.String("https://mx.fengxianhub.top/wxpay/refunds/notify"),
 		FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
 		Amount: &refunddomestic.AmountReq{
 			Currency: core.String("CNY"),
