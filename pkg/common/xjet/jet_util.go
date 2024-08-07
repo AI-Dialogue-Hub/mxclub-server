@@ -1,13 +1,10 @@
 package xjet
 
 import (
-	"bytes"
-	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"mxclub/pkg/api"
 	"net/http"
-	"net/url"
 )
 
 func NewCommonJetController[T jet.IJetController]() {
@@ -47,40 +44,12 @@ func IsAnyEmpty(strs ...string) bool {
 }
 
 // ConvertFastHTTPRequestToStandard converts a *fasthttp.Request to a *http.Request
-func ConvertFastHTTPRequestToStandard(fastReq *fasthttp.Request) (*http.Request, error) {
-	// 获取请求方法
-	method := string(fastReq.Header.Method())
-
-	// 获取请求URL
-	uri := fastReq.URI()
-	url := &url.URL{
-		Scheme:   string(uri.Scheme()),
-		Host:     string(uri.Host()),
-		Path:     string(uri.Path()),
-		RawPath:  string(uri.PathOriginal()),
-		RawQuery: string(uri.QueryString()),
-	}
-
-	// 获取请求头部
-	header := make(http.Header)
-	fastReq.Header.VisitAll(func(key, value []byte) {
-		header.Add(string(key), string(value))
-	})
-
-	// 获取请求正文并复制
-	body := fastReq.Body()
-	bodyCopy := make([]byte, len(body))
-	copy(bodyCopy, body)
-	bodyReader := bytes.NewReader(bodyCopy)
-
-	// 创建新的http.Request实例
-	req, err := http.NewRequest(method, url.String(), bodyReader)
+func ConvertFastHTTPRequestToStandard(ctx jet.Ctx) (*http.Request, error) {
+	request := new(http.Request)
+	err := fasthttpadaptor.ConvertRequest(ctx.FastHttpCtx(), request, true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create http.Request: %w", err)
+		ctx.Logger().Errorf("ConvertFastHTTPRequestToStandard ERROR:%v", err)
+		return nil, err
 	}
-
-	// 复制请求头部
-	req.Header = header
-
-	return req, nil
+	return request, nil
 }

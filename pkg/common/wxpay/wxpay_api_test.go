@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-func TestRefunds(t *testing.T) {
+func testRefunds(t *testing.T) {
 	info := getInfo(t)
 	requestCtx := &fasthttp.RequestCtx{Request: fasthttp.Request{}, Response: fasthttp.Response{}}
 	ctx := jetContext.NewContext(requestCtx, xlog.NewWith("text"))

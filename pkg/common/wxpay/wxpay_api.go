@@ -111,11 +111,12 @@ func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
 		req *http.Request
 		err error
 	)
-	req, err = xjet.ConvertFastHTTPRequestToStandard(ctx.Request())
+	req, err = xjet.ConvertFastHTTPRequestToStandard(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if req == nil {
+		ctx.Logger().Errorf("req is nil, %v", req)
 		req = httptest.NewRequest(
 			http.MethodGet, "http://127.0.0.1", io.NopCloser(bytes.NewBuffer(ctx.Request().Body())),
 		)
@@ -127,6 +128,6 @@ func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
 		return nil, err
 	}
 	ctx.Logger().Infof("notifyReq Summary:%v\n", notifyReq.Summary)
-	ctx.Logger().Infof("transactionId:%v", transaction.TransactionId)
+	ctx.Logger().Infof("transactionId:%v", *transaction.TransactionId)
 	return transaction, nil
 }
