@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 	"log"
+	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
@@ -48,6 +49,8 @@ func init() {
 	}()
 	<-c2
 	<-c1
+	// 加载wxpay
+	wxpay.InitWxPay(config.WxPayConfig)
 }
 
 type Config struct {
@@ -55,6 +58,8 @@ type Config struct {
 	File   File                `yaml:"file" validate:"required"`
 	Mysql  *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
 	Redis  *xredis.RedisConfig `yaml:"redis" validate:"required"`
+
+	WxPayConfig *wxpay.WxPayConfig `yaml:"wx_pay_config" validate:"required"`
 }
 
 type Server struct {
