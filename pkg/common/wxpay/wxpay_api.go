@@ -86,7 +86,7 @@ func Refunds(ctx jet.Ctx, transaction *payments.Transaction, outRefundNo, reason
 				Account: refunddomestic.ACCOUNT_AVAILABLE.Ptr(),
 				Amount:  transaction.Amount.PayerTotal,
 			}},
-			Refund: transaction.Amount.Total,
+			Refund: transaction.Amount.PayerTotal,
 			Total:  transaction.Amount.Total,
 		},
 	}

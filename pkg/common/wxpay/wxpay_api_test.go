@@ -4,33 +4,28 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	jetContext "github.com/fengyuan-liang/jet-web-fasthttp/core/context"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	"github.com/valyala/fasthttp"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"io"
-	"log"
 	"mxclub/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-type testConfigDTO struct {
-	Config *WxPayConfig `yaml:"wx_pay_config"`
-}
-
-var (
-	testConfigPath = "E:\\workspace\\goland\\config\\mxclub.yml"
-	testConfig     = new(testConfigDTO)
-)
-
-func setUp() {
-	// 读取配置文件
-	if err := utils.YamlToStruct(testConfigPath, testConfig); err != nil {
-		log.Fatalf("config parse error:%v", err.Error())
+func TestRefunds(t *testing.T) {
+	info := getInfo(t)
+	requestCtx := &fasthttp.RequestCtx{Request: fasthttp.Request{}, Response: fasthttp.Response{}}
+	ctx := jetContext.NewContext(requestCtx, xlog.NewWith("text"))
+	err := Refunds(ctx, info, utils.ParseString(17229726929695), "111")
+	if err != nil {
+		ctx.Logger().Errorf("%v", err)
 	}
-	InitWxPay(testConfig.Config)
 }
 
-func TestDecryptData(t *testing.T) {
+func getInfo(t *testing.T) *payments.Transaction {
 	setUp()
 	info := getTestEncryptWxpayCallBackInfo(t)
 	handler := NewWxPayCertHandler(testConfig.Config)
@@ -43,7 +38,7 @@ func TestDecryptData(t *testing.T) {
 	// 如果验签未通过，或者解密失败
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil
 	}
 	// 处理通知内容
 	fmt.Println(notifyReq.Summary)
@@ -51,4 +46,5 @@ func TestDecryptData(t *testing.T) {
 	fmt.Println(utils.ObjToJsonStr(transaction.TransactionId))
 	fmt.Println(utils.ObjToMap(*transaction))
 	fmt.Println(utils.MustMapToObj[payments.Transaction](utils.ObjToMap(*transaction)))
+	return transaction
 }
