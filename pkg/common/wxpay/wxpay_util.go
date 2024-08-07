@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	"math/big"
 	mathRand "math/rand"
 	"os"
 	"strconv"
@@ -101,4 +102,22 @@ func GenerateUniqueOrderNumber() string {
 	orderNumber := strconv.FormatInt(timestamp, 10) + strconv.Itoa(randomNumber)
 
 	return orderNumber
+}
+
+func GenerateOutRefundNo() string {
+	return GenerateRandomString(25)
+}
+
+// GenerateRandomString 生成指定长度的随机字符串
+func GenerateRandomString(length int) string {
+	chars := []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	result := make([]rune, length)
+	for i := range result {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
+		if err != nil {
+			panic(err)
+		}
+		result[i] = chars[n.Int64()]
+	}
+	return string(result)
 }

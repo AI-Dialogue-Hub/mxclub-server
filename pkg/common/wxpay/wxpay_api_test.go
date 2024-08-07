@@ -19,7 +19,7 @@ func TestRefunds(t *testing.T) {
 	info := getInfo(t)
 	requestCtx := &fasthttp.RequestCtx{Request: fasthttp.Request{}, Response: fasthttp.Response{}}
 	ctx := jetContext.NewContext(requestCtx, xlog.NewWith("text"))
-	err := Refunds(ctx, info, utils.ParseString(17229726929695), "111")
+	err := Refunds(ctx, info, GenerateOutRefundNo(), "商品已售完")
 	if err != nil {
 		ctx.Logger().Errorf("%v", err)
 	}

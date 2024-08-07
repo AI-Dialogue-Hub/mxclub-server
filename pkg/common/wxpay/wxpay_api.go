@@ -79,13 +79,13 @@ func Refunds(ctx jet.Ctx, transaction *payments.Transaction, outRefundNo, reason
 		OutRefundNo:   core.String(outRefundNo),
 		Reason:        core.String(reason),
 		NotifyUrl:     core.String("https://mx.fengxianhub.top/wxpay/refunds/notify"),
-		FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
+		//FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
 		Amount: &refunddomestic.AmountReq{
 			Currency: core.String("CNY"),
-			From: []refunddomestic.FundsFromItem{{
-				Account: refunddomestic.ACCOUNT_AVAILABLE.Ptr(),
-				Amount:  transaction.Amount.PayerTotal,
-			}},
+			//From: []refunddomestic.FundsFromItem{{
+			//	Account: refunddomestic.ACCOUNT_AVAILABLE.Ptr(),
+			//	Amount:  transaction.Amount.PayerTotal,
+			//}},
 			Refund: transaction.Amount.PayerTotal,
 			Total:  transaction.Amount.Total,
 		},
@@ -94,6 +94,8 @@ func Refunds(ctx jet.Ctx, transaction *payments.Transaction, outRefundNo, reason
 	if err != nil {
 		// 处理错误
 		log.Printf("call Create err:%s", err)
+		// 处理返回结果
+		log.Printf("status=%d resp=%s", result.Response.StatusCode, resp)
 		return err
 	} else {
 		// 处理返回结果

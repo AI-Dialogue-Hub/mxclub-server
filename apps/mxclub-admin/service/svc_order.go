@@ -95,7 +95,9 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 	// 1.2 转换
 	transaction := utils.MustMapToObj[payments.Transaction](wxPayCallbackInfo.RawData)
 	// 2. 进行退款
-	err = wxpay.Refunds(ctx, transaction, params.OutTradeNo, params.Reason)
+	outRefundNo := wxpay.GenerateOutRefundNo()
+	logger.Infof("outRefundNo:%v", outRefundNo)
+	err = wxpay.Refunds(ctx, transaction, outRefundNo, params.Reason)
 	if err != nil {
 		logger.Errorf("err:%v", err)
 		return errors.New("退款失败")
