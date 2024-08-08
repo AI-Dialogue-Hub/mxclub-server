@@ -48,7 +48,7 @@ func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.UserVO, error) {
 	totalSpent, _ := svc.orderRepo.TotalSpent(ctx, id)
 	// 如果是打手，名字用打手名替换
 	if userPO.Role == enum.RoleAssistant {
-		userPO.WxName = userPO.Name
+		userPO.WxName = fmt.Sprintf("%v 编号: %03d", userPO.Name, userPO.MemberNumber)
 	}
 	userVO := utils.MustCopyByCtx[vo.UserVO](ctx, userPO)
 	userVO.SetCurrentPoints(totalSpent)

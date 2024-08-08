@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/GoKit/future"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
@@ -21,7 +20,6 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
-	userPO "mxclub/domain/user/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 	"time"
@@ -70,11 +68,15 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
 	// 1. 查询商品信息
+
 	// 1.1 查询车头名称
-	f1 := future.FutureFunc[*userPO.User](svc.userService.FindUserByDashId, req.ExecutorId)
+	var dasherName string
+	if req.SpecifyExecutor {
+		dasher, _ := svc.userService.FindUserByDashId(req.ExecutorId)
+		dasherName = dasher.Name
+	}
 	// 1.2 折扣信息
 	preferentialVO, _ := svc.Preferential(ctx, req.ProductId)
-	dashPO, _ := f1.Get()
 	// 2. 创建订单
 	order := &po.Order{
 		OrderId:         utils.SafeParseUint64(req.OrderTradeNo),
@@ -89,7 +91,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		RoleId:          req.RoleId,
 		SpecifyExecutor: req.SpecifyExecutor,
 		ExecutorID:      req.ExecutorId,
-		ExecutorName:    dashPO.Name,
+		ExecutorName:    dasherName,
 		Notes:           req.Notes,
 		DiscountPrice:   preferentialVO.OriginalPrice - preferentialVO.DiscountedPrice,
 		FinalPrice:      preferentialVO.DiscountedPrice,

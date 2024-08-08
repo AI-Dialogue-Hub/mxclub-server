@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.0.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/stretchr/testify v1.8.4
@@ -28,6 +29,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/image v0.18.0 // indirect
+	golang.org/x/time v0.6.0 // indirect
 )
 
 require (

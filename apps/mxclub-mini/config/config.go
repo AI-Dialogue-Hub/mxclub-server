@@ -7,6 +7,7 @@ import (
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
+	"mxclub/pkg/common/xupload"
 	"mxclub/pkg/utils"
 	"strings"
 	"sync"
@@ -29,36 +30,26 @@ func init() {
 		log.Fatalf("config error:%v", err.Error())
 	}
 
-	// ============== 耗时加载全部异步化 =============================
-	var (
-		c1 = make(chan struct{})
-		c2 = make(chan struct{})
-	)
-	go func() {
-		defer func() { c1 <- struct{}{} }()
-		if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
-			panic(err)
-		} else {
-			// gorm
-			jet.Provide(func() *gorm.DB { return db })
-		}
-	}()
-	go func() {
-		defer func() { c2 <- struct{}{} }()
-		// redis
-		xredis.NewRedisClient(config.Redis)
-	}()
-	<-c2
-	<-c1
+	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
+		panic(err)
+	} else {
+		// gorm
+		jet.Provide(func() *gorm.DB { return db })
+	}
+	// redis
+	xredis.NewRedisClient(config.Redis)
 	// wxPay
 	wxpay.InitWxPay(config.WxPayConfig)
+	// oss or localStorage
+	xupload.SetUp(config.UploadConfig)
 }
 
 type Config struct {
-	Server      *Server            `yaml:"server" validate:"required"`
-	WxConfig    *WxConfig          `yaml:"wx_config" validate:"required"`
-	WxPayConfig *wxpay.WxPayConfig `yaml:"wx_pay_config" validate:"required"`
-	File        File               `yaml:"file" validate:"required"`
+	Server       *Server               `yaml:"server" validate:"required"`
+	WxConfig     *WxConfig             `yaml:"wx_config" validate:"required"`
+	WxPayConfig  *wxpay.WxPayConfig    `yaml:"wx_pay_config" validate:"required"`
+	File         File                  `yaml:"file" validate:"required"`
+	UploadConfig *xupload.UploadConfig `yaml:"upload_config" validate:"required"`
 
 	Mysql *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
 	Redis *xredis.RedisConfig `yaml:"redis" validate:"required"`
