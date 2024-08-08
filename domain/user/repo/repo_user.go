@@ -79,7 +79,7 @@ func (repo UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) 
 }
 
 func (repo UserRepo) FindByMemberNumber(memberNumber uint) (*po.User, error) {
-	return repo.FindOne("member_number = ?", memberNumber)
+	return repo.FindOne("member_number = ? and role = 'assistant' and ", memberNumber)
 }
 
 func (repo UserRepo) ExistsByOpenId(ctx jet.Ctx, openId string) bool {

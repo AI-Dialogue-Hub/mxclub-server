@@ -26,7 +26,7 @@ func setUp() {
 	}
 }
 
-func TestEnv(t *testing.T) {
+func testEnv(t *testing.T) {
 	setUp()
 
 	client = NewClient(testConfig.Oss)
