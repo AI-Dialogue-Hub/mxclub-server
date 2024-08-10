@@ -47,7 +47,7 @@ func testDecryptData(t *testing.T) {
 	}
 	// 处理通知内容
 	fmt.Println(notifyReq.Summary)
-	fmt.Println(*transaction)
+	fmt.Println(utils.ObjToJsonStr(*transaction))
 	fmt.Println(utils.ObjToJsonStr(transaction.TransactionId))
 	fmt.Println(utils.ObjToMap(*transaction))
 	fmt.Println(utils.MustMapToObj[payments.Transaction](utils.ObjToMap(*transaction)))

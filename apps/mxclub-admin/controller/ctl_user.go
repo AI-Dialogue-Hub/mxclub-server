@@ -68,9 +68,13 @@ func (ctl UserController) GetLogin(ctx jet.Ctx, param *loginParams) (*api.Respon
 	return xjet.WrapperResult(ctx, userVO, nil)
 }
 
-func (ctl UserController) GetV1UserList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+func (ctl UserController) PostV1UserList(ctx jet.Ctx, params *req.UserListReq) (*api.Response, error) {
 	pageResult, err := ctl.userService.List(ctx, params)
 	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
+func (ctl UserController) GetV1UserTypeList(ctx jet.Ctx) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, vo.WrapUserTypeVOS(enum.RoleDisPlayNameMap), nil)
 }
 
 func (ctl UserController) PostV1UserUpdate(ctx jet.Ctx, userReq *req.UserReq) (*api.Response, error) {
@@ -79,4 +83,9 @@ func (ctl UserController) PostV1UserUpdate(ctx jet.Ctx, userReq *req.UserReq) (*
 	}
 	err := ctl.userService.Update(ctx, userReq)
 	return xjet.WrapperResult(ctx, "Ok", err)
+}
+
+func (ctl UserController) DeleteV1UserDasher0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
+	userId, _ := param.GetInt64(0)
+	return xjet.WrapperResult(ctx, "Ok", ctl.userService.RemoveAssistant(ctx, uint(userId)))
 }

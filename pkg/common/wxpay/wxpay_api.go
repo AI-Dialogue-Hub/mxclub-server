@@ -115,8 +115,9 @@ func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	if req == nil {
-		ctx.Logger().Errorf("req is nil, %v", req)
+	if req == nil || req.Header.Get("Wechatpay-Serial") == "" {
+		ctx.Logger().Errorf("req is nil or cannot find head of Wechatpay-Serial\n")
+		defer utils.PrintReq(req)
 		req = httptest.NewRequest(
 			http.MethodGet, "http://127.0.0.1", io.NopCloser(bytes.NewBuffer(ctx.Request().Body())),
 		)

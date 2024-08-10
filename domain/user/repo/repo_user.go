@@ -27,6 +27,7 @@ type IUserRepo interface {
 	FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, string], error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
+	ListAroundCacheByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
 	// UpdateUserIconAndNickName 如果为空会给默认的头像和昵称
 	UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error
@@ -95,13 +96,22 @@ const userCachePrefix = "mini_user"
 const userListCachePrefix = "mini_user_list"
 
 func (repo UserRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error) {
+	return repo.ListAroundCacheByUserType(ctx, params, "")
+}
+
+func (repo UserRepo) ListAroundCacheByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error) {
 	// 根据页码参数生成唯一的缓存键
-	cacheListKey := xredis.BuildListDataCacheKey(userCachePrefix, params)
-	cacheCountKey := xredis.BuildListCountCacheKey(userListCachePrefix)
+	cacheListKey := fmt.Sprintf("%s_%s", xredis.BuildListDataCacheKey(userCachePrefix, params), userType)
+	cacheCountKey := fmt.Sprintf("%s_%s", xredis.BuildListCountCacheKey(userListCachePrefix), userType)
 
 	list, count, err := xredis.GetListOrDefault[po.User](ctx, cacheListKey, cacheCountKey, func() ([]*po.User, int64, error) {
 		// 如果缓存中未找到，则从数据库中获取
-		list, count, err := repo.List(params.Page, params.PageSize, nil)
+		query := xmysql.NewMysqlQuery()
+		query.SetPage(params.Page, params.PageSize)
+		if userType != "" {
+			query.SetFilter("role = ?", userType)
+		}
+		list, count, err := repo.ListByWrapper(ctx, query)
 		if err != nil {
 			ctx.Logger().Errorf("[repo list]error:%v", err.Error())
 			return nil, 0, err
@@ -192,6 +202,8 @@ func (repo UserRepo) RemoveDasher(ctx jet.Ctx, id uint) error {
 	update.SetFilter("id = ?", id)
 	update.Set("role", enum.RoleWxUser)
 	update.Set("member_number", 0)
+	update.Set("phone", 0)
+	update.Set("name", "")
 	return repo.UpdateByWrapper(update)
 }
 

@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"mxclub/domain/user/entity/enum"
 	"time"
 )
@@ -22,4 +23,18 @@ type UserVO struct {
 	DisPlayName  string        `json:"disPlayName"`                                  // 用户权限
 	MemberNumber int           `json:"member_number"`                                // 编号
 	ActivatedAt  time.Time     `json:"activated_at"`                                 // 最近一次上线
+}
+
+type UserTypeVO struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+}
+
+func WrapUserTypeVOS(m maps.IMap[enum.RoleType, string]) []*UserTypeVO {
+	vos := make([]*UserTypeVO, 0)
+	vos = append(vos, &UserTypeVO{"all", "全部"})
+	m.ForEach(func(k enum.RoleType, v string) {
+		vos = append(vos, &UserTypeVO{string(k), v})
+	})
+	return vos
 }

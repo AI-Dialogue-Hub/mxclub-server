@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
 	_ "mxclub/domain/user/repo"
@@ -40,19 +41,26 @@ func (svc UserService) CheckUser(ctx jet.Ctx, username string, password string) 
 	return userPO, nil
 }
 
-func (svc UserService) List(ctx jet.Ctx, params *api.PageParams) (*api.PageResult, error) {
-	list, count, err := svc.userRepo.ListAroundCache(ctx, params)
+func (svc UserService) List(ctx jet.Ctx, params *req.UserListReq) (*api.PageResult, error) {
+	if params.UserType == "all" {
+		params.UserType = ""
+	}
+	list, count, err := svc.userRepo.ListAroundCacheByUserType(ctx, params.PageParams, enum.RoleType(params.UserType))
 	if err != nil {
 		ctx.Logger().Errorf("[UserService List] error:%v", err.Error())
 		return nil, errors.New("查询失败")
 	}
 	userVOS := utils.CopySlice[*po.User, *vo.UserVO](list)
 	utils.ForEach(userVOS, func(t *vo.UserVO) { t.DisPlayName = t.Role.DisPlayName() })
-	return api.WrapPageResult(params, userVOS, count), nil
+	return api.WrapPageResult(params.PageParams, userVOS, count), nil
 }
 
 func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 	updateMap := utils.ObjToMap(req)
 	updateMap["member_number"] = utils.SafeParseUint64(updateMap["member_number"])
 	return svc.userRepo.UpdateUser(ctx, updateMap)
+}
+
+func (svc UserService) RemoveAssistant(ctx jet.Ctx, userId uint) error {
+	return svc.userRepo.RemoveDasher(ctx, userId)
 }

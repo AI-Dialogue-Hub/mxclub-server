@@ -2,6 +2,7 @@ package req
 
 import (
 	"mxclub/domain/user/entity/enum"
+	"mxclub/pkg/api"
 )
 
 type UserReq struct {
@@ -12,4 +13,9 @@ type UserReq struct {
 	WxGrade      string        `json:"wx_grade"`                                     // 微信等级
 	Role         enum.RoleType `json:"role" validate:"required" reg_err_info:"不能为空"` // 用户权限
 	MemberNumber any           `json:"member_number"`                                // 编号
+}
+
+type UserListReq struct {
+	*api.PageParams
+	UserType string `json:"role"` // 用户类型
 }

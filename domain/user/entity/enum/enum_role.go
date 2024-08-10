@@ -2,6 +2,7 @@ package enum
 
 import (
 	"errors"
+	"github.com/fengyuan-liang/GoKit/collection/maps"
 )
 
 type Permission uint64
@@ -63,22 +64,30 @@ const (
 	RoleAssistant RoleType = "assistant"
 )
 
-var rolePermissionMap = map[RoleType]Permission{
-	RoleTS:            RoleTsPermission,
-	RoleManager:       RoleManagerPermission,
-	RoleAdministrator: RoleAdministratorPermission,
-}
+var rolePermissionMap = func() maps.IMap[RoleType, Permission] {
+	linkedHashMap := maps.NewLinkedHashMap[RoleType, Permission]()
+	linkedHashMap.PutAll([]*maps.Pair[RoleType, Permission]{
+		{RoleTS, RoleTsPermission},
+		{RoleManager, RoleManagerPermission},
+		{RoleAdministrator, RoleAdministratorPermission},
+	})
+	return linkedHashMap
+}()
 
-var roleDisPlayNameMap = map[RoleType]string{
-	RoleTS:            "技术支持",
-	RoleManager:       "管理员",
-	RoleAdministrator: "系统管理员",
-	RoleWxUser:        "微信用户",
-	RoleAssistant:     "助教 打手",
-}
+var RoleDisPlayNameMap = func() maps.IMap[RoleType, string] {
+	linkedHashMap := maps.NewLinkedHashMap[RoleType, string]()
+	linkedHashMap.PutAll([]*maps.Pair[RoleType, string]{
+		{RoleTS, "技术支持"},
+		{RoleManager, "管理员"},
+		{RoleAdministrator, "系统管理员"},
+		{RoleWxUser, "微信用户"},
+		{RoleAssistant, "助教 打手"},
+	})
+	return linkedHashMap
+}()
 
 func (r RoleType) Permission() Permission {
-	if per, ok := rolePermissionMap[r]; ok {
+	if per, ok := rolePermissionMap.Get(r); ok {
 		return per
 	} else {
 		return 0
@@ -86,7 +95,7 @@ func (r RoleType) Permission() Permission {
 }
 
 func (r RoleType) DisPlayName() string {
-	return roleDisPlayNameMap[r]
+	return RoleDisPlayNameMap.MustGet(r)
 }
 
 func (r RoleType) CheckPermission(requiredPermission Permission) error {

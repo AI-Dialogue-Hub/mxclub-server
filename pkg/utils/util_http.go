@@ -111,7 +111,7 @@ func baseReq[T any](f func() *http.Request) (*T, error) {
 	resp, err := client.Do(req)
 	if resp == nil {
 		xlog.Errorf("err:%v", err)
-		printReq(req)
+		PrintReq(req)
 		return nil, errors.New("resp is empty")
 	}
 	if err != nil || resp.StatusCode != 200 {
@@ -148,7 +148,7 @@ func printInfo(resp *http.Response, err error, req *http.Request) string {
 	fmt.Printf("code:%v,请求发送失败:%v\n", resp.StatusCode, err)
 	fmt.Println("================ 打印请求 ==================")
 	// 打印请求
-	printReq(req)
+	PrintReq(req)
 	fmt.Println("=============== 打印响应 ==================")
 	// 打印响应
 	respBody := printResp(resp)
@@ -166,7 +166,7 @@ func printResp(resp *http.Response) string {
 	return strData
 }
 
-func printReq(req *http.Request) {
+func PrintReq(req *http.Request) {
 	// 打印url
 	fmt.Printf("url:[%s]\n", req.URL.String())
 	// 打印请求行
