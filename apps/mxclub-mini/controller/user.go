@@ -68,8 +68,7 @@ func (ctl UserController) PostClientLoginUpdate(ctx jet.Ctx, req *req.UserInfoRe
 }
 
 func (ctl UserController) PostClientLoginMember(ctx jet.Ctx) (*api.Response, error) {
-	tokenInfo := ctx.FastHttpCtx().UserValue("tokenInfo").(*middleware.AuthToken)
-	userVO, err := ctl.userService.GetUserById(ctx, tokenInfo.UserId)
+	userVO, err := ctl.userService.GetUserById(ctx, middleware.MustGetUserId(ctx))
 	return xjet.WrapperResult(ctx, userVO, err)
 }
 
@@ -104,6 +103,10 @@ func (ctl UserController) PostV1MessageReadAll(ctx jet.Ctx) (*api.Response, erro
 func (ctl UserController) PostV1MessageHandle(ctx jet.Ctx, req *req.MessageHandleReq) (*api.Response, error) {
 	ctx.Logger().Infof("messageType:%v", utils.ObjToJsonStr(req))
 	return xjet.WrapperResult(ctx, "ok", ctl.userService.HandleMessage(ctx, req))
+}
+
+func (ctl UserController) PostV1MessageOrderInvite(ctx jet.Ctx, req *req.OrderExecutorInviteReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "邀请成功，打手同意后请刷新订单", ctl.userService.PushInviteMessage(ctx, req))
 }
 
 // ====== 验证码 ========

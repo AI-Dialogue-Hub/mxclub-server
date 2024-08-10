@@ -31,3 +31,14 @@ type WithdrawListDTO struct {
 	Status          *enum.WithdrawalStatus
 	UserId          uint
 }
+
+type ListByOrderStatusDTO struct {
+	Status       enum.OrderStatus
+	PageParams   *api.PageParams
+	Ge           string
+	Le           string
+	MemberNumber int
+	UserId       uint
+	ExecutorName string
+	IsDasher     bool
+}

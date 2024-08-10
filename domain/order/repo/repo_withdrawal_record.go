@@ -21,13 +21,13 @@ func init() {
 type IWithdrawalRepo interface {
 	xmysql.IBaseRepo[po.WithdrawalRecord]
 	// WithdrawnAmountNotReject 用户历史提现金额，包括通过和进行中的
-	WithdrawnAmountNotReject(ctx jet.Ctx, dasherId uint) (float64, error)
-	ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error)
-	Withdrawn(ctx jet.Ctx, dasherId uint, userId uint, dasherName string, amount float64) error
+	WithdrawnAmountNotReject(ctx jet.Ctx, dasherId int) (float64, error)
+	ApproveWithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, error)
+	Withdrawn(ctx jet.Ctx, dasherId int, userId uint, dasherName string, amount float64) error
 	ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]*po.WithdrawalRecord, error)
 	// ApproveWithdrawnAmountByDasherIds 打手们运行提现的钱
 	// @return 打手id -> 可以提现的钱
-	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []uint) (map[uint]float64, error)
+	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, error)
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -44,7 +44,7 @@ type WithdrawalRepo struct {
 
 // ====================================================
 
-func (repo WithdrawalRepo) WithdrawnAmountNotReject(ctx jet.Ctx, dasherId uint) (float64, error) {
+func (repo WithdrawalRepo) WithdrawnAmountNotReject(ctx jet.Ctx, dasherId int) (float64, error) {
 	var amount float64
 
 	sql := `select COALESCE(sum(withdrawal_amount), 0) 
@@ -59,7 +59,7 @@ func (repo WithdrawalRepo) WithdrawnAmountNotReject(ctx jet.Ctx, dasherId uint) 
 	return amount, nil
 }
 
-func (repo WithdrawalRepo) ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (float64, error) {
+func (repo WithdrawalRepo) ApproveWithdrawnAmount(ctx jet.Ctx, dasherId int) (float64, error) {
 	var amount float64
 
 	sql := `select COALESCE(sum(withdrawal_amount), 0) 
@@ -74,9 +74,9 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmount(ctx jet.Ctx, dasherId uint) (f
 	return amount, nil
 }
 
-func (repo WithdrawalRepo) ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []uint) (map[uint]float64, error) {
+func (repo WithdrawalRepo) ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, error) {
 	// 初始化结果map
-	results := make(map[uint]float64)
+	results := make(map[int]float64)
 
 	// 将dasherIds数组转换为逗号分隔的字符串
 	ids := make([]string, len(dasherIds))
@@ -101,7 +101,7 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasher
 
 	// 遍历查询结果
 	for rows.Next() {
-		var dasherId uint
+		var dasherId int
 		var amount float64
 		if err = rows.Scan(&dasherId, &amount); err != nil {
 			ctx.Logger().Errorf("[ApproveWithdrawnAmountByDasherIds]ERROR:%v", err.Error())
@@ -119,7 +119,7 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasher
 	return results, nil
 }
 
-func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId uint, userId uint, dasherName string, amount float64) error {
+func (repo WithdrawalRepo) Withdrawn(ctx jet.Ctx, dasherId int, userId uint, dasherName string, amount float64) error {
 	return repo.InsertOne(&po.WithdrawalRecord{
 		DasherID:         dasherId,
 		DasherUserId:     userId,

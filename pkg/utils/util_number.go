@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"log"
+	"math"
 	"math/rand"
 	"reflect"
 	"regexp"
@@ -426,4 +427,13 @@ func GetRandomInt(min, max int) int {
 	}
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(max-min+1) + min
+}
+
+func RoundToDecimalPlaces(num float64, decimals int) float64 {
+	shift := math.Pow(10, float64(decimals))
+	return math.Round(num*shift) / shift
+}
+
+func RoundToTwoDecimalPlaces(num float64) float64 {
+	return RoundToDecimalPlaces(num, 2)
 }

@@ -20,10 +20,10 @@ type OrderVO struct {
 	GameRegion         string             `json:"game_region"`
 	RoleId             string             `json:"role_id"`
 	SpecifyExecutor    bool               `json:"specify_executor"`
-	ExecutorID         uint               `json:"executor_id"`
+	ExecutorID         int                `json:"executor_id"`
 	ExecutorName       string             `json:"executor_name"`
-	Executor2Id        uint               `json:"executor2_id"`
-	Executor3Id        uint               `json:"executor3_id"`
+	Executor2Id        int                `json:"executor2_id"`
+	Executor3Id        int                `json:"executor3_id"`
 	Executor2Name      string             `json:"executor2_name"`
 	Executor3Name      string             `json:"executor3_name"`
 	Notes              string             `json:"notes"`

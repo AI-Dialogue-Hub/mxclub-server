@@ -63,3 +63,22 @@ func TestIsDigit(t *testing.T) {
 	assert.Equal(t, float64(20), ParseFloat64("20"))
 	assert.Equal(t, 20.5, ParseFloat64("20.5"))
 }
+
+func TestRoundToDecimalPlaces(t *testing.T) {
+	tests := []struct {
+		num      float64
+		decimals int
+		expected float64
+	}{
+		{123.456789, 2, 123.46},
+		{123.456789, 3, 123.457},
+		{123.456789, 1, 123.5},
+	}
+
+	for _, test := range tests {
+		result := RoundToDecimalPlaces(test.num, test.decimals)
+		if result != test.expected {
+			t.Errorf("For %.2f with %d decimals, expected %.2f, but got %.2f", test.num, test.decimals, test.expected, result)
+		}
+	}
+}

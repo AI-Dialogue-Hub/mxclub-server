@@ -23,7 +23,7 @@ type IUserRepo interface {
 	QueryUserByAccount(username string, password string) (*po.User, error)
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
 	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
-	FindByMemberNumber(memberNumber uint) (*po.User, error)
+	FindByMemberNumber(memberNumber int) (*po.User, error)
 	FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, string], error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
@@ -79,8 +79,8 @@ func (repo UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) 
 	return one, err
 }
 
-func (repo UserRepo) FindByMemberNumber(memberNumber uint) (*po.User, error) {
-	return repo.FindOne("member_number = ? and role = 'assistant' and ", memberNumber)
+func (repo UserRepo) FindByMemberNumber(memberNumber int) (*po.User, error) {
+	return repo.FindOne("member_number = ? and role = 'assistant'", memberNumber)
 }
 
 func (repo UserRepo) ExistsByOpenId(ctx jet.Ctx, openId string) bool {
@@ -201,7 +201,7 @@ func (repo UserRepo) RemoveDasher(ctx jet.Ctx, id uint) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", id)
 	update.Set("role", enum.RoleWxUser)
-	update.Set("member_number", 0)
+	update.Set("member_number", -1)
 	update.Set("phone", 0)
 	update.Set("name", "")
 	return repo.UpdateByWrapper(update)

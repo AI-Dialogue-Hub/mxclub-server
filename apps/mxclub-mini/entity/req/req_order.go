@@ -11,10 +11,11 @@ type OrderListReq struct {
 	Ge           string           `json:"search_GE_createTime"` // start time
 	Le           string           `json:"search_LE_createTime"` // end time
 	MemberNumber int              `json:"member_number"`
+	Role         string           `json:"role"`
 }
 
 type OrderReq struct {
-	ExecutorId      uint   `json:"executor_id"`
+	ExecutorId      int    `json:"executor_id"`
 	GameRegion      string `json:"game_region"`
 	Notes           string `json:"notes"`
 	ProductId       uint   `json:"product_id"`
@@ -33,9 +34,9 @@ type OrderFinishReq struct {
 
 type OrderStartReq struct {
 	OrderId     uint   `json:"orderId" validate:"required"` // 订单流水号
-	ExecutorId  uint   `json:"executor_id" validate:"required"`
-	Executor2Id uint   `json:"executor_2_id"`
-	Executor3Id uint   `json:"executor_3_id"`
+	ExecutorId  int    `json:"executor_id" validate:"required"`
+	Executor2Id int    `json:"executor_2_id"`
+	Executor3Id int    `json:"executor_3_id"`
 	RoleId      string `json:"role_id" validate:"required"`
 	GameRegion  string `json:"game_region" validate:"required"`
 }
@@ -53,11 +54,18 @@ type WithDrawListReq struct {
 type OrderExecutorReq struct {
 	ExecutorType uint   `json:"executor_type" validate:"required"`
 	ExecutorName string `json:"executor_name"`
-	ExecutorId   uint   `json:"executor_id"`
+	ExecutorId   int    `json:"executor_id"`
 	OrderId      uint   `json:"order_id"`
+}
+
+type OrderExecutorInviteReq struct {
+	ExecutorId int    `json:"executor_id" validate:"required"`
+	OrderId    uint   `json:"orderId" validate:"required"`
+	RoleId     string `json:"role_id" validate:"required"`
+	GameRegion string `json:"game_region" validate:"required"`
 }
 
 type OrderGrabReq struct {
 	OrderId    uint `json:"orderId" validate:"required"` // 订单流水号
-	ExecutorId uint `json:"executor_id" validate:"required"`
+	ExecutorId int  `json:"executor_id" validate:"required"`
 }

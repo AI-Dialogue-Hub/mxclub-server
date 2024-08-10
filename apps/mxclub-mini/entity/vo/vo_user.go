@@ -10,6 +10,7 @@ type UserVO struct {
 	WxName          string        `json:"wx_name"`
 	WxIcon          string        `json:"wx_icon,omitempty"`
 	WxGrade         string        `json:"wx_grade"`
+	DasherStaring   float64       `json:"dasher_staring"`
 	Role            enum.RoleType `json:"role"`
 	MemberNumber    int           `json:"member_number"`
 	CurrentPoints   float64       `json:"currentPoints"`
@@ -41,6 +42,7 @@ type CaptchaVerifyVO struct {
 }
 
 type AssistantOnlineVO struct {
-	Id   uint   `json:"id"`
-	Name string `json:"name"`
+	Id     int    `json:"id"`
+	UserId uint   `json:"user_id"`
+	Name   string `json:"name"`
 }

@@ -73,7 +73,7 @@ func (svc MessageService) PushMessage(ctx jet.Ctx, messageDTO *dto.MessageDTO) e
 		MessageFrom:   messageDTO.MessageFrom,
 		MessageTo:     messageDTO.MessageTo,
 		MessageStatus: messageDTO.MessageStatus,
-		OrderId:       messageDTO.OrderId,
+		OrderId:       messageDTO.OrdersId,
 		Ext:           messageDTO.Ext,
 	})
 }

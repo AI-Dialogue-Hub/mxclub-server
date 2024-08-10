@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"math"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
@@ -20,6 +19,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
+	userEnum "mxclub/domain/user/entity/enum"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 	"time"
@@ -70,10 +70,16 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	// 1. 查询商品信息
 
 	// 1.1 查询车头名称
-	var dasherName string
+	var (
+		dasherName            string
+		executorId            int
+		specifyExecutorUserId uint
+	)
 	if req.SpecifyExecutor {
 		dasher, _ := svc.userService.FindUserByDashId(req.ExecutorId)
+		executorId = req.ExecutorId
 		dasherName = dasher.Name
+		specifyExecutorUserId = dasher.ID
 	}
 	// 1.2 折扣信息
 	preferentialVO, _ := svc.Preferential(ctx, req.ProductId)
@@ -90,13 +96,15 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		GameRegion:      req.GameRegion,
 		RoleId:          req.RoleId,
 		SpecifyExecutor: req.SpecifyExecutor,
-		ExecutorID:      req.ExecutorId,
+		ExecutorID:      executorId,
+		Executor2Id:     -1,
+		Executor3Id:     -1,
 		ExecutorName:    dasherName,
 		Notes:           req.Notes,
 		DiscountPrice:   preferentialVO.OriginalPrice - preferentialVO.DiscountedPrice,
 		FinalPrice:      preferentialVO.DiscountedPrice,
 		ExecutorPrice:   0,
-		PurchaseDate:    core.Time(time.Now()),
+		PurchaseDate:    utils.Ptr(time.Now()),
 	}
 	// 3. 保存订单
 	err := svc.orderRepo.InsertOne(order)
@@ -107,21 +115,37 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	}
 	// 4. 如果指定订单，给打手发送接单消息
 	if req.SpecifyExecutor {
-		go svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(req.ExecutorId, order.ID, req.GameRegion, req.RoleId, ""))
+		go svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(specifyExecutorUserId, order.ID, req.GameRegion, req.RoleId, ""))
 	}
 	return nil
 }
 
 func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {
 	userId := middleware.MustGetUserId(ctx)
-	list, err := svc.orderRepo.ListByOrderStatus(ctx, req.OrderStatus, &req.PageParams, req.Ge, req.Le, req.MemberNumber, userId)
+	// 特殊编号用户
+	var executorName string
+	var isDasher = req.Role == string(userEnum.RoleAssistant)
+	if isDasher {
+		userPO, _ := svc.userService.userRepo.FindByMemberNumber(req.MemberNumber)
+		executorName = userPO.Name
+	}
+	list, err := svc.orderRepo.ListByOrderStatus(ctx, &orderRepoDTO.ListByOrderStatusDTO{
+		Status:       req.OrderStatus,
+		PageParams:   utils.Ptr(req.PageParams),
+		Ge:           req.Ge,
+		Le:           req.Le,
+		MemberNumber: req.MemberNumber,
+		UserId:       userId,
+		IsDasher:     isDasher,
+		ExecutorName: executorName,
+	})
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]List ERROR, %v", err.Error())
 		return nil, errors.New("查询不到数据")
 	}
 	orderVOS := utils.CopySlice[*po.Order, *vo.OrderVO](list)
 	// 打手查看老板等级
-	if req.MemberNumber > 0 {
+	if req.MemberNumber >= 0 {
 		// 获取老板等级
 		svc.doBuildUserGrade(ctx, orderVOS)
 	}
@@ -183,10 +207,10 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error {
 	orderPO, _ := svc.orderRepo.FindByID(finishReq.OrderId)
 	executorNum := 1
-	if orderPO.Executor2Id != 0 {
+	if orderPO.Executor2Id != -1 {
 		executorNum++
 	}
-	if orderPO.Executor3Id != 0 {
+	if orderPO.Executor3Id != -1 {
 		executorNum++
 	}
 	// 抽成比例
@@ -208,10 +232,10 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 		defer utils.RecoverAndLogError(ctx)
 		svc.SendMessagesToExecutors(ctx, orderPO, orderPO.ExecutorID, executorPrice)
 		// 给其他打手发送打钱消息
-		if orderPO.Executor2Id != 0 {
+		if orderPO.Executor2Id >= 0 {
 			svc.SendMessagesToExecutors(ctx, orderPO, orderPO.Executor2Id, executorPrice)
 		}
-		if orderPO.Executor3Id != 0 {
+		if orderPO.Executor3Id >= 0 {
 			svc.SendMessagesToExecutors(ctx, orderPO, orderPO.Executor3Id, executorPrice)
 		}
 		// 检查用户是否需要升级等级了
@@ -227,7 +251,7 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 	return nil
 }
 
-func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, executorID uint, executorPrice float64) {
+func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, executorID int, executorPrice float64) {
 	dashPO, _ := svc.userService.FindUserByDashId(executorID)
 	message := fmt.Sprintf(
 		"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
@@ -241,10 +265,11 @@ func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, 
 }
 
 // getCutRate 返回小数抽成比例
-func (svc OrderService) getCutRate(ctx jet.Ctx) float64 {
+func (svc OrderService) getCutRate(ctx jet.Ctx) (cutRate float64) {
+	defer utils.RecoverAndLogError(ctx)
 	defer traceUtil.TraceElapsedByName(time.Now(), "getCutRate")
 	// 默认抽成20%
-	var cutRate = 0.2
+	cutRate = 0.2
 	cutRatePO, err := svc.commonRepo.FindConfigByName(ctx, commonEnum.CutRate.String())
 	if err != nil || cutRatePO == nil {
 		ctx.Logger().Errorf("[getCutRate]ERROR: %v", err)
@@ -257,7 +282,7 @@ func (svc OrderService) getCutRate(ctx jet.Ctx) float64 {
 			}
 		}
 	}
-	return cutRate
+	return
 }
 
 func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {
@@ -270,43 +295,21 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 }
 
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
-	if req.Executor2Id == 0 && req.Executor3Id == 0 {
-		// 直接开始
-		err := svc.startOrder(ctx, req.OrderId, req.ExecutorId)
-		if err != nil {
-			ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
-			return errors.New("订单开始失败，请联系客服")
-		}
-		return nil
-	}
-	// 指定打手的数量
-	executorNumber := 0
-	if req.Executor2Id > 0 {
-		executorNumber++
-	}
-	if req.Executor3Id > 0 {
-		executorNumber++
-	}
-	// 1. 给其他两个打手发消息
-	if req.Executor2Id > 0 {
-		user1, _ := svc.userService.FindUserByDashId(req.Executor2Id)
-		message := dto.NewDispatchMessage(user1.ID, req.OrderId, req.GameRegion, req.RoleId, utils.ParseString(executorNumber))
-		_ = svc.messageService.PushMessage(ctx, message)
-	}
-	if req.Executor3Id > 0 {
-		user2, _ := svc.userService.FindUserByDashId(req.Executor3Id)
-		message := dto.NewDispatchMessage(user2.ID, req.OrderId, req.GameRegion, req.RoleId, utils.ParseString(executorNumber))
-		_ = svc.messageService.PushMessage(ctx, message)
+	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
+	err := svc.startOrder(ctx, req.OrderId, req.ExecutorId)
+	if err != nil {
+		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
+		return errors.New("订单开始失败，请联系客服")
 	}
 	return nil
 }
 
-func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId uint) error {
+func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId int) error {
 	return svc.orderRepo.UpdateOrderByDasher(ctx, orderId, executorId, enum.RUNNING)
 }
 
 func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExecutorReq) (err error) {
-	if orderReq.ExecutorName == "" && orderReq.ExecutorId == 0 {
+	if orderReq.ExecutorName == "" && orderReq.ExecutorId == -1 {
 		err = svc.orderRepo.RemoveAssistant(ctx, utils.MustCopy[orderDTO.OrderExecutorDTO](orderReq))
 	} else {
 		err = svc.orderRepo.AddAssistant(ctx, utils.MustCopy[orderDTO.OrderExecutorDTO](orderReq))
@@ -396,7 +399,7 @@ func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error 
 	err := svc.orderRepo.GrabOrder(ctx, grabReq.OrderId, grabReq.ExecutorId)
 	if err != nil {
 		ctx.Logger().Errorf("[GrabOrder]ERROR, err:%v", err.Error())
-		return errors.New("抢单失败，请刷新订单列表")
+		return errors.New("订单已被抢走")
 	}
 	go func() {
 		defer utils.RecoverAndLogError(ctx)

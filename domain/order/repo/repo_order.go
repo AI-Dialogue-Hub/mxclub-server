@@ -24,16 +24,10 @@ func init() {
 
 type IOrderRepo interface {
 	xmysql.IBaseRepo[po.Order]
-	ListByOrderStatus(
-		ctx jet.Ctx,
-		status enum.OrderStatus,
-		params *api.PageParams,
-		ge, le string,
-		memberNumber int,
-		userId uint) ([]*po.Order, error)
+	ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO) ([]*po.Order, error)
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error)
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
-	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (float64, error)
+	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
 	FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error
 	// FindByOrderId orderId 订单流水号
@@ -43,13 +37,14 @@ type IOrderRepo interface {
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
-	GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error
+	GrabOrder(ctx jet.Ctx, ordersId uint, executorId int) error
 	// UpdateOrderByDasher 通过车头进行更新
-	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error
-	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id uint, executor2Name string) error
-	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id uint, executor3Name string) error
+	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus) error
+	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error
+	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id int, executor3Name string) error
 	DoneEvaluation(id uint) error
 	RemoveByTradeNo(orderNo string) error
+	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -67,7 +62,7 @@ type OrderRepo struct {
 const cachePrefix = "_order_CachePrefix"
 const listCachePrefix = "_order_configListCachePrefix"
 
-func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, params *api.PageParams, ge, le string, memberNumber int, userId uint) ([]*po.Order, error) {
+func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO) ([]*po.Order, error) {
 	// 根据页码参数生成唯一的缓存键
 	//cacheListKey := xredis.BuildListDataCacheKey(cachePrefix + ge, params)
 	//cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + le)
@@ -76,17 +71,20 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, status enum.OrderStatus, pa
 	//	return repo.List(params.Page, params.PageSize, "order_status = ?", status)
 	//})
 	query := new(xmysql.MysqlQuery)
-	if memberNumber > 0 {
+	if d.IsDasher {
 		// 这里有可能是三个打手中的任意一个
-		query.SetFilter("(executor_id = ? or executor2_id = ? or executor3_id = ?)", memberNumber, memberNumber, memberNumber)
+		query.SetFilter(
+			"(executor_id = ? or executor2_id = ? or executor3_id = ?)",
+			d.MemberNumber, d.MemberNumber, d.MemberNumber,
+		)
 	} else {
-		query.SetFilter("purchase_id = ?", userId)
+		query.SetFilter("purchase_id = ?", d.UserId)
 	}
-	query.SetPage(params.Page, params.PageSize)
-	query.SetFilter("purchase_date >= ?", ge)
-	query.SetFilter("purchase_date <= ?", le)
-	if status != 0 {
-		query.SetFilter("order_status = ?", status)
+	query.SetPage(d.PageParams.Page, d.PageParams.PageSize)
+	query.SetFilter("purchase_date >= ?", d.Ge)
+	query.SetFilter("purchase_date <= ?", d.Le)
+	if d.Status != 0 {
+		query.SetFilter("order_status = ?", d.Status)
 	}
 	return repo.ListNoCountByQuery(query)
 }
@@ -129,7 +127,7 @@ func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, l
 
 }
 
-func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId uint) (result float64, err error) {
+func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (result float64, err error) {
 	defer traceUtil.TraceElapsedByName(time.Now(), "OrderWithdrawAbleAmount")
 	var totalAmount float64
 	var amount1, amount2, amount3 float64
@@ -255,22 +253,24 @@ func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDT
 	return repo.UpdateByWrapper(updateWrap)
 }
 
-func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) error {
+func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]orderRepo GrabOrder", ctx.Logger().ReqId))
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	tx := repo.DB().Begin()
 	// 1. 读取一个未被抢单的订单，并锁定该行（读取锁）
 	var lockOrderId uint
 	row := tx.Raw(
-		"SELECT id FROM orders WHERE id = ? and order_status = ? AND executor_id = 0 LIMIT 1 FOR UPDATE",
+		"SELECT id FROM orders WHERE id = ? and order_status = ? and specify_executor = 0 LIMIT 1 FOR UPDATE",
 		ordersId, enum.PROCESSING,
 	)
-	if err := row.Scan(&lockOrderId).Error; err != nil {
+	if err := row.Scan(&lockOrderId).Error; err != nil || lockOrderId <= 0 {
 		tx.Rollback()
 		if errors.Is(err, sql.ErrNoRows) {
 			ctx.Logger().Errorf("ERROR:%v", err.Error())
 			return errors.New("no pending orders available")
 		}
+		ctx.Logger().Errorf("lockOrderId:%v", lockOrderId)
+		return errors.New("no pending orders available")
 	}
 	// 2. 更新该订单的状态为已抢单，并设置执行者 Id
 	err := tx.Exec(
@@ -288,21 +288,21 @@ func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId uint) err
 	return nil
 }
 
-func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId uint, status enum.OrderStatus) error {
+func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
 	update.Set("executor_id", executorId)
 	update.Set("order_status", status)
 	return repo.UpdateByWrapper(update)
 }
-func (repo OrderRepo) UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id uint, executor2Name string) error {
+func (repo OrderRepo) UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
 	update.Set("executor2_id", executor2Id)
 	update.Set("executor2_name", executor2Name)
 	return repo.UpdateByWrapper(update)
 }
-func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id uint, executor3Name string) error {
+func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id int, executor3Name string) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
 	update.Set("executor3_id", executor3Id)
@@ -323,4 +323,14 @@ func (repo OrderRepo) DoneEvaluation(id uint) error {
 
 func (repo OrderRepo) RemoveByTradeNo(orderNo string) error {
 	return repo.RemoveOne("order_id = ?", orderNo)
+}
+
+func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error) {
+	query := xmysql.NewMysqlQuery()
+	// 这里有可能是三个打手中的任意一个
+	query.SetFilter(
+		"order_status = 2 and (executor_id = ? or executor2_id = ? or executor3_id = ?)",
+		dasherId, dasherId, dasherId,
+	)
+	return repo.FindByWrapper(query)
 }

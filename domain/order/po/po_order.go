@@ -20,10 +20,10 @@ type Order struct {
 	GameRegion         string             `gorm:"column:game_region"`
 	RoleId             string             `gorm:"column:role_id"`
 	SpecifyExecutor    bool               `gorm:"column:specify_executor"`
-	ExecutorID         uint               `gorm:"column:executor_id"`
+	ExecutorID         int                `gorm:"column:executor_id"`
 	ExecutorName       string             `gorm:"column:executor_name"`
-	Executor2Id        uint               `gorm:"column:executor2_id"`
-	Executor3Id        uint               `gorm:"column:executor3_id"`
+	Executor2Id        int                `gorm:"column:executor2_id"`
+	Executor3Id        int                `gorm:"column:executor3_id"`
 	Executor2Name      string             `gorm:"column:executor2_name"`
 	Executor3Name      string             `gorm:"column:executor3_name"`
 	Notes              string             `gorm:"column:notes"`
