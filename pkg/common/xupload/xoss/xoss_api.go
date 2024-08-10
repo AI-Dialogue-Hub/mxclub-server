@@ -8,13 +8,15 @@ import (
 	"mime/multipart"
 	"mxclub/pkg/utils"
 	"os"
+	"path"
 )
 
 type OssUploadStrategy struct{}
 
+// PutFromLocalFile filePath 文件保存路径
 func (*OssUploadStrategy) PutFromLocalFile(ctx jet.Ctx, filePath string) (string, error) {
 	logger := ctx.Logger()
-	fileUrlPath := fmt.Sprintf("%v/%v", ossCfg.StoragePath, filePath)
+	fileUrlPath := fmt.Sprintf("%v/%v", ossCfg.StoragePath, getFileNameFromPath(filePath))
 	appendFile, err := client.AppendFile(todoCtx, ossCfg.Bucket, fileUrlPath)
 	if err != nil {
 		logger.Errorf("failed to append file %v", err)
@@ -30,6 +32,11 @@ func (*OssUploadStrategy) PutFromLocalFile(ctx jet.Ctx, filePath string) (string
 	defer utils.HandleClose(appendFile)
 	logger.Infof("af write n:%#v\n", n)
 	return BuildURL(fileUrlPath), nil
+}
+
+func getFileNameFromPath(filePath string) string {
+	_, fileName := path.Split(filePath)
+	return fileName
 }
 
 func (*OssUploadStrategy) PutFromWeb(ctx jet.Ctx) (string, error) {
@@ -77,6 +84,6 @@ func (*OssUploadStrategy) PutFromWeb(ctx jet.Ctx) (string, error) {
 	return BuildURL(filePath), nil
 }
 
-func (*OssUploadStrategy) GetFile(ctx jet.Ctx, path string, filePath string) {
+func (o *OssUploadStrategy) GetFile(ctx jet.Ctx, path string, filePath string) {
 	// noting to do
 }

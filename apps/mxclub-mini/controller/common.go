@@ -37,13 +37,18 @@ func (*DemoController) PostV1Upload(ctx jet.Ctx) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, fileURL, nil)
 }
 
-func (*DemoController) GetV1File0(ctx jet.Ctx, params *api.PathParam) {
-	strategy, err := xupload.FetchStrategy(config.GetConfig().UploadConfig.StorageType)
+func (ctr ProductController) GetV1File0(ctx jet.Ctx, params *api.PathParam) {
+	storageType := config.GetConfig().UploadConfig.StorageType
+	strategy, err := xupload.FetchStrategy(storageType)
 	if err != nil {
 		ctx.Logger().Errorf("FetchStrategy ERROR:%v", err)
 		return
 	}
 	path, _ := params.GetString(0)
-
-	strategy.GetFile(ctx, config.GetConfig().File.FilePath, path)
+	if storageType == "oss" {
+		localStrategy, _ := xupload.FetchLocalStrategy()
+		localStrategy.GetFile(ctx, config.GetConfig().File.FilePath, path)
+	} else {
+		strategy.GetFile(ctx, path, config.GetConfig().File.FilePath)
+	}
 }
