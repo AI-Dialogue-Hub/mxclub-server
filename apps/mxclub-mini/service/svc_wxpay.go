@@ -24,7 +24,7 @@ func NewWxPayService(orderRepo repo.IOrderRepo, userService *UserService, wxpayC
 }
 
 func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePayDTO, error) {
-	userPO, _ := s.userService.FindUserById(id)
+	userPO, _ := s.userService.FindUserById(ctx, id)
 	prePayRequestDTO := wxpay.NewPrepayRequest(amount, userPO.WxOpenId)
 	prepayDTO, err := wxpay.Prepay(ctx, prePayRequestDTO)
 	if err != nil {

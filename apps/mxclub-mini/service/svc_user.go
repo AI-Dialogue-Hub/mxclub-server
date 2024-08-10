@@ -49,7 +49,7 @@ func NewUserService(repo repo.IUserRepo,
 
 func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.UserVO, error) {
 	// 用户信息
-	userPO, err := svc.userRepo.FindByID(id)
+	userPO, err := svc.FindUserById(ctx, id)
 	userVO := utils.MustCopyByCtx[vo.UserVO](ctx, userPO)
 	if err != nil || userPO == nil {
 		return nil, err
@@ -118,12 +118,12 @@ func (svc UserService) GetUserByOpenId(ctx jet.Ctx, openId string) (*vo.UserVO, 
 	return utils.MustCopyByCtx[vo.UserVO](ctx, userPO), err
 }
 
-func (svc UserService) FindUserById(id uint) (*po.User, error) {
-	return svc.userRepo.FindByID(id)
+func (svc UserService) FindUserById(ctx jet.Ctx, id uint) (*po.User, error) {
+	return svc.userRepo.FindByIdAroundCache(ctx, id)
 }
 
-func (svc UserService) FindUserByDashId(memberNumber int) (*po.User, error) {
-	return svc.userRepo.FindByMemberNumber(memberNumber)
+func (svc UserService) FindUserByDashId(ctx jet.Ctx, memberNumber int) (*po.User, error) {
+	return svc.userRepo.FindByMemberNumber(ctx, memberNumber)
 }
 
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
@@ -164,11 +164,10 @@ func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
 		ctx.Logger().Errorf("[AssistantOnline]ERROR:%v", err.Error())
 		return nil
 	}
-	// TODO 排除自己
-	//filterUserList := utils.Filter(userPOList, func(in *po.User) bool {
-	//	return in.ID != middleware.MustGetUserId(ctx)
-	//})
-	return utils.Map[*po.User, *vo.AssistantOnlineVO](userPOList, func(in *po.User) *vo.AssistantOnlineVO {
+	filterUserList := utils.Filter(userPOList, func(in *po.User) bool {
+		return in.ID != middleware.MustGetUserId(ctx)
+	})
+	return utils.Map[*po.User, *vo.AssistantOnlineVO](filterUserList, func(in *po.User) *vo.AssistantOnlineVO {
 		return &vo.AssistantOnlineVO{
 			Id:     in.MemberNumber,
 			UserId: in.ID,
@@ -200,7 +199,7 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 	case 101:
 		// 订单进行中 移除队友操作 ext为打手编号
 		memberNumber := utils.ParseInt(handleReq.Ext)
-		userPO, _ := svc.userRepo.FindByMemberNumber(memberNumber)
+		userPO, _ := svc.userRepo.FindByMemberNumber(ctx, memberNumber)
 		message := fmt.Sprintf("您将被移除在进行中的订单，订单id:%v", handleReq.OrdersId)
 		_ = svc.messageService.PushRemoveMessage(ctx, handleReq.OrdersId, userPO.ID, message)
 	case 201:
@@ -208,11 +207,13 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 		svc.handleAcceptApplication(ctx, handleReq)
 	case 301:
 		// 接单拒绝，通知打手
-		userPO, _ := svc.FindUserById(middleware.MustGetUserId(ctx))
+		userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
 		if handleReq.MessageType == messageEnum.REMOVE_MESSAGE {
-			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您移除打手:%v(%v)的申请已被拒绝，请联系相关打手", userPO.MemberNumber, userPO.Name))
+			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID,
+				fmt.Sprintf("您移除打手:%v(%v)的申请已被拒绝，请联系相关打手", userPO.MemberNumber, userPO.Name))
 		} else {
-			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已被拒绝，请联系其他打手", userPO.MemberNumber, userPO.Name))
+			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID,
+				fmt.Sprintf("您邀请打手:%v(%v)的申请已被拒绝，请联系其他打手", userPO.MemberNumber, userPO.Name))
 		}
 	case 401:
 		// 同意移除
@@ -224,7 +225,7 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
 	orderId := handleReq.OrdersId
 	orderPO, _ := svc.orderRepo.FindByID(orderId)
-	userPO, _ := svc.FindUserById(middleware.MustGetUserId(ctx))
+	userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
 	if orderPO.Executor2Id == -1 {
 		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name))
 		// 更新角色
@@ -237,13 +238,13 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 
 func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
 	orderPO, _ := svc.orderRepo.FindByID(handleReq.OrdersId)
-	userPO, _ := svc.FindUserById(middleware.MustGetUserId(ctx))
+	userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
 	if orderPO.Executor2Id == userPO.MemberNumber {
 		_ = svc.orderRepo.UpdateOrderDasher2(ctx, orderPO.ID, -1, "")
 	} else if orderPO.Executor3Id == userPO.MemberNumber {
 		_ = svc.orderRepo.UpdateOrderDasher3(ctx, orderPO.ID, -1, "")
 	}
-	executorPO, _ := svc.userRepo.FindByMemberNumber(orderPO.ExecutorID)
+	executorPO, _ := svc.userRepo.FindByMemberNumber(ctx, orderPO.ExecutorID)
 	message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
 	_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
 }
@@ -272,15 +273,15 @@ func (svc UserService) RemoveAssistant(ctx jet.Ctx) error {
 }
 
 func (svc UserService) PushInviteMessage(ctx jet.Ctx, req *req.OrderExecutorInviteReq) error {
-	//logger := ctx.Logger() TODO FIX_ME
+	logger := ctx.Logger()
 	// 检查是否在进行中订单
-	//orderPO, err := svc.orderRepo.FindByDasherId(ctx, req.ExecutorId)
-	//if err != nil || orderPO.ID > 0 {
-	//	logger.Errorf("[FindByDasherId]ERROR:%v", err)
-	//	return errors.New("打手有在进行中的订单，无法派单")
-	//}
+	orderPO, err := svc.orderRepo.FindByDasherId(ctx, req.ExecutorId)
+	if err != nil || orderPO.ID > 0 {
+		logger.Errorf("[FindByDasherId]ERROR:%v", err)
+		return errors.New("打手有在进行中的订单，无法派单")
+	}
 	go func() {
-		user, _ := svc.FindUserByDashId(req.ExecutorId)
+		user, _ := svc.FindUserByDashId(ctx, req.ExecutorId)
 		message := dto.NewDispatchMessage(user.ID, req.OrderId, req.GameRegion, req.RoleId, "")
 		_ = svc.messageService.PushMessage(ctx, message)
 	}()

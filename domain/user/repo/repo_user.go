@@ -23,7 +23,7 @@ type IUserRepo interface {
 	QueryUserByAccount(username string, password string) (*po.User, error)
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
 	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
-	FindByMemberNumber(memberNumber int) (*po.User, error)
+	FindByMemberNumber(ctx jet.Ctx, memberNumber int) (*po.User, error)
 	FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, string], error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
@@ -38,6 +38,7 @@ type IUserRepo interface {
 	UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum.MemberStatus) error
 	UpdateUserPhone(ctx jet.Ctx, id uint, phone string) error
 	RemoveDasher(ctx jet.Ctx, id uint) error
+	FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -51,6 +52,11 @@ func NewUserRepo(db *gorm.DB) IUserRepo {
 type UserRepo struct {
 	xmysql.BaseRepo[po.User]
 }
+
+// =============================================================================
+
+const userCachePrefix = "mini_user"
+const userListCachePrefix = "mini_user_list"
 
 func (repo UserRepo) QueryUserByAccount(username string, password string) (*po.User, error) {
 	return repo.FindOne("name = ? and password = ?", username, utils.EncryptPassword(password))
@@ -79,8 +85,11 @@ func (repo UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) 
 	return one, err
 }
 
-func (repo UserRepo) FindByMemberNumber(memberNumber int) (*po.User, error) {
-	return repo.FindOne("member_number = ? and role = 'assistant'", memberNumber)
+func (repo UserRepo) FindByMemberNumber(ctx jet.Ctx, memberNumber int) (*po.User, error) {
+	cacheKey := fmt.Sprintf("%v_%v_%v", userCachePrefix, "FindByMemberNumber", memberNumber)
+	return xredis.GetOrDefault[po.User](ctx, cacheKey, func() (*po.User, error) {
+		return repo.FindOne("member_number = ? and role = 'assistant'", memberNumber)
+	})
 }
 
 func (repo UserRepo) ExistsByOpenId(ctx jet.Ctx, openId string) bool {
@@ -91,9 +100,6 @@ func (repo UserRepo) ExistsByOpenId(ctx jet.Ctx, openId string) bool {
 	}
 	return count > 0
 }
-
-const userCachePrefix = "mini_user"
-const userListCachePrefix = "mini_user_list"
 
 func (repo UserRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error) {
 	return repo.ListAroundCacheByUserType(ctx, params, "")
@@ -225,4 +231,11 @@ func (repo UserRepo) FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, s
 		m.Put(pair.Id, utils.GetOrDefault(pair.WxGrade, "LV0"))
 	}
 	return m, nil
+}
+
+func (repo UserRepo) FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error) {
+	cacheKey := fmt.Sprintf("%v_%v", userCachePrefix, id)
+	return xredis.GetOrDefault[po.User](ctx, cacheKey, func() (*po.User, error) {
+		return repo.FindByID(id)
+	})
 }

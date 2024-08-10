@@ -76,7 +76,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		specifyExecutorUserId uint
 	)
 	if req.SpecifyExecutor {
-		dasher, _ := svc.userService.FindUserByDashId(req.ExecutorId)
+		dasher, _ := svc.userService.FindUserByDashId(ctx, req.ExecutorId)
 		executorId = req.ExecutorId
 		dasherName = dasher.Name
 		specifyExecutorUserId = dasher.ID
@@ -126,7 +126,7 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 	var executorName string
 	var isDasher = req.Role == string(userEnum.RoleAssistant)
 	if isDasher {
-		userPO, _ := svc.userService.userRepo.FindByMemberNumber(req.MemberNumber)
+		userPO, _ := svc.userService.userRepo.FindByMemberNumber(ctx, req.MemberNumber)
 		executorName = userPO.Name
 	}
 	list, err := svc.orderRepo.ListByOrderStatus(ctx, &orderRepoDTO.ListByOrderStatusDTO{
@@ -168,7 +168,7 @@ func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 
 func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.PreferentialVO, error) {
 	userId := middleware.MustGetUserId(ctx)
-	userById, err := svc.userService.FindUserById(userId)
+	userById, err := svc.userService.FindUserById(ctx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
@@ -252,7 +252,7 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 }
 
 func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, executorID int, executorPrice float64) {
-	dashPO, _ := svc.userService.FindUserByDashId(executorID)
+	dashPO, _ := svc.userService.FindUserByDashId(ctx, executorID)
 	message := fmt.Sprintf(
 		"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
 		dashPO.MemberNumber,
@@ -325,7 +325,7 @@ func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExec
 
 func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, error) {
 	userId := middleware.MustGetUserId(ctx)
-	userById, err := svc.userService.FindUserById(userId)
+	userById, err := svc.userService.FindUserById(ctx, userId)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, cannot find user:%v", userId)
 		return nil, errors.New("cannot find user info")
@@ -380,7 +380,7 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	// 1. 添加提现记录
-	userById, _ := svc.userService.FindUserById(userId)
+	userById, _ := svc.userService.FindUserById(ctx, userId)
 	err := svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userId, userById.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
@@ -405,7 +405,7 @@ func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error 
 		defer utils.RecoverAndLogError(ctx)
 		// 2. 给买家发送消息
 		orderPO, _ := svc.orderRepo.FindByID(grabReq.OrderId)
-		dasherPO, _ := svc.userService.FindUserByDashId(grabReq.ExecutorId)
+		dasherPO, _ := svc.userService.FindUserByDashId(ctx, grabReq.ExecutorId)
 		toUserMessage := fmt.Sprintf(
 			"您的订单:%v，已被打手:%v(%v)接受，可前往订单，选中日期%v进行查看",
 			orderPO.OrderName, dasherPO.MemberNumber, dasherPO.Name, formatDate(orderPO.PurchaseDate),
