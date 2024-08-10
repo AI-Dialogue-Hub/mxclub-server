@@ -37,6 +37,7 @@ func handleJwtAuth(ctx *fasthttp.RequestCtx) (err error) {
 	if jwtToken == "" {
 		logger.Error("empty Authorization")
 		err = api.ErrorUnauthorized(logger.ReqId)
+		return
 	}
 	tokenInfo, err := ParseAuthToken(jwtToken)
 	if err != nil {

@@ -47,7 +47,7 @@ func (ctr ProductController) GetV1File0(ctx jet.Ctx, params *api.PathParam) {
 	path, _ := params.GetString(0)
 	if storageType == "oss" {
 		localStrategy, _ := xupload.FetchLocalStrategy()
-		localStrategy.GetFile(ctx, config.GetConfig().File.FilePath, path)
+		localStrategy.GetFile(ctx, path, config.GetConfig().File.FilePath)
 	} else {
 		strategy.GetFile(ctx, path, config.GetConfig().File.FilePath)
 	}

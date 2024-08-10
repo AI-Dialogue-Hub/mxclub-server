@@ -117,7 +117,7 @@ func (*LocalUploadStrategy) GetFile(ctx jet.Ctx, path string, filePath string) {
 	// 检查文件是否存在
 	_, err := os.Stat(fullFilePath)
 	if err != nil {
-		logger.Error("File not found", fasthttp.StatusNotFound)
+		logger.Errorf("File not found, %v, %v", fileName, fullFilePath)
 		xjet.Error(ctx, "File not found", fasthttp.StatusNotFound)
 		return
 	}
