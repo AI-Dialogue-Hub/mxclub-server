@@ -1,6 +1,7 @@
 package main
 
 import (
+	jetContext "github.com/fengyuan-liang/jet-web-fasthttp/core/context"
 	"github.com/fengyuan-liang/jet-web-fasthttp/core/router"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/valyala/fasthttp"
@@ -9,6 +10,7 @@ import (
 	"mxclub/apps/mxclub-mini/middleware"
 	_ "mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/common/xjet"
+	"mxclub/pkg/common/xmysql"
 )
 
 func main() {
@@ -21,6 +23,9 @@ func main() {
 	jet.SetFastHttpServer(&fasthttp.Server{
 		Handler:            router.ServeHTTP,
 		MaxRequestBodySize: config.GetConfig().File.MaxRequestBodySize * 1024 * 1024,
+	})
+	jet.AddPostJetCtxInitHook(func(ctx jetContext.Ctx) {
+		xmysql.SetLoggerPrefix(ctx.Logger().ReqId)
 	})
 	jet.Run(config.GetConfig().Server.Port)
 }

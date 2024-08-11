@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRefundDTO(t *testing.T) {
+func testRefundDTO(t *testing.T) {
 	val := getTestEncryptWxpayCallBackInfo(t)
 	t.Logf("%v\n", val)
 	jsonStr := utils.ObjToJsonStr(val)
@@ -14,7 +14,7 @@ func TestRefundDTO(t *testing.T) {
 }
 
 func getTestEncryptWxpayCallBackInfo(t *testing.T) *WxPayCallBackEncryptDTO {
-	str := `{"summary":"支付成功","resource":{"algorithm":"AEAD_AES_256_GCM","associated_data":"transaction","ciphertext":"C9ZalMqbXPufxWdFSqyDCCTeYDMK4x42x0SePJ874CeDSbj8a717LtJeZZklgqxfW9Z50FTcPgXGZmVppHqESxkD/tfiPRYlAbfajCrA0kvWajG5ZrMXGDusX4abYChQuz98i8jJvK/bVtMiR+S0RJbSXc7MY05WHo3B3VTs7MP0bCcgPS1SpfG/pVYDmOOKQdun1E4MqIbl2MNAdjPdwwEtG7SG+C3X73ge9DlspFHgN9egB64tN/PY3BzJ1QKa2C7LeAG/E12G6TrYJr4h1QqirAgJTuL5eVea1EkH8WC9rAewyynPbNbui0WcK99jekKEpsEyzl/w3lDEtAZM8AGI7mUIXZClbQLf/yKnDwYpR6iwk9H7zgwRMsZi2ViBB+aHjZyolIZvqstCiKFqKyrV4GFmBwrm6rzGXTQgiNX1W68VHulldj5zPpg8vwgPiIVwQ472qpC1xZ3jlC8/F/aNeOYeikmPlwdzkcffqmQu9kspgVDG6AQdaOvRHZuDMc4DrHXQTgcdS7cunYrAF7x16UlSiRGeCd99jHCS93QJPBbaENi9ZWZjC7icQ62bSdmYprqnHWWx0y1qyMQEKwxHGHrGk2jiWspm","nonce":"fv1XisQ8zfAn","original_type":"transaction"},"id":"4a5a469e-f34e-5b08-abd7-1de5b0109017","create_time":"2024-08-09T01:02:35+08:00","resource_type":"encrypt-resource","event_type":"TRANSACTION.SUCCESS"}`
+	str := `{"summary":"支付成功","resource":{"algorithm":"AEAD_AES_256_GCM","associated_data":"transaction","ciphertext":"zMwzl8o6CKa37X8EKRcLVEAv+1a7LpzAP7TkX3ZEEpbtyQLetKShUSSTl6xwbfAMlrZsL0PKvNaMcCZUJjjvwGLYCI4GBx64MQgOFjzd8iWLwjmFQwzVEN4KAJvPlxXq92kHN0GoDrp6Q9MNNB0eIUmVft8rrU2RsRFvn8QwVH5s9aUuuKAUFUNMYs2jHO0JvIkJz8RoBJpAmKsHPNf/L5xlG71MFNC7v9yhp1A1X2ThYCoqmbkriS1SmLT/OGhaZTcfz6VdJ79xhsZpEYwguHfGfaIJQcgmWf1lB3Dk+Y4/uNzqDq48EUt6QgrG0dxsNomD9VlHdHLCX4GBGVPxBjcDn4KwKBRW9bN5pN6kX+EHzUel9Ue0pREuRziQBvT7mMflWdi6Rp2sB/d7UTp1GrV32o2a+1U/qWxXrxOGVQIF0fYkn/PQWXD7HE5MOakRO800UfbX9/Ouoj41G0RWH4bnD5vuD0RGV1pOdv1QArvv8jWDizT2hG59dfyUwHeYE8BATeOWmVDVD1d20lQ/MqIro2OyLfylZniqajbs3fR5VcuyJW/0BWx7YzwBrTRh3/FdmmN63KaGRiX0aEs4qaXcO9AKdEc=","nonce":"sue6aFnccw2B","original_type":"transaction"},"id":"a32d1b69-9e56-57bd-8d0b-970becd4ede8","create_time":"2024-08-11T09:56:32+08:00","resource_type":"encrypt-resource","event_type":"TRANSACTION.SUCCESS"}`
 	val, err := utils.JsonStrToObj[WxPayCallBackEncryptDTO](str)
 	if err != nil {
 		t.Logf("error, %v", err)

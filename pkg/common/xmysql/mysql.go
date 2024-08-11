@@ -7,9 +7,6 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-	"log"
-	"os"
 	"time"
 )
 
@@ -91,19 +88,19 @@ func ConnectDB(cfg *MySqlConfig) (db *gorm.DB, err error) {
 		cfg.LogLevel = 2
 	}
 	// 定义日志配置
-	gormLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold:             time.Second,                   // 慢查询阈值
-			LogLevel:                  logger.LogLevel(cfg.LogLevel), // 日志级别
-			IgnoreRecordNotFoundError: true,                          // 忽略记录未找到错误
-			Colorful:                  false,                         // 禁用彩色打印
-		},
-	)
+	//gormLogger := logger.New(
+	//	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+	//	logger.Config{
+	//		SlowThreshold:             time.Second,                   // 慢查询阈值
+	//		LogLevel:                  logger.LogLevel(cfg.LogLevel), // 日志级别
+	//		IgnoreRecordNotFoundError: true,                          // 忽略记录未找到错误
+	//		Colorful:                  false,                         // 禁用彩色打印
+	//	},
+	//)
 	opts = &gorm.Config{
 		SkipDefaultTransaction: false, // 禁用默认事务(true: Error 1295: This command is not supported in the prepared statement protocol yet)
 		PrepareStmt:            false, // 创建并缓存预编译语句(true: Error 1295)
-		Logger:                 gormLogger,
+		Logger:                 NewGormLogAdapter(),
 	}
 
 	db, err = gorm.Open(mysql.Open(dsn), opts)

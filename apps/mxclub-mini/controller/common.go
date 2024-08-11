@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	xjet.NewCommonJetController[DemoController]()
+	xjet.NewCommonJetController[CommonController]()
 }
 
-type DemoController struct {
+type CommonController struct {
 	jet.BaseJetController
 }
 
@@ -22,13 +22,13 @@ type Param struct {
 	Age  int    `form:"age" validate:"lte=120,gte=1" reg_err_info:"年龄不合法"`
 }
 
-func (*DemoController) GetV1Hello(ctx jet.Ctx, p *Param) (*api.Response, error) {
+func (*CommonController) GetV1Hello(ctx jet.Ctx, p *Param) (*api.Response, error) {
 	ctx.Logger().Infof("request uri:%v", string(ctx.Request().RequestURI()))
 	ctx.Logger().Infof("request param:%v", utils.ObjToJsonStr(p))
 	return api.Success(ctx.Logger().ReqId, "hello world"), nil
 }
 
-func (*DemoController) PostV1Upload(ctx jet.Ctx) (*api.Response, error) {
+func (*CommonController) PostV1Upload(ctx jet.Ctx) (*api.Response, error) {
 	strategy, _ := xupload.FetchStrategy(config.GetConfig().UploadConfig.StorageType)
 	fileURL, err := strategy.PutFromWeb(ctx)
 	if err != nil {
