@@ -126,7 +126,7 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 	var executorName string
 	var isDasher = req.Role == string(userEnum.RoleAssistant)
 	if isDasher {
-		userPO, _ := svc.userService.userRepo.FindByMemberNumber(ctx, req.MemberNumber)
+		userPO, _ := svc.userService.FindUserByDashId(ctx, req.MemberNumber)
 		executorName = userPO.Name
 	}
 	list, err := svc.orderRepo.ListByOrderStatus(ctx, &orderRepoDTO.ListByOrderStatusDTO{
@@ -173,7 +173,7 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
 
-	productVO, err := svc.productService.FindById(productId)
+	productVO, err := svc.productService.FindById(ctx, productId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find product: %w", err)
 	}

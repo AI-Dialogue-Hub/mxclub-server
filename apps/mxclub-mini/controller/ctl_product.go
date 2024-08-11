@@ -31,7 +31,7 @@ func (ctr ProductController) GetV1Product0(ctx jet.Ctx, args *api.PathParam) (*a
 	if xjet.IsAnyEmpty(productId) {
 		return xjet.WrapperResult(ctx, "", errors.New("product is empty"))
 	}
-	vo, err := ctr.ProductService.FindById(utils.ParseUint(productId))
+	vo, err := ctr.ProductService.FindById(ctx, utils.ParseUint(productId))
 	return xjet.WrapperResult(ctx, vo, err)
 }
 
@@ -45,6 +45,6 @@ func (ctr ProductController) GetV1ProductType0(ctx jet.Ctx, args *api.PathParam)
 	if xjet.IsAnyEmpty(typeValue) {
 		return xjet.WrapperResult(ctx, "", errors.New("typeValue is empty"))
 	}
-	vo, err := ctr.ProductService.List(utils.ParseUint(typeValue))
+	vo, err := ctr.ProductService.List(ctx, utils.ParseUint(typeValue))
 	return xjet.WrapperResult(ctx, vo, err)
 }

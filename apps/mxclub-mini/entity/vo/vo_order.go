@@ -54,6 +54,7 @@ type ProductVO struct {
 	Images           xmysql.StringArray `json:"images"`
 	DetailImages     xmysql.StringArray `json:"detail_images"`
 	Thumbnail        string             `json:"thumbnail"`
+	Phone            string             `json:"phone"`
 }
 
 type WithDrawVO struct {

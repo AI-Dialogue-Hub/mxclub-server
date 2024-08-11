@@ -57,7 +57,7 @@ func (svc UserService) List(ctx jet.Ctx, params *req.UserListReq) (*api.PageResu
 
 func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 	updateMap := utils.ObjToMap(req)
-	updateMap["member_number"] = utils.SafeParseUint64(updateMap["member_number"])
+	updateMap["member_number"] = utils.SafeParseNumber[int](updateMap["member_number"])
 	return svc.userRepo.UpdateUser(ctx, updateMap)
 }
 

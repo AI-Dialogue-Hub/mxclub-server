@@ -88,7 +88,7 @@ func (repo UserRepo) FindByOpenId(ctx jet.Ctx, openId string) (*po.User, error) 
 func (repo UserRepo) FindByMemberNumber(ctx jet.Ctx, memberNumber int) (*po.User, error) {
 	cacheKey := fmt.Sprintf("%v_%v_%v", userCachePrefix, "FindByMemberNumber", memberNumber)
 	return xredis.GetOrDefault[po.User](ctx, cacheKey, func() (*po.User, error) {
-		return repo.FindOne("member_number = ? and role = 'assistant'", memberNumber)
+		return repo.FindOne("member_number = ? and role = ?", memberNumber, enum.RoleAssistant.String())
 	})
 }
 

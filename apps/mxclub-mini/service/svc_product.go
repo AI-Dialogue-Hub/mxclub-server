@@ -3,8 +3,10 @@ package service
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/vo"
+	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/product/po"
 	"mxclub/domain/product/repo"
+	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
 )
@@ -15,23 +17,26 @@ func init() {
 
 type ProductService struct {
 	ProductRepo repo.IProductRepo
+	userRepo    userRepo.IUserRepo
 }
 
-func NewProductService(repo repo.IProductRepo) *ProductService {
-	return &ProductService{ProductRepo: repo}
+func NewProductService(repo repo.IProductRepo, userRepo userRepo.IUserRepo) *ProductService {
+	return &ProductService{ProductRepo: repo, userRepo: userRepo}
 }
 
-func (svc ProductService) FindById(id uint) (*vo.ProductVO, error) {
+func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) {
 	productPO, err := svc.ProductRepo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 	productVO, _ := utils.Copy[vo.ProductVO](productPO)
 	productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
+	productVO.Phone = userPO.Phone
 	return productVO, nil
 }
 
-func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {
+func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, error) {
 	var (
 		list []*po.Product
 		err  error
@@ -49,5 +54,8 @@ func (svc ProductService) List(typeValue uint) ([]*vo.ProductVO, error) {
 		return nil, err
 	}
 	productVOS := utils.CopySlice[*po.Product, *vo.ProductVO](list)
+	// 老板已经保存电话了，选用上一次老板保存的电话
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
+	utils.ForEach(productVOS, func(ele *vo.ProductVO) { ele.Phone = userPO.Phone })
 	return productVOS, err
 }

@@ -98,6 +98,10 @@ func (r RoleType) DisPlayName() string {
 	return RoleDisPlayNameMap.MustGet(r)
 }
 
+func (r RoleType) String() string {
+	return string(r)
+}
+
 func (r RoleType) CheckPermission(requiredPermission Permission) error {
 	if r.Permission()&requiredPermission != requiredPermission {
 		return errors.New("权限不够")
