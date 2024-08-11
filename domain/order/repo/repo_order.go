@@ -33,6 +33,7 @@ type IOrderRepo interface {
 	// FindByOrderId orderId 订单流水号
 	FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error)
 	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
+	QueryOrderWithDelayTime(ctx jet.Ctx, status enum.OrderStatus, thresholdTime time.Time) ([]*po.Order, error)
 	// UpdateOrderStatus 这里的orderId为订单流水号
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
@@ -217,6 +218,11 @@ func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
 
 func (repo OrderRepo) QueryOrderByStatus(ctx jet.Ctx, status enum.OrderStatus) ([]*po.Order, error) {
 	return repo.Find("order_status = ? and specify_executor = ?", status, false)
+}
+
+func (repo OrderRepo) QueryOrderWithDelayTime(
+	ctx jet.Ctx, status enum.OrderStatus, thresholdTime time.Time) ([]*po.Order, error) {
+	return repo.Find("order_status = ? and specify_executor = ? and purchase_date < ?", status, false, thresholdTime)
 }
 
 func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error {

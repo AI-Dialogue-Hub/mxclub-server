@@ -286,7 +286,24 @@ func (svc OrderService) getCutRate(ctx jet.Ctx) (cutRate float64) {
 }
 
 func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {
-	orders, err := svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
+	var (
+		orders []*po.Order
+		err    error
+	)
+	// 1. 获取金牌打手提前看到订单时间
+	dasher, _ := svc.userService.FindUserById(ctx, middleware.MustGetUserId(ctx))
+	if dasher.MemberNumber <= 100 {
+		orders, err = svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
+	} else {
+		var delayTime int = 20 // 默认20s
+		// 非金牌打手 晚指定秒后才能看到订单
+		configByName, _ := svc.commonRepo.FindConfigByName(ctx, commonEnum.DelayTime.String())
+		if configByName != nil && len(configByName.Content) > 0 && configByName.Content[0]["desc"] != nil {
+			delayTime = utils.SafeParseNumber[int](configByName.Content[0]["desc"])
+		}
+		delayDuration := time.Now().Add(-time.Second * time.Duration(delayTime))
+		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, delayDuration)
+	}
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return nil, errors.New("订单完成失败，请联系客服")
