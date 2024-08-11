@@ -15,6 +15,7 @@ type IBaseRepo[T any] interface {
 	RemoveByID(id interface{}) error
 	RemoveOne(filter any, data ...any) error
 	Update(update any, filter any, data ...any) error
+	UpdateById(update any, id any) error
 	UpdateByWrapper(updateWrap *MysqlUpdate) error
 	FindByID(id interface{}) (*T, error)
 	Find(filter any, data ...any) ([]*T, error)
@@ -74,6 +75,10 @@ func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
 
 func (r *BaseRepo[T]) Update(update any, filter any, data ...any) error {
 	return r.db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Updates(update).Error
+}
+
+func (r *BaseRepo[T]) UpdateById(update any, id any) error {
+	return r.Update(update, "id = ?", id)
 }
 
 func (r *BaseRepo[T]) UpdateByWrapper(updateWrap *MysqlUpdate) error {

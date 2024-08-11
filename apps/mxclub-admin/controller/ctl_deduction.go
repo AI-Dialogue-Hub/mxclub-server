@@ -17,7 +17,7 @@ func (ctl OrderController) PutV1Deduction(ctx jet.Ctx, req *req.DeductionAddReq)
 }
 
 func (ctl OrderController) PostV1Deduction(ctx jet.Ctx, req *req.DeductionUpdateReq) (*api.Response, error) {
-	return xjet.WrapperResult(ctx, xjet.OK, ctl.orderService.Update(ctx, req))
+	return xjet.WrapperResult(ctx, xjet.OK, ctl.orderService.UpdateDeduction(ctx, req))
 }
 
 func (ctl OrderController) DeleteV1Deduction(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {

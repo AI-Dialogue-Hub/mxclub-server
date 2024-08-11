@@ -1,10 +1,12 @@
 package utils
 
 import (
-	"strconv"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"testing"
 )
 
 func TestEncryptPassword(t *testing.T) {
-	t.Logf("%v", EncryptPassword(strconv.Itoa(123456)))
+	genReqId := xlog.GenReqId()
+	t.Logf("%v", genReqId)
+	t.Logf("%v", EncryptPassword(genReqId))
 }

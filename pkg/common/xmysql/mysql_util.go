@@ -33,7 +33,10 @@ func (j *JSONArray) Scan(value interface{}) error {
 type StringArray []string
 
 func (j *StringArray) Scan(value interface{}) error {
-	return json.Unmarshal(value.([]byte), j)
+	if bt, ok := value.([]byte); ok {
+		return json.Unmarshal(bt, j)
+	}
+	return json.Unmarshal(utils.MustObjToByte(value), j)
 }
 
 func (j StringArray) Value() (driver.Value, error) {

@@ -64,13 +64,15 @@ func MustGenAuthToken(ctx jet.Ctx, userPO *po.User) string {
 	return token
 }
 
+const day = 24 * 60 * 60
+
 func GenAuthTokenByUserName(userPO *po.User) (string, error) {
 	authToken := &AuthToken{
 		UserName: userPO.Name,
 		UserPO:   userPO,
 	}
 	if authToken.ExpiresAt == 0 {
-		authToken.ExpiresAt = time.Now().Unix() + 7*86400
+		authToken.ExpiresAt = time.Now().Unix() + 30*day
 	}
 
 	signKey := []byte(config.GetConfig().Server.JwtKey)

@@ -40,7 +40,7 @@ func (svc OrderService) Add(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
 	return nil
 }
 
-func (svc OrderService) Update(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) error {
+func (svc OrderService) UpdateDeduction(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) error {
 	updateMap := map[string]any{
 		"amount": updateReq.Amount,
 		"reason": updateReq.Reason,
@@ -48,7 +48,7 @@ func (svc OrderService) Update(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) e
 	}
 	err := svc.deductionRepo.Update(updateMap, "id = ?", updateReq.ID)
 	if err != nil {
-		ctx.Logger().Errorf("[orderService]Update ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]UpdateDeduction ERROR:%v", err.Error())
 		return errors.New("修改失败")
 	}
 	return nil

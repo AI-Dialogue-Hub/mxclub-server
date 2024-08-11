@@ -110,3 +110,27 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 	}
 	return nil
 }
+
+// TransferOrder 转单就是把
+func (svc OrderService) TransferOrder(ctx jet.Ctx, id int64) error {
+	err := svc.orderRepo.ClearOrderDasherInfo(ctx, id)
+	if err != nil {
+		ctx.Logger().Errorf("[TransferOrder]err:%v", err)
+		return errors.New("转单失败")
+	}
+	return nil
+}
+
+func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
+	updateMap := utils.ObjToMap(orderVO)
+	delete(updateMap, "id")
+	delete(updateMap, "order_status_str")
+	delete(updateMap, "detail_images")
+	err := svc.orderRepo.UpdateById(updateMap, orderVO.ID)
+	if err != nil {
+		ctx.Logger().Errorf("[UpdateOrder]err:%v", err)
+		return errors.New("更新订单失败")
+	}
+	svc.orderRepo.ClearOrderCache(ctx)
+	return nil
+}

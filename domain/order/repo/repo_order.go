@@ -46,6 +46,8 @@ type IOrderRepo interface {
 	DoneEvaluation(id uint) error
 	RemoveByTradeNo(orderNo string) error
 	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
+	ClearOrderDasherInfo(ctx jet.Ctx, ordersId int64) error
+	ClearOrderCache(ctx jet.Ctx)
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -339,4 +341,19 @@ func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, erro
 		dasherId, dasherId, dasherId,
 	)
 	return repo.FindByWrapper(query)
+}
+
+func (repo OrderRepo) ClearOrderDasherInfo(ctx jet.Ctx, ordersId int64) error {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", ordersId)
+	update.Set("executor_id", -1)
+	update.Set("executor_name", "")
+	update.Set("order_status", enum.PROCESSING)
+	update.Set("specify_executor", false)
+	return repo.UpdateByWrapper(update)
+}
+
+func (repo OrderRepo) ClearOrderCache(ctx jet.Ctx) {
+	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 }
