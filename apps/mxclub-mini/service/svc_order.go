@@ -67,17 +67,18 @@ func NewOrderService(
 func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
-	// 1. 查询商品信息
-
-	// 1.1 查询车头名称
 	var (
 		dasherName            string
 		executorId            int
 		specifyExecutorUserId uint
 	)
 	if req.SpecifyExecutor {
-		dasher, _ := svc.userService.FindUserByDashId(ctx, req.ExecutorId)
+		// 特殊编号打手
 		executorId = req.ExecutorId
+		if executorId == -1 {
+			executorId = 0
+		}
+		dasher, _ := svc.userService.FindUserByDashId(ctx, req.ExecutorId)
 		dasherName = dasher.Name
 		specifyExecutorUserId = dasher.ID
 	}

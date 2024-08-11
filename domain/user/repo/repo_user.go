@@ -179,7 +179,8 @@ func (repo UserRepo) UpdateUserPhone(ctx jet.Ctx, userId uint, phone string) err
 }
 
 func (repo UserRepo) UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum.MemberStatus) error {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	cacheKey := fmt.Sprintf("%v_%v", userCachePrefix, userId)
+	_ = xredis.Del(cacheKey)
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":            userId,
 		"member_status": status,
