@@ -81,6 +81,10 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		dasher, _ := svc.userService.FindUserByDashId(ctx, executorId)
 		dasherName = dasher.Name
 		specifyExecutorUserId = dasher.ID
+	} else {
+		if req.ExecutorId == 0 {
+			executorId = -1
+		}
 	}
 	// 1.2 折扣信息
 	preferentialVO, _ := svc.Preferential(ctx, req.ProductId)
