@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -35,13 +36,17 @@ func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePa
 	return prepayDTO, nil
 }
 
-func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx) {
+func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[string, any]) {
 	defer utils.RecoverAndLogError(ctx)
 	// 解析回调参数
 	transaction, err := wxpay.DecryptWxpayCallBack(ctx)
 	if err != nil || transaction == nil {
 		ctx.Logger().Errorf("[DecryptWxpayCallBack] %v", err)
-		return
+		// 失败了，直接解析参数
+		if transaction, err = wxpay.DecryptWxpayCallBackByParams(ctx, params); err != nil {
+			ctx.Logger().Errorf("[DecryptWxpayCallBackByParams]ERROR %v", err)
+			return
+		}
 	}
 	objToMap := utils.ObjToMap(*transaction)
 	err = s.wxpayCallbackRepo.InsertOne(&po.WxPayCallback{

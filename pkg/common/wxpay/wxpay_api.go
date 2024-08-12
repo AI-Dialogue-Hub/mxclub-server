@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
@@ -123,6 +124,26 @@ func DecryptWxpayCallBack(ctx jet.Ctx) (*payments.Transaction, error) {
 		)
 		req.Header.Add("test", "test")
 	}
+	transaction := new(payments.Transaction)
+	notifyReq, err := notifyHandler.ParseNotifyRequest(context.Background(), req, transaction)
+	if err != nil {
+		return nil, err
+	}
+	ctx.Logger().Infof("notifyReq Summary:%v\n", notifyReq.Summary)
+	ctx.Logger().Infof("transactionId:%v", *transaction.TransactionId)
+	return transaction, nil
+}
+
+// DecryptWxpayCallBackByParams 解密支付成功后的回调
+func DecryptWxpayCallBackByParams(ctx jet.Ctx, params *maps.LinkedHashMap[string, any]) (*payments.Transaction, error) {
+	info, err := utils.JsonStrToObj[*WxPayCallBackEncryptDTO](utils.ObjToJsonStr(params))
+	if err != nil {
+		return nil, err
+	}
+	req := httptest.NewRequest(
+		http.MethodGet, "http://127.0.0.1", io.NopCloser(bytes.NewBuffer(utils.MustObjToByte(info))),
+	)
+	req.Header.Add("test", "test")
 	transaction := new(payments.Transaction)
 	notifyReq, err := notifyHandler.ParseNotifyRequest(context.Background(), req, transaction)
 	if err != nil {

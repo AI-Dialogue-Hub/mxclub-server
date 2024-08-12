@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/GoKit/future"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/bo"
 	"mxclub/apps/mxclub-mini/entity/dto"
@@ -55,19 +54,17 @@ func (svc UserService) GetUserById(ctx jet.Ctx, id uint) (*vo.UserVO, error) {
 		return nil, err
 	}
 	// 用户消费金额
-	f1 := future.FutureFunc[float64](func() float64 {
+	if userPO.Role == enum.RoleWxUser {
 		totalSpent, _ := svc.orderRepo.TotalSpent(ctx, id)
-		return totalSpent
-	})
+		userVO.SetCurrentPoints(totalSpent)
+	}
 	// 如果是打手，名字用打手名替换
 	if userPO.Role == enum.RoleAssistant {
-		userPO.WxName = fmt.Sprintf("%v 编号: %03d", userPO.Name, userPO.MemberNumber)
+		userVO.WxName = fmt.Sprintf("%v 编号: %03d", userPO.Name, userPO.MemberNumber)
 		// 获取打手评星
 		staring, _ := svc.evaluationRepo.FindStaring(ctx, userPO.MemberNumber)
 		userVO.DasherStaring = utils.RoundToTwoDecimalPlaces(staring)
 	}
-	totalSpent, _ := f1.Get()
-	userVO.SetCurrentPoints(totalSpent)
 	return userVO, err
 }
 

@@ -78,7 +78,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		if executorId == -1 {
 			executorId = 0
 		}
-		dasher, _ := svc.userService.FindUserByDashId(ctx, req.ExecutorId)
+		dasher, _ := svc.userService.FindUserByDashId(ctx, executorId)
 		dasherName = dasher.Name
 		specifyExecutorUserId = dasher.ID
 	}
