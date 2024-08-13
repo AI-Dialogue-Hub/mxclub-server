@@ -161,7 +161,7 @@ func (repo UserRepo) ExistsAssistant(ctx jet.Ctx, phone string, memberNumber int
 }
 
 func (repo UserRepo) AssistantOnline(ctx jet.Ctx) ([]*po.User, error) {
-	return repo.Find("member_status = ?", enum.Online)
+	return repo.Find("member_status = ? and role = ?", enum.Online, enum.RoleAssistant.String())
 }
 
 // CheckAssistantStatus 检查打手是否可以接单, 必须是在线状态
