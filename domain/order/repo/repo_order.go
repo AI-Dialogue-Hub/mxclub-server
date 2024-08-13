@@ -282,8 +282,8 @@ func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int) erro
 	}
 	// 2. 更新该订单的状态为已抢单，并设置执行者 Id
 	err := tx.Exec(
-		"UPDATE orders SET order_status = ?, executor_id = ?, specify_executor = ? WHERE id = ?",
-		enum.PROCESSING, executorId, true, ordersId,
+		"UPDATE orders SET order_status = ?, executor_id = ?, specify_executor = ?, grab_at = ? WHERE id = ?",
+		enum.PROCESSING, executorId, true, time.Now(), ordersId,
 	).Error
 	if err != nil {
 		tx.Rollback()

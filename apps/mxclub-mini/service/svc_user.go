@@ -277,8 +277,12 @@ func (svc UserService) PushInviteMessage(ctx jet.Ctx, req *req.OrderExecutorInvi
 		logger.Errorf("[FindByDasherId]ERROR:%v", err)
 		return errors.New("打手有在进行中的订单，无法派单")
 	}
+	user, err := svc.FindUserByDashId(ctx, req.ExecutorId)
+	if err != nil || user == nil || user.ID == 0 {
+		logger.Errorf("[FindUserByDashId]ERROR:%v", err)
+		return errors.New("打手不存在")
+	}
 	go func() {
-		user, _ := svc.FindUserByDashId(ctx, req.ExecutorId)
 		message := dto.NewDispatchMessage(user.ID, req.OrderId, req.GameRegion, req.RoleId, "")
 		_ = svc.messageService.PushMessage(ctx, message)
 	}()

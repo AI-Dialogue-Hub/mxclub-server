@@ -166,7 +166,10 @@ func (repo UserRepo) AssistantOnline(ctx jet.Ctx) ([]*po.User, error) {
 
 // CheckAssistantStatus 检查打手是否可以接单, 必须是在线状态
 func (repo UserRepo) CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool {
-	count, _ := repo.Count("member_number = ? and member_status = ?", memberNumber, enum.Online)
+	count, _ := repo.Count(
+		"member_number = ? and member_status = ? and role = ?",
+		memberNumber, enum.Online, enum.RoleAssistant.String(),
+	)
 	return count >= 1
 }
 

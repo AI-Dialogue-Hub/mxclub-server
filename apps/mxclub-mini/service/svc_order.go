@@ -160,6 +160,9 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 	// 1. 获取所有用户id
 	userIdList := utils.Map[*vo.OrderVO, uint](vos, func(in *vo.OrderVO) uint { return in.PurchaseId })
+	if len(userIdList) == 0 {
+		return
+	}
 	// 2. 查询userId对应老板的等级
 	userId2GradeMap, err := svc.userService.userRepo.FindGradeByUserIdList(userIdList)
 	if err != nil {
@@ -319,6 +322,7 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
 	err := svc.startOrder(ctx, req.OrderId, req.ExecutorId)
+	// TODO 判断抢单时间和开始时间间隔 进行罚款
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return errors.New("订单开始失败，请联系客服")

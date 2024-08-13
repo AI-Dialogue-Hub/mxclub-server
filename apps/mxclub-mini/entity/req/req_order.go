@@ -59,7 +59,7 @@ type OrderExecutorReq struct {
 }
 
 type OrderExecutorInviteReq struct {
-	ExecutorId int    `json:"executor_id" validate:"required"`
+	ExecutorId int    `json:"executor_id" validate:"gt=-1" reg_error_info:"打手编号必须大于等于0"`
 	OrderId    uint   `json:"orderId" validate:"required"`
 	RoleId     string `json:"role_id" validate:"required"`
 	GameRegion string `json:"game_region" validate:"required"`

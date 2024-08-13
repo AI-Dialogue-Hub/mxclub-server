@@ -149,7 +149,7 @@ func DecryptWxpayCallBackByParams(ctx jet.Ctx, params *maps.LinkedHashMap[string
 	if err != nil {
 		return nil, err
 	}
-	ctx.Logger().Infof("notifyReq Summary:%v\n", notifyReq.Summary)
+	ctx.Logger().Infof("notifyReq Summary:%v", notifyReq.Summary)
 	ctx.Logger().Infof("transactionId:%v", *transaction.TransactionId)
 	return transaction, nil
 }
