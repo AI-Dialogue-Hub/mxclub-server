@@ -65,7 +65,10 @@ func NewOrderService(
 // ===============================================================
 
 func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
-	userId := middleware.MustGetUserId(ctx)
+	var (
+		userId = middleware.MustGetUserId(ctx)
+		logger = ctx.Logger()
+	)
 	go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
 	var (
 		dasherName            string
@@ -78,14 +81,19 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		if executorId == -1 {
 			executorId = 0
 		}
-		dasher, _ := svc.userService.FindUserByDashId(ctx, executorId)
-		dasherName = dasher.Name
-		specifyExecutorUserId = dasher.ID
+		dasher, err := svc.userService.FindUserByDashId(ctx, executorId)
+		if err == nil {
+			dasherName = dasher.Name
+			specifyExecutorUserId = dasher.ID
+		}
 	} else {
 		executorId = -1
 	}
 	// 1.2 折扣信息
-	preferentialVO, _ := svc.Preferential(ctx, req.ProductId)
+	preferentialVO, err := svc.Preferential(ctx, req.ProductId)
+	if err != nil {
+		logger.Errorf("Preferential ERROR:%v", err)
+	}
 	// 2. 创建订单
 	order := &po.Order{
 		OrderId:         utils.SafeParseUint64(req.OrderTradeNo),
@@ -110,7 +118,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		PurchaseDate:    utils.Ptr(time.Now()),
 	}
 	// 3. 保存订单
-	err := svc.orderRepo.InsertOne(order)
+	err = svc.orderRepo.InsertOne(order)
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]Add ERROR, %v", err.Error())
 		ctx.Logger().Errorf("order:%v", utils.ObjToJsonStr(order))
@@ -172,7 +180,7 @@ func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 	})
 }
 
-func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.PreferentialVO, error) {
+func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.PreferentialVO, err error) {
 	userId := middleware.MustGetUserId(ctx)
 	userById, err := svc.userService.FindUserById(ctx, userId)
 	if err != nil {
@@ -184,19 +192,29 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (*vo.Preferent
 		return nil, fmt.Errorf("failed to find product: %w", err)
 	}
 
+	preferentialVO := &vo.PreferentialVO{
+		OriginalPrice:   productVO.Price,
+		DiscountedPrice: productVO.Price,
+		DiscountRate:    1.0,
+		DiscountInfo:    "商品金额大于100，不触发优惠",
+	}
+
+	defer func() {
+		if recoverErr := recover(); recoverErr != nil {
+			result = preferentialVO
+			ctx.Logger().Errorf("recoverErr:%v", recoverErr)
+		}
+	}()
+
 	if productVO.Price < 100 {
-		return &vo.PreferentialVO{
-			OriginalPrice:   productVO.Price,
-			DiscountedPrice: productVO.Price,
-			DiscountRate:    1.0,
-			DiscountInfo:    "商品金额大于100，不触发优惠",
-		}, nil
+		return preferentialVO, nil
 	}
 
 	rule, exists := enum.DiscountRules[userById.WxGrade]
 
 	if !exists {
-		return nil, errors.New("不是会员")
+		ctx.Logger().Infof("不是会员")
+		return preferentialVO, nil
 	}
 
 	discountedPrice := math.Floor(productVO.Price*rule.Discount*100) / 100
