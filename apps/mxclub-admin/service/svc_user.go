@@ -5,7 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
-	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/apps/mxclub-admin/middleware"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
@@ -73,7 +73,7 @@ func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
 		return nil
 	}
 	filterUserList := utils.Filter(userPOList, func(in *po.User) bool {
-		return in.ID != middleware.MustGetUserId(ctx)
+		return in.ID != middleware.MustGetUserInfo(ctx).ID
 	})
 	return utils.Map[*po.User, *vo.AssistantOnlineVO](filterUserList, func(in *po.User) *vo.AssistantOnlineVO {
 		return &vo.AssistantOnlineVO{
