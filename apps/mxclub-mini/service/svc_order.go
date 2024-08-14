@@ -438,7 +438,12 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("%s GrabOrder", ctx.Logger().ReqId))
 	// 1. 抢单
-	err := svc.orderRepo.GrabOrder(ctx, grabReq.OrderId, grabReq.ExecutorId)
+	var dasherName string
+	dasher, _ := svc.userService.FindUserByDashId(ctx, grabReq.ExecutorId)
+	if dasher != nil {
+		dasherName = dasher.Name
+	}
+	err := svc.orderRepo.GrabOrder(ctx, grabReq.OrderId, grabReq.ExecutorId, dasherName)
 	if err != nil {
 		ctx.Logger().Errorf("[GrabOrder]ERROR, err:%v", err.Error())
 		return errors.New("订单已被抢走")

@@ -89,3 +89,8 @@ func (ctl UserController) DeleteV1UserDasher0(ctx jet.Ctx, param *api.PathParam)
 	userId, _ := param.GetInt64(0)
 	return xjet.WrapperResult(ctx, "Ok", ctl.userService.RemoveAssistant(ctx, uint(userId)))
 }
+
+// GetV1AssistantOnline 获取在线打手，不包括打手自己
+func (ctl UserController) GetV1AssistantOnline(ctx jet.Ctx) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, ctl.userService.AssistantOnline(ctx), nil)
+}

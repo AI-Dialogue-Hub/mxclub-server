@@ -38,3 +38,9 @@ func WrapUserTypeVOS(m maps.IMap[enum.RoleType, string]) []*UserTypeVO {
 	})
 	return vos
 }
+
+type AssistantOnlineVO struct {
+	Id     int    `json:"id"`
+	UserId uint   `json:"user_id"`
+	Name   string `json:"name"`
+}

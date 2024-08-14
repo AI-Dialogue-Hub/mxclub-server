@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
@@ -63,4 +64,22 @@ func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 
 func (svc UserService) RemoveAssistant(ctx jet.Ctx, userId uint) error {
 	return svc.userRepo.RemoveDasher(ctx, userId)
+}
+
+func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
+	userPOList, err := svc.userRepo.AssistantOnline(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("[AssistantOnline]ERROR:%v", err.Error())
+		return nil
+	}
+	filterUserList := utils.Filter(userPOList, func(in *po.User) bool {
+		return in.ID != middleware.MustGetUserId(ctx)
+	})
+	return utils.Map[*po.User, *vo.AssistantOnlineVO](filterUserList, func(in *po.User) *vo.AssistantOnlineVO {
+		return &vo.AssistantOnlineVO{
+			Id:     in.MemberNumber,
+			UserId: in.ID,
+			Name:   in.Name,
+		}
+	})
 }

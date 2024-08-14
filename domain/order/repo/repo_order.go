@@ -38,7 +38,7 @@ type IOrderRepo interface {
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
-	GrabOrder(ctx jet.Ctx, ordersId uint, executorId int) error
+	GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dasherName string) error
 	// UpdateOrderByDasher 通过车头进行更新
 	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus) error
 	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error
@@ -261,7 +261,7 @@ func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDT
 	return repo.UpdateByWrapper(updateWrap)
 }
 
-func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int) error {
+func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dasherName string) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]orderRepo GrabOrder", ctx.Logger().ReqId))
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	tx := repo.DB().Begin()
@@ -282,8 +282,8 @@ func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int) erro
 	}
 	// 2. 更新该订单的状态为已抢单，并设置执行者 Id
 	err := tx.Exec(
-		"UPDATE orders SET order_status = ?, executor_id = ?, specify_executor = ?, grab_at = ? WHERE id = ?",
-		enum.PROCESSING, executorId, true, time.Now(), ordersId,
+		"UPDATE orders SET order_status = ?, executor_id = ?, executor_name = ?, specify_executor = ?, grab_at = ? WHERE id = ?",
+		enum.PROCESSING, executorId, dasherName, true, time.Now(), ordersId,
 	).Error
 	if err != nil {
 		tx.Rollback()
