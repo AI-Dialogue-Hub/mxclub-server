@@ -270,7 +270,7 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 			orderPO.OrderName,
 			orderPO.OrderId,
 		)
-		_ = svc.messageService.PushSystemMessage(ctx, orderPO.ProductID, message)
+		_ = svc.messageService.PushSystemMessage(ctx, orderPO.PurchaseId, message)
 	}()
 	return nil
 }
@@ -337,7 +337,7 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
-	err := svc.startOrder(ctx, req.OrderId, req.ExecutorId)
+	err := svc.startOrder(ctx, req.OrderId, req.ExecutorId, req.StartImages)
 	// TODO 判断抢单时间和开始时间间隔 进行罚款
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
@@ -346,8 +346,8 @@ func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	return nil
 }
 
-func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId int) error {
-	return svc.orderRepo.UpdateOrderByDasher(ctx, orderId, executorId, enum.RUNNING)
+func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId int, image string) error {
+	return svc.orderRepo.UpdateOrderByDasher(ctx, orderId, executorId, enum.RUNNING, image)
 }
 
 func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExecutorReq) (err error) {

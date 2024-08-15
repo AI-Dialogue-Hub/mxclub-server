@@ -11,6 +11,7 @@ import (
 	"mxclub/apps/mxclub-mini/middleware"
 	miniUtil "mxclub/apps/mxclub-mini/utils"
 	messageEnum "mxclub/domain/message/entity/enum"
+	orderEnum "mxclub/domain/order/entity/enum"
 	orderRepo "mxclub/domain/order/repo"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
@@ -196,9 +197,10 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 	case 101:
 		// 订单进行中 移除队友操作 ext为打手编号
 		memberNumber := utils.ParseInt(handleReq.Ext)
-		userPO, _ := svc.userRepo.FindByMemberNumber(ctx, memberNumber)
-		message := fmt.Sprintf("您将被移除在进行中的订单，订单id:%v", handleReq.OrdersId)
-		_ = svc.messageService.PushRemoveMessage(ctx, handleReq.OrdersId, userPO.ID, message)
+		if userPO, err := svc.userRepo.FindByMemberNumber(ctx, memberNumber); err == nil {
+			message := fmt.Sprintf("您将被移除在进行中的订单，订单id:%v", handleReq.OrdersId)
+			_ = svc.messageService.PushRemoveMessage(ctx, handleReq.OrdersId, userPO.ID, message)
+		}
 	case 201:
 		// 同意邀请
 		svc.handleAcceptApplication(ctx, handleReq)
@@ -223,6 +225,10 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 	orderId := handleReq.OrdersId
 	orderPO, _ := svc.orderRepo.FindByID(orderId)
 	userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
+	if orderPO.OrderStatus == orderEnum.SUCCESS {
+		ctx.Logger().Errorf("[handleAcceptApplication]ERROR, 不能接受已完成的订单: %v", utils.ObjToJsonStr(handleReq))
+		return
+	}
 	if orderPO.Executor2Id == -1 {
 		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name))
 		// 更新角色

@@ -40,7 +40,7 @@ type IOrderRepo interface {
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dasherName string) error
 	// UpdateOrderByDasher 通过车头进行更新
-	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus) error
+	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus, image string) error
 	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error
 	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id int, executor3Name string) error
 	DoneEvaluation(id uint) error
@@ -84,11 +84,14 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO
 		query.SetFilter("purchase_id = ?", d.UserId)
 	}
 	query.SetPage(d.PageParams.Page, d.PageParams.PageSize)
-	query.SetFilter("purchase_date >= ?", d.Ge)
-	query.SetFilter("purchase_date <= ?", d.Le)
+	if d.Ge != "" && d.Le != "" {
+		query.SetFilter("purchase_date >= ?", d.Ge)
+		query.SetFilter("purchase_date <= ?", d.Le)
+	}
 	if d.Status != 0 {
 		query.SetFilter("order_status = ?", d.Status)
 	}
+	query.SetSort("id desc")
 	return repo.ListNoCountByQuery(query)
 }
 
@@ -296,11 +299,12 @@ func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dash
 	return nil
 }
 
-func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus) error {
+func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus, image string) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
 	update.Set("executor_id", executorId)
 	update.Set("order_status", status)
+	update.Set("start_images", image)
 	return repo.UpdateByWrapper(update)
 }
 func (repo OrderRepo) UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error {

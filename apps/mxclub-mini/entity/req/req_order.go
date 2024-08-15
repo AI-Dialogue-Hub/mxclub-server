@@ -39,6 +39,7 @@ type OrderStartReq struct {
 	Executor3Id int    `json:"executor_3_id"`
 	RoleId      string `json:"role_id" validate:"required"`
 	GameRegion  string `json:"game_region" validate:"required"`
+	StartImages string `json:"start_images"`
 }
 
 type WithDrawReq struct {
