@@ -18,7 +18,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 		Comments:   evaluationReq.Comments,
 	}
 	evaluationList = append(evaluationList, evaluation1)
-	if evaluationReq.Executor2ID > 0 {
+	if evaluationReq.Executor2ID >= 0 {
 		evaluation2 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
 			OrderID:    evaluationReq.OrderID,
@@ -28,7 +28,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 		}
 		evaluationList = append(evaluationList, evaluation2)
 	}
-	if evaluationReq.Executor3ID > 0 {
+	if evaluationReq.Executor3ID >= 0 {
 		evaluation3 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
 			OrderID:    evaluationReq.OrderID,

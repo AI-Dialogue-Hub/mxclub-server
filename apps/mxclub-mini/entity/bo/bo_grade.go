@@ -2,6 +2,7 @@ package bo
 
 import (
 	"github.com/fengyuan-liang/GoKit/collection/maps"
+	"math"
 	"mxclub/pkg/utils"
 )
 
@@ -12,12 +13,16 @@ var GradeMap = utils.NewLinkedHashMapWithPairs([]*maps.Pair[float64, string]{
 	{10000, "LV4"},
 	{20000, "LV5"},
 	{50000, "LV6"},
+	{math.MaxFloat64, "LV7"},
 })
 
 func GetGradeByScore(score float64) string {
-	for _, level := range GradeMap.KeySet() {
-		if score < level {
-			return GradeMap.MustGet(level)
+	keySet := GradeMap.KeySet()
+	for index, level := range keySet {
+		if score >= level && score < keySet[index+1] {
+			if got, ok := GradeMap.Get(level); ok {
+				return got
+			}
 		}
 	}
 	return "LV0"
