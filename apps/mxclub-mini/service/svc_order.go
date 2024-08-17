@@ -10,6 +10,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
 	"sync"
 
@@ -338,12 +339,51 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
 	err := svc.startOrder(ctx, req.OrderId, req.ExecutorId, req.StartImages)
-	// TODO 判断抢单时间和开始时间间隔 进行罚款
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return errors.New("订单开始失败，请联系客服")
 	}
+	go svc.handleLowTimeOutDeduction(ctx, req.OrderId, req.ExecutorId)
 	return nil
+}
+
+func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, executorId int) {
+	defer utils.RecoverWithPrefix(ctx, "handleLowTimeOutDeduction")
+	// 查询接单时间
+	orderPO, err := svc.orderRepo.FindByID(ordersId)
+	if err != nil {
+		ctx.Logger().Errorf("[FindByID]ERROR: %v", err.Error())
+		return
+	}
+	penaltyStrategy, err := penalty.FetchPenaltyRule(penalty.DeductRuleTimeout)
+
+	if err != nil {
+		ctx.Logger().Errorf("fetch penaltyRule ERROR: %v", err)
+		return
+	}
+	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: ordersId, GrabTime: orderPO.GrabAt})
+
+	if err != nil || applyPenalty.PenaltyAmount <= 0 {
+		ctx.Logger().Errorf("[ApplyPenalty]ERROR: %v", err.Error())
+		return
+	}
+
+	dasherPO, _ := svc.userService.FindUserByDashId(ctx, executorId)
+
+	err = svc.deductionRepo.InsertOne(&po.Deduction{
+		UserID:          dasherPO.ID,
+		ConfirmPersonId: 0,
+		Amount:          applyPenalty.PenaltyAmount,
+		Reason:          applyPenalty.Reason,
+		Status:          enum.Deduct_PENDING,
+	})
+
+	_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, applyPenalty.Message)
+
+	if err != nil {
+		ctx.Logger().Errorf("deduction insert ERROR: %v", err)
+		return
+	}
 }
 
 func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId int, image string) error {
@@ -384,19 +424,23 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 
 	go func() {
 		defer wg.Done()
+		// 提现成功的钱
 		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userById.MemberNumber)
 	}()
 	go func() {
 		defer wg.Done()
+		// 用户发起提现的钱，包括未提现和提现成功的
 		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userById.MemberNumber)
 	}()
 	go func() {
 		defer wg.Done()
+		// 订单中能提现的钱
 		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userById.MemberNumber)
 	}()
 
 	go func() {
 		defer wg.Done()
+		// 罚款的钱
 		totalDeduct, _ = svc.deductionRepo.TotalDeduct(ctx, userId)
 	}()
 
@@ -408,7 +452,10 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	)
 
 	if approveWithdrawnAmount > orderWithdrawAbleAmount {
-		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, approveWithdrawnAmount: %v gt orderWithdrawAbleAmount:%v", approveWithdrawnAmount, orderWithdrawAbleAmount)
+		ctx.Logger().Errorf(
+			"[HistoryWithDrawAmount]ERROR, approveWithdrawnAmount: %v gt orderWithdrawAbleAmount:%v",
+			approveWithdrawnAmount, orderWithdrawAbleAmount,
+		)
 		return nil, errors.New("系统查询错误，请联系管理员")
 	}
 	return &vo.WithDrawVO{

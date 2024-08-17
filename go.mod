@@ -22,6 +22,7 @@ require (
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/stretchr/testify v1.8.4
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.18
+	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5
 )
 
 require (

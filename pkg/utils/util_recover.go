@@ -11,3 +11,10 @@ func RecoverAndLogError(ctx jet.Ctx) {
 		debug.PrintStack()
 	}
 }
+
+func RecoverWithPrefix(ctx jet.Ctx, prefixInfo string) {
+	if r := recover(); r != nil {
+		ctx.Logger().Errorf("[%v]Recovered from panic: %v", prefixInfo, r)
+		debug.PrintStack()
+	}
+}

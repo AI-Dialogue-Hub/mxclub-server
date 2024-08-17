@@ -7,7 +7,7 @@ type OrderEvaluation struct {
 
 	OrdersID   uint   `gorm:"not null"`  // 订单的 orders_id
 	OrderID    uint   `gorm:"not null"`  // 订单的 order_id
-	ExecutorID uint   `gorm:"not null"`  // 打手 id
+	ExecutorID int    `gorm:"not null"`  // 打手 id
 	Rating     int    `gorm:"not null"`  // 评价的评分（假设是从 1 到 5）
 	Comments   string `gorm:"type:text"` // 评价的评论
 

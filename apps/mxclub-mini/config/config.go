@@ -29,7 +29,9 @@ func init() {
 	if err := validator.New().Struct(config); err != nil {
 		log.Fatalf("config error:%v", err.Error())
 	}
-
+	// config
+	jet.Provide(func() *Config { return config })
+	// mysql
 	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
 		panic(err)
 	} else {

@@ -7,6 +7,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"mxclub/apps/mxclub-mini/config"
 	_ "mxclub/apps/mxclub-mini/controller"
+	_ "mxclub/apps/mxclub-mini/cron"
 	"mxclub/apps/mxclub-mini/middleware"
 	_ "mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/common/xjet"

@@ -90,6 +90,9 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO
 	}
 	if d.Status != 0 {
 		query.SetFilter("order_status = ?", d.Status)
+	} else {
+		// 退款订单不展示
+		query.SetFilter("order_status != ?", enum.Refunds.String())
 	}
 	query.SetSort("id desc")
 	return repo.ListNoCountByQuery(query)

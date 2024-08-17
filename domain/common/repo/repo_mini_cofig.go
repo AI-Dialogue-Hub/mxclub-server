@@ -100,12 +100,12 @@ func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) 
 }
 
 func (repo MiniConfigRepo) DeleteById(ctx jet.Ctx, id string) error {
-	_ = xredis.DelMatchingKeys(ctx, configCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, configCachePrefix)
 	return repo.RemoveByID(id)
 }
 
 func (repo MiniConfigRepo) UpdateConfigByConfigName(ctx jet.Ctx, configName string, content []map[string]any) error {
-	_ = xredis.DelMatchingKeys(ctx, configCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, configCachePrefix)
 	updateMap := map[string]any{"content": xmysql.JSONArray(content)}
 	err := repo.Update(updateMap, "config_name = ?", configName)
 	if err != nil {
