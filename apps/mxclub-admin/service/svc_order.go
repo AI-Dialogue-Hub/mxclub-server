@@ -82,17 +82,17 @@ func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpda
 	}
 	if updateReq.WithdrawalStatus == "completed" {
 		// 发送提现成功消息
-		message := fmt.Sprintf("你的提现已通过，提现金额: %v 元，打款方式为：%v", updateReq.WithdrawalAmount, updateReq.WithdrawalMethod)
+		message := fmt.Sprintf("你的提现已通过，提现金额: %v 元，打款方式为：%v", updateReq.WithdrawalAmount, updateReq.WithdrawalInfo)
 		_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, message)
 	} else if updateReq.WithdrawalStatus == "reject" {
 		message := fmt.Sprintf("你的提现申请被拒绝，请联系客服或重新发起提现，提现金额: %v 元，拒绝原因：%v",
-			updateReq.WithdrawalAmount, updateReq.WithdrawalMethod)
+			updateReq.WithdrawalAmount, updateReq.WithdrawalInfo)
 		_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, message)
 	}
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", updateReq.Id)
 	update.Set("withdrawal_status", updateReq.WithdrawalStatus)
-	update.Set("withdrawal_method", updateReq.WithdrawalMethod)
+	update.Set("withdrawal_method", updateReq.WithdrawalInfo)
 	return svc.withdrawRepo.UpdateByWrapper(update)
 }
 
