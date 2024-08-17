@@ -7,6 +7,7 @@ import (
 )
 
 var GradeMap = utils.NewLinkedHashMapWithPairs([]*maps.Pair[float64, string]{
+	{0, "LV0"},
 	{500, "LV1"},
 	{2000, "LV2"},
 	{5000, "LV3"},

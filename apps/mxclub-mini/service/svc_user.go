@@ -203,7 +203,7 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 		}
 	case 201:
 		// 同意邀请
-		svc.handleAcceptApplication(ctx, handleReq)
+		return svc.handleAcceptApplication(ctx, handleReq)
 	case 301:
 		// 接单拒绝，通知打手
 		userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
@@ -221,22 +221,27 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 	return nil
 }
 
-func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
+func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.MessageHandleReq) error {
 	orderId := handleReq.OrdersId
 	orderPO, _ := svc.orderRepo.FindByID(orderId)
 	userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
+	memberNumber := userPO.MemberNumber
+	if orderPO.ExecutorID == memberNumber || orderPO.Executor2Id == memberNumber || orderPO.Executor3Id == memberNumber {
+		return errors.New("您已在队伍中了，不需要再接受邀请")
+	}
 	if orderPO.OrderStatus == orderEnum.SUCCESS {
 		ctx.Logger().Errorf("[handleAcceptApplication]ERROR, 不能接受已完成的订单: %v", utils.ObjToJsonStr(handleReq))
-		return
+		return errors.New("不能接受已完成的订单")
 	}
 	if orderPO.Executor2Id == -1 {
-		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name))
+		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", memberNumber, userPO.Name))
 		// 更新角色
-		_ = svc.orderRepo.UpdateOrderDasher2(ctx, orderId, userPO.MemberNumber, userPO.Name)
+		_ = svc.orderRepo.UpdateOrderDasher2(ctx, orderId, memberNumber, userPO.Name)
 	} else if orderPO.Executor3Id == -1 {
-		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name))
-		_ = svc.orderRepo.UpdateOrderDasher3(ctx, orderId, userPO.MemberNumber, userPO.Name)
+		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", memberNumber, userPO.Name))
+		_ = svc.orderRepo.UpdateOrderDasher3(ctx, orderId, memberNumber, userPO.Name)
 	}
+	return nil
 }
 
 func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
@@ -247,9 +252,9 @@ func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHan
 	} else if orderPO.Executor3Id == userPO.MemberNumber {
 		_ = svc.orderRepo.UpdateOrderDasher3(ctx, orderPO.ID, -1, "")
 	}
-	executorPO, _ := svc.userRepo.FindByMemberNumber(ctx, orderPO.ExecutorID)
-	message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
-	_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
+	//executorPO, _ := svc.userRepo.FindByMemberNumber(ctx, orderPO.ExecutorID)
+	//message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
+	//_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
 }
 
 func (svc UserService) checkUserGrade(ctx jet.Ctx, id uint) {
