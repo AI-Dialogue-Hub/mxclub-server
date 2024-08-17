@@ -18,9 +18,12 @@ type WitchDrawListReq struct {
 }
 
 type WitchDrawUpdateReq struct {
-	Id               uint   `json:"id"`
-	WithdrawalStatus string `json:"withdrawal_status"`
-	WithdrawalMethod string `json:"withdrawal_method"`
+	Id                   uint   `json:"id"`
+	WithdrawalStatus     string `json:"withdrawal_status"`
+	WithdrawalMethod     string `json:"withdrawal_method"`                     // 同意提现，提现方式
+	WithdrawalRejectInfo string `json:"withdrawal_reject_info"`                // 拒绝原因
+	DasherId             int    `json:"dasher_id" validate:"required"`         // 打手编号
+	WithdrawalAmount     string `json:"withdrawal_amount" validate:"required"` // 提现金额
 }
 
 type WxPayRefundsReq struct {

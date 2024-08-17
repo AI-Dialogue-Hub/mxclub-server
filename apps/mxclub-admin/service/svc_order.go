@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"mxclub/apps/mxclub-admin/entity/req"
@@ -9,6 +10,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
+	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xmysql"
@@ -24,16 +26,22 @@ type OrderService struct {
 	wxPayCallbackRepo repo.IWxPayCallbackRepo
 	withdrawRepo      repo.IWithdrawalRepo
 	deductionRepo     repo.IDeductionRepo
+	userRepo          userRepo.IUserRepo
+	messageService    *MessageService
 }
 
 func NewOrderService(repo repo.IOrderRepo,
 	withdrawRepo repo.IWithdrawalRepo,
 	deductionRepo repo.IDeductionRepo,
-	wxPayCallbackRepo repo.IWxPayCallbackRepo) *OrderService {
+	wxPayCallbackRepo repo.IWxPayCallbackRepo,
+	messageService *MessageService,
+	userRepo userRepo.IUserRepo) *OrderService {
 	return &OrderService{orderRepo: repo,
 		withdrawRepo:      withdrawRepo,
 		deductionRepo:     deductionRepo,
 		wxPayCallbackRepo: wxPayCallbackRepo,
+		messageService:    messageService,
+		userRepo:          userRepo,
 	}
 }
 
@@ -68,10 +76,18 @@ func (svc OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) 
 }
 
 func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpdateReq) error {
+	dasherPO, err := svc.userRepo.FindByMemberNumber(ctx, updateReq.DasherId)
+	if err != nil {
+		return errors.New("打手id错误")
+	}
 	if updateReq.WithdrawalStatus == "completed" {
-
+		// 发送提现成功消息
+		message := fmt.Sprintf("你的提现已通过，提现金额: %v 元，打款方式为：%v", updateReq.WithdrawalAmount, updateReq.WithdrawalMethod)
+		_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, message)
 	} else if updateReq.WithdrawalStatus == "reject" {
-
+		message := fmt.Sprintf("你的提现申请被拒绝，请联系客服或重新发起提现，提现金额: %v 元，拒绝原因：%v",
+			updateReq.WithdrawalAmount, updateReq.WithdrawalMethod)
+		_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, message)
 	}
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", updateReq.Id)
