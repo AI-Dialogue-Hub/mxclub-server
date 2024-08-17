@@ -24,6 +24,7 @@ func DecodeBase64ToImage(base64String string) (string, error) {
 
 	// Decode the Base64 string
 	imgData, err := base64.StdEncoding.DecodeString(data)
+
 	if err != nil {
 		return "", err
 	}

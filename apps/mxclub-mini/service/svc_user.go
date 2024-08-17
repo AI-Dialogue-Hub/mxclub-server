@@ -90,6 +90,7 @@ func (svc UserService) WxLogin(ctx jet.Ctx, code string) (string, error) {
 	return jwtToken, err
 }
 
+// UpdateWxUserInfo 这个头像保存在本地
 func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) (*vo.UserVO, error) {
 	var (
 		userId   = middleware.MustGetUserId(ctx)
@@ -216,7 +217,7 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 		}
 	case 401:
 		// 同意移除
-		svc.handleRemoveDasher(ctx, handleReq)
+		return svc.handleRemoveDasher(ctx, handleReq)
 	}
 	return nil
 }
@@ -244,7 +245,13 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 	return nil
 }
 
-func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHandleReq) {
+func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHandleReq) error {
+	// 只有组队和进行中的订单才能被移除
+	if orderPO, err := svc.orderRepo.FindByID(handleReq.OrdersId); err == nil && orderPO != nil {
+		if orderPO.OrderStatus != orderEnum.PROCESSING && orderPO.OrderStatus != orderEnum.RUNNING {
+			return errors.New("您的订单不在组队或者进行中，无法移除队伍")
+		}
+	}
 	orderPO, _ := svc.orderRepo.FindByID(handleReq.OrdersId)
 	userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
 	if orderPO.Executor2Id == userPO.MemberNumber {
@@ -255,6 +262,7 @@ func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHan
 	//executorPO, _ := svc.userRepo.FindByMemberNumber(ctx, orderPO.ExecutorID)
 	//message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
 	//_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
+	return nil
 }
 
 func (svc UserService) checkUserGrade(ctx jet.Ctx, id uint) {
