@@ -1,7 +1,10 @@
 package xjet
 
 import (
+	"github.com/fengyuan-liang/jet-web-fasthttp/core/context"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"mxclub/pkg/api"
 	"net/http"
@@ -52,4 +55,10 @@ func ConvertFastHTTPRequestToStandard(ctx jet.Ctx) (*http.Request, error) {
 		return nil, err
 	}
 	return request, nil
+}
+
+var defaultCtx = context.NewContext(new(fasthttp.RequestCtx), xlog.NewWith("defaultCtx"))
+
+func NewDefaultJetContext() jet.Ctx {
+	return defaultCtx
 }

@@ -1,9 +1,12 @@
 package service
 
 import (
+	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"math"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/product/po"
 	"mxclub/domain/product/repo"
 	userRepo "mxclub/domain/user/repo"
@@ -16,23 +19,49 @@ func init() {
 }
 
 type ProductService struct {
-	ProductRepo repo.IProductRepo
+	productRepo repo.IProductRepo
 	userRepo    userRepo.IUserRepo
 }
 
 func NewProductService(repo repo.IProductRepo, userRepo userRepo.IUserRepo) *ProductService {
-	return &ProductService{ProductRepo: repo, userRepo: userRepo}
+	return &ProductService{productRepo: repo, userRepo: userRepo}
 }
 
 func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) {
-	productPO, err := svc.ProductRepo.FindByID(id)
+	// 查找产品信息
+	productPO, err := svc.productRepo.FindByID(id)
+	if err != nil {
+		ctx.Logger().Errorf("cannot find product, productId is:%v", id)
+		return nil, errors.New("查找商品出错，请联系客服")
+	}
+
+	// 复制 productPO 到 productVO
+	productVO, err := utils.Copy[vo.ProductVO](productPO)
+	if err != nil {
+		ctx.Logger().Errorf("cannot copy product, productId is:%v", id)
+		return nil, errors.New("查找商品出错，请联系客服")
+	}
+
+	// 拼接 Description 字段
+	productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
+
+	// 查找用户信息
+	userPO, err := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
 	if err != nil {
 		return nil, err
 	}
-	productVO, _ := utils.Copy[vo.ProductVO](productPO)
-	productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
-	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
+
+	// 设置用户手机号
 	productVO.Phone = userPO.Phone
+
+	// 查找用户会员优惠金额
+	discountRate := enum.FetchDiscountByGrade(userPO.WxGrade)
+	discountedPrice := math.Floor(productVO.Price*discountRate*100) / 100
+
+	// 计算最终价格和优惠金额
+	productVO.FinalPrice = discountedPrice
+	productVO.DiscountPrice = productVO.Price - productVO.FinalPrice
+
 	return productVO, nil
 }
 
@@ -49,7 +78,7 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 	} else if typeValue != 0 {
 		query.SetFilter("type = ?", typeValue)
 	}
-	list, err = svc.ProductRepo.ListNoCountByQuery(query)
+	list, err = svc.productRepo.ListNoCountByQuery(query)
 	if err != nil {
 		return nil, err
 	}

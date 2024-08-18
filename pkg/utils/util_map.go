@@ -8,3 +8,25 @@ func NewLinkedHashMapWithPairs[K comparable, V any](pairs []*maps.Pair[K, V]) ma
 	linkedHashMap.PutAll(pairs)
 	return linkedHashMap
 }
+
+func ReverseLinkedHashMap[K comparable, V comparable](linkedHashMap maps.IMap[K, V]) maps.IMap[V, K] {
+	reversedLinkedHashMap := maps.NewLinkedHashMap[V, K]()
+	linkedHashMap.ForEach(func(k K, v V) {
+		reversedLinkedHashMap.Put(v, k)
+	})
+	return reversedLinkedHashMap
+}
+
+func SliceToMap[T any, KEY comparable](arr []T, f func(ele T) KEY) maps.IMap[KEY, []T] {
+	linkedHashMap := maps.NewLinkedHashMap[KEY, []T]()
+	for _, ele := range arr {
+		parseKey := f(ele)
+		if linkedHashMap.ContainsKey(parseKey) {
+			linkedHashMap.Put(parseKey, append(linkedHashMap.MustGet(parseKey), ele))
+		} else {
+			elements := []T{ele}
+			linkedHashMap.Put(parseKey, elements)
+		}
+	}
+	return linkedHashMap
+}

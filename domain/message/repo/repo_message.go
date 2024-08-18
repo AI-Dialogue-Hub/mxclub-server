@@ -74,7 +74,7 @@ func (repo MessageRepo) DeleteById(ctx jet.Ctx, id int64) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	err := repo.RemoveByID(id)
 	if err != nil {
-		ctx.Logger().Errorf("[ProductRepo]DeleteById ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[productRepo]DeleteById ERROR:%v", err.Error())
 		return errors.New("删除失败")
 	}
 	return nil
@@ -84,7 +84,7 @@ func (repo MessageRepo) Add(ctx jet.Ctx, po *po.Message) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	err := repo.InsertOne(po)
 	if err != nil {
-		ctx.Logger().Errorf("[ProductRepo]Add ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[productRepo]Add ERROR:%v", err.Error())
 		return errors.New("添加失败")
 	}
 	return nil

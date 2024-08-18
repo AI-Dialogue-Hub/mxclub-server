@@ -10,6 +10,7 @@ import (
 	"mxclub/domain/order/po"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
+	"time"
 )
 
 func init() {
@@ -20,6 +21,15 @@ type IDeductionRepo interface {
 	xmysql.IBaseRepo[po.Deduction]
 	TotalDeduct(ctx jet.Ctx, userId uint) (float64, error)
 	ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po.Deduction, int64, error)
+	FindDeDuctListBeyondDuration(duration time.Duration) ([]*po.Deduction, error)
+	// FindDeDuctListWithDurations 获取指定时间段超时的处罚记录
+	//
+	// Time Axis: |---- righted (e.g., -5 days ago) ----|---- left (e.g., -3 days ago) ----|---- now ----|
+	//
+	// Query: SELECT * FROM orders WHERE created_at BETWEEN (now - right) AND (now - left)
+	FindDeDuctListWithDurations(left, right time.Duration) ([]*po.Deduction, error)
+	// UpdateStatusByIds 批量更新处罚记录
+	UpdateStatusByIds(ids []uint, status enum.DeductStatus) error
 }
 
 func NewDeductionRepo(db *gorm.DB) IDeductionRepo {
@@ -67,4 +77,29 @@ func (repo DeductionRepo) ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po
 		return nil, 0, err
 	}
 	return listNoCountByQuery, count, nil
+}
+
+// FindDeDuctListBeyondDuration 查找超时指定时间 duration 的订单
+func (repo DeductionRepo) FindDeDuctListBeyondDuration(duration time.Duration) ([]*po.Deduction, error) {
+	query := xmysql.NewMysqlQuery()
+	query.SetFilter("created_at <= ? and status = ?", time.Now().Add(-duration), enum.Deduct_PENDING)
+	return repo.ListNoCountByQuery(query)
+}
+
+func (repo DeductionRepo) FindDeDuctListWithDurations(left, right time.Duration) ([]*po.Deduction, error) {
+	var (
+		query = xmysql.NewMysqlQuery()
+		now   = time.Now()
+	)
+	query.SetFilter(
+		"created_at <= ? and created_at >= ? and status = ?",
+		now.Add(-left), now.Add(-right), enum.Deduct_PENDING)
+	return repo.ListNoCountByQuery(query)
+}
+
+func (repo DeductionRepo) UpdateStatusByIds(ids []uint, status enum.DeductStatus) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id in (?)", ids)
+	update.Set("status", status)
+	return repo.UpdateByWrapper(update)
 }

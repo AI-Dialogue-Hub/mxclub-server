@@ -42,8 +42,11 @@ type CronService struct {
 // RunCron 注意在集群情况下需要指定单台机器执行定时任务，防止多次执行
 func (cronService *CronService) RunCron() {
 	cronService.logger.Infof("[RunCron]...")
-	cronService.c.AddFunc("0 0 3 * *", func() {
+	cronService.c.AddFunc("0 0 3 * * *", func() {
 		cronService.logger.Infof("[RunCron Func]...")
-		// TODO 扫描罚款的订单，并进行处罚
+		cronService.orderService.SyncDeductionInfo()
+	})
+	cronService.once.Do(func() {
+		cronService.c.Start()
 	})
 }

@@ -11,3 +11,10 @@ var DiscountRules = map[string]struct {
 	"LV5": {Threshold: 20000, Discount: 0.88},
 	"LV6": {Threshold: 50000, Discount: 0.85},
 }
+
+func FetchDiscountByGrade(grade string) float64 {
+	if discountRule, ok := DiscountRules[grade]; ok {
+		return discountRule.Discount
+	}
+	return 1
+}

@@ -63,7 +63,7 @@ func (repo UserRepo) QueryUserByAccount(username string, password string) (*po.U
 }
 
 func (repo UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
 	user := &po.User{
 		WxOpenId: openId,
 		Role:     enum.RoleWxUser,
@@ -134,7 +134,7 @@ func (repo UserRepo) ListAroundCacheByUserType(ctx jet.Ctx, params *api.PagePara
 }
 
 func (repo UserRepo) UpdateUser(ctx jet.Ctx, updateMap map[string]any) error {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
 	id := updateMap["id"]
 	delete(updateMap, "id")
 	err := repo.Update(updateMap, "id = ?", id)
@@ -146,7 +146,7 @@ func (repo UserRepo) UpdateUser(ctx jet.Ctx, updateMap map[string]any) error {
 }
 
 func (repo UserRepo) ToBeAssistant(ctx jet.Ctx, userId uint, phone string, memberNumber int64, name string) error {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":            userId,
 		"member_number": memberNumber,
@@ -174,7 +174,7 @@ func (repo UserRepo) CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool {
 }
 
 func (repo UserRepo) UpdateUserPhone(ctx jet.Ctx, userId uint, phone string) error {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":    userId,
 		"phone": phone,
@@ -183,7 +183,7 @@ func (repo UserRepo) UpdateUserPhone(ctx jet.Ctx, userId uint, phone string) err
 
 func (repo UserRepo) UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum.MemberStatus) error {
 	cacheKey := fmt.Sprintf("%v_%v", userCachePrefix, userId)
-	_ = xredis.Del(cacheKey)
+	defer xredis.Del(cacheKey)
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":            userId,
 		"member_status": status,
@@ -191,7 +191,7 @@ func (repo UserRepo) UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum
 }
 
 func (repo UserRepo) UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
 	if nickName == "" {
 		nickName = fmt.Sprintf("用户%v", 30000+id)
 	}
@@ -207,7 +207,7 @@ func (repo UserRepo) UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickN
 }
 
 func (repo UserRepo) RemoveDasher(ctx jet.Ctx, id uint) error {
-	_ = xredis.DelMatchingKeys(ctx, userCachePrefix)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", id)
 	update.Set("role", enum.RoleWxUser)
