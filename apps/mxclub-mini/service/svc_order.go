@@ -218,12 +218,12 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.Pr
 		return preferentialVO, nil
 	}
 
-	discountedPrice := math.Floor(productVO.Price*rule.Discount*100) / 100
+	discountedPrice := utils.RoundToTwoDecimalPlaces(productVO.Price * rule.Discount)
 
 	return &vo.PreferentialVO{
 		OriginalPrice:     productVO.Price,
 		DiscountedPrice:   discountedPrice,
-		PreferentialPrice: productVO.Price - discountedPrice,
+		PreferentialPrice: utils.RoundToTwoDecimalPlaces(productVO.Price - discountedPrice),
 		DiscountRate:      rule.Discount,
 		DiscountInfo:      fmt.Sprintf("会员等级:%v,折扣:%v折", userById.WxGrade, rule.Discount*100),
 	}, nil

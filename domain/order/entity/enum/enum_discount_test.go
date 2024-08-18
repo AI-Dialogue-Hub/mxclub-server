@@ -1,6 +1,8 @@
 package enum
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestDeductStatus_DisPlayName(t *testing.T) {
 	rule, exists := DiscountRules[""]

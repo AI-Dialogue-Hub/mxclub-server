@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"math"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/entity/enum"
@@ -56,11 +55,11 @@ func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) 
 
 	// 查找用户会员优惠金额
 	discountRate := enum.FetchDiscountByGrade(userPO.WxGrade)
-	discountedPrice := math.Floor(productVO.Price*discountRate*100) / 100
+	discountedPrice := utils.RoundToTwoDecimalPlaces(productVO.Price * discountRate)
 
 	// 计算最终价格和优惠金额
 	productVO.FinalPrice = discountedPrice
-	productVO.DiscountPrice = productVO.Price - productVO.FinalPrice
+	productVO.DiscountPrice = utils.RoundToTwoDecimalPlaces(productVO.Price - productVO.FinalPrice)
 
 	return productVO, nil
 }
