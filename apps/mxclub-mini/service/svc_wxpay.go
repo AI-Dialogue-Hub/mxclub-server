@@ -4,10 +4,14 @@ import (
 	"errors"
 	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/vo"
+	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/utils"
+	"time"
 )
 
 func init() {
@@ -15,13 +19,20 @@ func init() {
 }
 
 type WxPayService struct {
-	orderRepo         repo.IOrderRepo
 	wxpayCallbackRepo repo.IWxPayCallbackRepo
 	userService       *UserService
+	orderService      *OrderService
 }
 
-func NewWxPayService(orderRepo repo.IOrderRepo, userService *UserService, wxpayCallbackRepo repo.IWxPayCallbackRepo) *WxPayService {
-	return &WxPayService{orderRepo: orderRepo, userService: userService, wxpayCallbackRepo: wxpayCallbackRepo}
+func NewWxPayService(
+	orderService *OrderService,
+	userService *UserService,
+	wxpayCallbackRepo repo.IWxPayCallbackRepo) *WxPayService {
+	return &WxPayService{
+		orderService:      orderService,
+		userService:       userService,
+		wxpayCallbackRepo: wxpayCallbackRepo,
+	}
 }
 
 func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePayDTO, error) {
@@ -34,6 +45,36 @@ func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePa
 	}
 	ctx.Logger().Infof("用户: %v 付款：%v，进行中，prepayDTO：%v", id, amount, utils.ObjToJsonStr(prepayDTO))
 	return prepayDTO, nil
+}
+
+func (s WxPayService) addRawOrder(ctx jet.Ctx, outTradeNo string, preferentialVO *vo.PreferentialVO, productId uint) {
+	// 插入订单数据
+	// 2. 创建订单
+	order := &po.Order{
+		OrderId:         utils.SafeParseUint64(outTradeNo),
+		PurchaseId:      middleware.MustGetUserId(ctx),
+		OrderName:       "",
+		OrderIcon:       "",
+		OrderStatus:     enum.PROCESSING,
+		OriginalPrice:   preferentialVO.OriginalPrice,
+		ProductID:       productId,
+		Phone:           "",
+		GameRegion:      "",
+		RoleId:          "",
+		SpecifyExecutor: false,
+		ExecutorID:      -1,
+		Executor2Id:     -1,
+		Executor3Id:     -1,
+		ExecutorName:    "",
+		Notes:           "",
+		DiscountPrice:   preferentialVO.OriginalPrice - preferentialVO.DiscountedPrice,
+		FinalPrice:      preferentialVO.DiscountedPrice,
+		ExecutorPrice:   0,
+		PurchaseDate:    utils.Ptr(time.Now()),
+	}
+	if err := s.orderService.orderRepo.InsertOne(order); err != nil {
+		ctx.Logger().Errorf("addRawOrder ERROR:%v", err)
+	}
 }
 
 func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[string, any]) {

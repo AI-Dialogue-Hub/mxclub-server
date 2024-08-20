@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"math/big"
 	mathRand "math/rand"
@@ -90,16 +91,23 @@ func loadPrivateKeyBlock(privateKeyPath string) (*pem.Block, error) {
 	return block, nil
 }
 
+func init() {
+	// 生成一个随机数作为后缀
+	mathRand.Seed(time.Now().Unix())
+}
+
 func GenerateUniqueOrderNumber() string {
+
 	// 获取当前时间戳
 	timestamp := time.Now().Unix()
 
-	// 生成一个随机数作为后缀
-	mathRand.Seed(time.Now().UnixNano())
-	randomNumber := mathRand.Intn(9999)
+	randomNumber := mathRand.Intn(1000000) // 包含0到999999
+
+	// 使用fmt.Sprintf来保证四位数，不足四位则前面补零
+	suffix := fmt.Sprintf("%06d", randomNumber)
 
 	// 拼接订单号
-	orderNumber := strconv.FormatInt(timestamp, 10) + strconv.Itoa(randomNumber)
+	orderNumber := strconv.FormatInt(timestamp, 10) + suffix
 
 	return orderNumber
 }

@@ -16,7 +16,7 @@ import (
 )
 
 func testRefunds(t *testing.T) {
-	info := getInfo(t)
+	info := getInfoV2(t)
 	requestCtx := &fasthttp.RequestCtx{Request: fasthttp.Request{}, Response: fasthttp.Response{}}
 	ctx := jetContext.NewContext(requestCtx, xlog.NewWith("text"))
 	err := Refunds(ctx, info, GenerateOutRefundNo(), "协商一致进行退款!")
@@ -47,4 +47,14 @@ func getInfo(t *testing.T) *payments.Transaction {
 	fmt.Println(utils.ObjToMap(*transaction))
 	fmt.Println(utils.MustMapToObj[payments.Transaction](utils.ObjToMap(*transaction)))
 	return transaction
+}
+
+func getInfoV2(t *testing.T) *payments.Transaction {
+	setUp()
+	str := ``
+	val, err := utils.JsonStrToObj[payments.Transaction](str)
+	if err != nil {
+		panic(err)
+	}
+	return val
 }
