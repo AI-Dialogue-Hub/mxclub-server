@@ -30,11 +30,11 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 	return vos, total, nil
 }
 
-func (svc OrderService) Add(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
+func (svc OrderService) AddDeduction(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
 	deductPO := utils.MustCopy[po.Deduction](addReq)
 	err := svc.deductionRepo.InsertOne(deductPO)
 	if err != nil {
-		ctx.Logger().Errorf("[orderService]Add ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[orderService]AddDeduction ERROR:%v", err.Error())
 		return errors.New("添加失败")
 	}
 	return nil

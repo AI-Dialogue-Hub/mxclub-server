@@ -121,7 +121,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	// 3. 保存订单
 	err = svc.orderRepo.InsertOne(order)
 	if err != nil {
-		ctx.Logger().Errorf("[orderService]Add ERROR, %v", err.Error())
+		ctx.Logger().Errorf("[orderService]AddDeduction ERROR, %v", err.Error())
 		ctx.Logger().Errorf("order:%v", utils.ObjToJsonStr(order))
 		return errors.New("订单保存保存失败，请联系客服")
 	}
@@ -367,6 +367,8 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 		ctx.Logger().Errorf("[ApplyPenalty]ERROR: %v", err.Error())
 		return
 	}
+
+	ctx.Logger().Errorf("deduction applyPenalty sucess: %+v", applyPenalty)
 
 	dasherPO, _ := svc.userService.FindUserByDashId(ctx, executorId)
 

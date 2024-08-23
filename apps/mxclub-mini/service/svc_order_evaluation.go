@@ -24,7 +24,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 	go svc.handleLowRatingDeduction(ctx, evaluation1)
 
 	evaluationList = append(evaluationList, evaluation1)
-	if evaluationReq.Executor2ID >= 0 {
+	if evaluationReq.Executor2ID >= 0 && evaluationReq.Rating2 > 0 {
 		evaluation2 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
 			OrderID:    evaluationReq.OrderID,
@@ -35,7 +35,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 		evaluationList = append(evaluationList, evaluation2)
 		go svc.handleLowRatingDeduction(ctx, evaluation2)
 	}
-	if evaluationReq.Executor3ID >= 0 {
+	if evaluationReq.Executor3ID >= 0 && evaluationReq.Rating3 > 0 {
 		evaluation3 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
 			OrderID:    evaluationReq.OrderID,
@@ -88,7 +88,12 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 		return
 	}
 
-	applyPenalty := penaltyStrategy.MustApplyPenalty(&penalty.PenaltyReq{OrdersId: ordersId, Rating: rating})
+	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: ordersId, Rating: rating})
+
+	if err != nil || applyPenalty.PenaltyAmount <= 0 {
+		logger.Errorf("fetch penaltyRule ERROR: %v, applyPenalty: %v", err, utils.ObjToJsonStr(applyPenalty))
+		return
+	}
 
 	err = svc.deductionRepo.InsertOne(&po.Deduction{
 		UserID:          dasherPO.ID,

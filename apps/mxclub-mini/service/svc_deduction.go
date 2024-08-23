@@ -49,7 +49,7 @@ func (svc OrderService) SyncDeductionInfo() {
 		syncDeductionInfoLogger.Errorf("FindDeDuctListBeyondDuration ERROR:%v", err)
 	} else {
 		// userId -> PO
-		userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.ID })
+		userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.UserID })
 		userId2POMap.ForEach(func(userId uint, deductionList []*po.Deduction) {
 			// 1.1 批量更新处罚记录
 			ids := utils.Map[*po.Deduction, uint](deductions, func(in *po.Deduction) uint {
@@ -76,7 +76,7 @@ func (svc OrderService) SyncDeductionInfo() {
 		return
 	}
 	// userId -> PO
-	userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.ID })
+	userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.UserID })
 	userId2POMap.ForEach(func(userId uint, deductionList []*po.Deduction) {
 		// 2.1 给用户发送消息，提示被处罚
 		builder := new(strings.Builder)
@@ -84,6 +84,7 @@ func (svc OrderService) SyncDeductionInfo() {
 		for _, deduction := range deductionList {
 			builder.WriteString(fmt.Sprintf("处罚Id：%v，处罚原因：%v\n", deduction.ID, deduction.Reason))
 		}
+		syncDeductionInfoLogger.Infof("push DeductionInfo, userId:%v, message: %v", userId, builder.String())
 		_ = svc.messageService.PushSystemMessage(xjet.NewDefaultJetContext(), userId, builder.String())
 	})
 }

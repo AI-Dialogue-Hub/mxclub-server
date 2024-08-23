@@ -8,7 +8,6 @@ import (
 
 func TestTimeoutPenalty_ApplyPenalty(t *testing.T) {
 	now := time.Now()
-
 	tests := []struct {
 		name           string
 		timeout        time.Duration
@@ -18,7 +17,8 @@ func TestTimeoutPenalty_ApplyPenalty(t *testing.T) {
 		{"No penalty for 9 minutes", time.Minute * 9, 0},
 		{"Penalty for 10 minutes", time.Minute * 10, 10},
 		{"Penalty for 15 minutes", time.Minute * 15, 10},
-		// Add additional tests for 20 minutes and more if you extend the map
+		{"Penalty for 15 minutes", time.Minute * 15, 10},
+		// AddDeduction additional tests for 20 minutes and more if you extend the map
 	}
 
 	for _, tt := range tests {

@@ -88,7 +88,7 @@ func (repo ProductRepo) Add(ctx jet.Ctx, po *po.Product) error {
 	_ = xredis.DelMatchingKeys(ctx, productCachePrefix)
 	err := repo.InsertOne(po)
 	if err != nil {
-		ctx.Logger().Errorf("[productRepo]Add ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[productRepo]AddDeduction ERROR:%v", err.Error())
 		return errors.New("添加失败")
 	}
 	return nil
