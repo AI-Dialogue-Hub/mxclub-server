@@ -39,6 +39,7 @@ type OrderService struct {
 	commonRepo     commonRepo.IMiniConfigRepo
 	deductionRepo  repo.IDeductionRepo
 	evaluationRepo repo.IEvaluationRepo
+	transferRepo   repo.ITransferRepo
 }
 
 func NewOrderService(
@@ -49,7 +50,8 @@ func NewOrderService(
 	messageService *MessageService,
 	commonRepo commonRepo.IMiniConfigRepo,
 	deductionRepo repo.IDeductionRepo,
-	evaluationRepo repo.IEvaluationRepo) *OrderService {
+	evaluationRepo repo.IEvaluationRepo,
+	transferRepo repo.ITransferRepo) *OrderService {
 
 	return &OrderService{
 		orderRepo:      repo,
@@ -60,6 +62,7 @@ func NewOrderService(
 		commonRepo:     commonRepo,
 		deductionRepo:  deductionRepo,
 		evaluationRepo: evaluationRepo,
+		transferRepo:   transferRepo,
 	}
 }
 

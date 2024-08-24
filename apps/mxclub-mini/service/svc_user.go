@@ -125,6 +125,11 @@ func (svc UserService) FindUserByDashId(ctx jet.Ctx, memberNumber int) (*po.User
 	return svc.userRepo.FindByMemberNumber(ctx, memberNumber)
 }
 
+func (svc UserService) ExistsExecutor(ctx jet.Ctx, memberNumber int) bool {
+	dasherPO, err := svc.userRepo.FindByMemberNumber(ctx, memberNumber)
+	return !(err != nil || dasherPO == nil || dasherPO.ID == 0)
+}
+
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	if svc.userRepo.ExistsAssistant(ctx, req.Phone, req.MemberNumber) {
 		return errors.New("电话或id已被使用")
@@ -306,4 +311,9 @@ func (svc UserService) PushInviteMessage(ctx jet.Ctx, req *req.OrderExecutorInvi
 		_ = svc.messageService.PushMessage(ctx, message)
 	}()
 	return nil
+}
+
+func (svc UserService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int) bool {
+	orderPO, err := svc.orderRepo.FindByDasherId(ctx, memberNumber)
+	return err != nil && orderPO != nil && orderPO.ID > 0
 }

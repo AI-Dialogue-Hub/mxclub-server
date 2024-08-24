@@ -73,6 +73,11 @@ func (ctl UserController) PostV1UserList(ctx jet.Ctx, params *req.UserListReq) (
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 
+func (ctl UserController) GetV1UserList(ctx jet.Ctx, params *req.UserListReq) (*api.Response, error) {
+	pageResult, err := ctl.userService.List(ctx, params)
+	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
 func (ctl UserController) GetV1UserTypeList(ctx jet.Ctx) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, vo.WrapUserTypeVOS(enum.RoleDisPlayNameMap), nil)
 }

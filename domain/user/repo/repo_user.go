@@ -23,10 +23,13 @@ type IUserRepo interface {
 	QueryUserByAccount(username string, password string) (*po.User, error)
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
 	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
+	// FindByMemberNumber
+	// @cache
 	FindByMemberNumber(ctx jet.Ctx, memberNumber int) (*po.User, error)
 	FindGradeByUserIdList(userIdList []uint) (maps.IMap[uint, string], error)
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
+	ListByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error)
 	ListAroundCacheByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
 	// UpdateUserIconAndNickName 如果为空会给默认的头像和昵称
@@ -105,24 +108,28 @@ func (repo UserRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po
 	return repo.ListAroundCacheByUserType(ctx, params, "")
 }
 
+func (repo UserRepo) ListByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error) {
+	// 如果缓存中未找到，则从数据库中获取
+	query := xmysql.NewMysqlQuery()
+	query.SetPage(params.Page, params.PageSize)
+	if userType != "" {
+		query.SetFilter("role = ?", userType)
+	}
+	list, count, err := repo.ListByWrapper(ctx, query)
+	if err != nil {
+		ctx.Logger().Errorf("[repo list]error:%v", err.Error())
+		return nil, 0, err
+	}
+	return list, count, nil
+}
+
 func (repo UserRepo) ListAroundCacheByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error) {
 	// 根据页码参数生成唯一的缓存键
 	cacheListKey := fmt.Sprintf("%s_%s", xredis.BuildListDataCacheKey(userCachePrefix, params), userType)
 	cacheCountKey := fmt.Sprintf("%s_%s", xredis.BuildListCountCacheKey(userListCachePrefix), userType)
 
 	list, count, err := xredis.GetListOrDefault[po.User](ctx, cacheListKey, cacheCountKey, func() ([]*po.User, int64, error) {
-		// 如果缓存中未找到，则从数据库中获取
-		query := xmysql.NewMysqlQuery()
-		query.SetPage(params.Page, params.PageSize)
-		if userType != "" {
-			query.SetFilter("role = ?", userType)
-		}
-		list, count, err := repo.ListByWrapper(ctx, query)
-		if err != nil {
-			ctx.Logger().Errorf("[repo list]error:%v", err.Error())
-			return nil, 0, err
-		}
-		return list, count, nil
+		return repo.ListByUserType(ctx, params, userType)
 	})
 
 	if err != nil {

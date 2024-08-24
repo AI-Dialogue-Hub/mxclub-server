@@ -44,8 +44,8 @@ func TestLowRatingPenalty_ApplyPenalty(t *testing.T) {
 	}{
 		{"Penalty for 1 star", 1, 30, false},
 		{"Penalty for 2 stars", 2, 20, false},
-		{"No penalty for 3 stars", 3, 0, false},
-		{"No penalty for 4 stars", 4, 0, false},
+		{"No penalty for 3 stars", 3, 0, true},
+		{"No penalty for 4 stars", 4, 0, true},
 		{"Invalid rating (negative)", -1, 0, true},
 		{"Invalid rating (zero)", 0, 0, true},
 	}

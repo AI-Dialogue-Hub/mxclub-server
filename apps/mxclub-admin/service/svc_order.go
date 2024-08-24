@@ -28,6 +28,7 @@ type OrderService struct {
 	deductionRepo     repo.IDeductionRepo
 	userRepo          userRepo.IUserRepo
 	messageService    *MessageService
+	transferRepo      repo.ITransferRepo
 }
 
 func NewOrderService(repo repo.IOrderRepo,
@@ -35,13 +36,15 @@ func NewOrderService(repo repo.IOrderRepo,
 	deductionRepo repo.IDeductionRepo,
 	wxPayCallbackRepo repo.IWxPayCallbackRepo,
 	messageService *MessageService,
-	userRepo userRepo.IUserRepo) *OrderService {
+	userRepo userRepo.IUserRepo,
+	transferRepo repo.ITransferRepo) *OrderService {
 	return &OrderService{orderRepo: repo,
 		withdrawRepo:      withdrawRepo,
 		deductionRepo:     deductionRepo,
 		wxPayCallbackRepo: wxPayCallbackRepo,
 		messageService:    messageService,
 		userRepo:          userRepo,
+		transferRepo:      transferRepo,
 	}
 }
 
@@ -126,17 +129,6 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 	}
 	return nil
 }
-
-// TransferOrder 转单就是把
-func (svc OrderService) TransferOrder(ctx jet.Ctx, id int64) error {
-	err := svc.orderRepo.ClearOrderDasherInfo(ctx, id)
-	if err != nil {
-		ctx.Logger().Errorf("[TransferOrder]err:%v", err)
-		return errors.New("转单失败")
-	}
-	return nil
-}
-
 func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
 	updateMap := utils.ObjToMap(orderVO)
 	delete(updateMap, "id")
@@ -149,4 +141,9 @@ func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
 	}
 	svc.orderRepo.ClearOrderCache(ctx)
 	return nil
+}
+
+func (svc OrderService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int) bool {
+	orderPO, err := svc.orderRepo.FindByDasherId(ctx, memberNumber)
+	return err != nil && orderPO != nil && orderPO.ID > 0
 }

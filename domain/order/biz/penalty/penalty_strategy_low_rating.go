@@ -40,7 +40,7 @@ func (p *LowRatingPenalty) ApplyPenalty(req *PenaltyReq) (*PenaltyResp, error) {
 		}
 	}
 	if defaultResp.PenaltyAmount <= 0 {
-		return nil, errors.New("no penalty")
+		return defaultResp, errors.New("no penalty")
 	}
 	// 实现低评星罚款的逻辑
 	return defaultResp, nil

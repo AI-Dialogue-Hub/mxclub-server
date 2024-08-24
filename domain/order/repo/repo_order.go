@@ -46,7 +46,7 @@ type IOrderRepo interface {
 	DoneEvaluation(id uint) error
 	RemoveByTradeNo(orderNo string) error
 	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
-	ClearOrderDasherInfo(ctx jet.Ctx, ordersId int64) error
+	ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error
 	ClearOrderCache(ctx jet.Ctx)
 }
 
@@ -350,7 +350,7 @@ func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, erro
 	return repo.FindByWrapper(query)
 }
 
-func (repo OrderRepo) ClearOrderDasherInfo(ctx jet.Ctx, ordersId int64) error {
+func (repo OrderRepo) ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
