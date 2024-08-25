@@ -56,15 +56,15 @@ func (repo MiniConfigRepo) FindSwiperConfig(ctx jet.Ctx) (*po.MiniConfig, error)
 }
 
 func (repo MiniConfigRepo) AddConfig(ctx jet.Ctx, configName string, content []map[string]any) error {
-	// 删除分页缓存
-	err := xredis.DelMatchingKeys(ctx, configCachePrefix)
-	if err != nil {
-		xlog.Errorf(err.Error())
-	}
-	err = repo.InsertOne(&po.MiniConfig{ConfigName: configName, Content: xmysql.JSONArray(content)})
+	err := repo.InsertOne(&po.MiniConfig{ConfigName: configName, Content: xmysql.JSONArray(content)})
 	if err != nil {
 		ctx.Logger().Errorf("InsertOne error: %v", err.Error())
 		return err
+	}
+	// 删除分页缓存
+	err = xredis.DelMatchingKeys(ctx, configCachePrefix)
+	if err != nil {
+		xlog.Errorf(err.Error())
 	}
 	return nil
 }

@@ -65,9 +65,9 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 	defer utils.RecoverWithPrefix(ctx, "handleLowRatingDeduction")
 
 	var (
-		rating   = evaluation.Rating
-		ordersId = evaluation.OrdersID
-		logger   = ctx.Logger()
+		rating  = evaluation.Rating
+		orderNo = evaluation.OrderID
+		logger  = ctx.Logger()
 	)
 
 	if rating > 2 {
@@ -88,7 +88,7 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 		return
 	}
 
-	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: ordersId, Rating: rating})
+	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: orderNo, Rating: rating})
 
 	if err != nil || applyPenalty.PenaltyAmount <= 0 {
 		logger.Errorf("fetch penaltyRule ERROR: %v, applyPenalty: %v", err, utils.ObjToJsonStr(applyPenalty))

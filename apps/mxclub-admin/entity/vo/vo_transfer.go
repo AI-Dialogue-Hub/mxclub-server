@@ -6,7 +6,7 @@ import (
 )
 
 type TransferVO struct {
-	ID               uint              `json:"id"`
+	ID               uint              `json:"id" validate:"gt=0"`
 	OrderId          uint64            `json:"order_id" comment:"订单Id"`
 	ExecutorFrom     int               `json:"executor_from" comment:"转单人Id，一般是车头"`
 	ExecutorFromName string            `json:"executor_from_name"`

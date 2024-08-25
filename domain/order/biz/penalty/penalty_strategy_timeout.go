@@ -38,7 +38,7 @@ func (p *TimeoutPenalty) ApplyPenalty(req *PenaltyReq) (*PenaltyResp, error) {
 				PenaltyAmount: penalty,
 				Reason:        fmt.Sprintf("订单接单后，%v分钟还没组队完成开始订单，罚款：%v元", duration.Minutes(), penalty),
 				Message: fmt.Sprintf(
-					"尊敬的打手您好，您的订单: %v, 由于接单未能即使组队并开始订单，组队时间为：%v，罚款：%v元, 您可在五个工作日内向客服发起申述，超过五个工作日，系统将进行罚款",
+					"尊敬的打手您好，您的订单: %v, 由于接单及时即使组队并开始订单，组队时间为：%v，罚款：%v元, 您可在五个工作日内向客服发起申述，超过五个工作日，系统将进行罚款",
 					req.OrdersId, utils.FormatDuration(minutes), penalty),
 			}, nil
 		}

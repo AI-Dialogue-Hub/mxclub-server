@@ -73,7 +73,9 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		userId = middleware.MustGetUserId(ctx)
 		logger = ctx.Logger()
 	)
-	go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
+	if req.Phone != "" {
+		go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
+	}
 	var (
 		dasherName            string
 		executorId            int
@@ -334,7 +336,7 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 	}
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
-		return nil, errors.New("订单完成失败，请联系客服")
+		return nil, errors.New("订单查询失败，请联系客服")
 	}
 	return utils.CopySlice[*po.Order, *vo.OrderVO](orders), nil
 }
@@ -364,13 +366,12 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 		ctx.Logger().Errorf("fetch penaltyRule ERROR: %v", err)
 		return
 	}
-	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: ordersId, GrabTime: orderPO.GrabAt})
+	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: uint(orderPO.OrderId), GrabTime: orderPO.GrabAt})
 
 	if err != nil || applyPenalty.PenaltyAmount <= 0 {
 		ctx.Logger().Errorf("[ApplyPenalty]ERROR: %v", err.Error())
 		return
 	}
-
 	ctx.Logger().Errorf("deduction applyPenalty sucess: %+v", applyPenalty)
 
 	dasherPO, _ := svc.userService.FindUserByDashId(ctx, executorId)

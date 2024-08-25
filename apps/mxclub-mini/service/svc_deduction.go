@@ -45,30 +45,31 @@ func (svc OrderService) SyncDeductionInfo() {
 	defer utils.RecoverByPrefix(syncDeductionInfoLogger, "syncDeductionInfo")
 	// 1. 处罚记录超过五天的
 	deductions, err := svc.deductionRepo.FindDeDuctListBeyondDuration(constant.Duration_5_Day)
-	if err != nil {
-		syncDeductionInfoLogger.Errorf("FindDeDuctListBeyondDuration ERROR:%v", err)
-	} else {
-		// userId -> PO
-		userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.UserID })
-		userId2POMap.ForEach(func(userId uint, deductionList []*po.Deduction) {
-			// 1.1 批量更新处罚记录
-			ids := utils.Map[*po.Deduction, uint](deductions, func(in *po.Deduction) uint {
-				return in.ID
-			})
-			err = svc.deductionRepo.UpdateStatusByIds(ids, enum.Deduct_SUCCESS)
-			if err != nil {
-				syncDeductionInfoLogger.Errorf("UpdateStatusByIds ERROR:%v", err)
-			} else {
-				// 1.2 给用户发送消息，提示被处罚
-				builder := new(strings.Builder)
-				builder.WriteString("尊敬的打手您好，您有以下处罚内容已超过五天未申述，系统已经进行处罚：\n")
-				for _, deduction := range deductionList {
-					builder.WriteString(fmt.Sprintf("处罚Id：%v，处罚原因：%v\n", deduction.ID, deduction.Reason))
-				}
-				_ = svc.messageService.PushSystemMessage(xjet.NewDefaultJetContext(), userId, builder.String())
-			}
-		})
+	if err != nil || len(deductions) <= 0 {
+		syncDeductionInfoLogger.Errorf("FindDeDuctListBeyondDuration ERROR:%v, deductions: %v", err, deductions)
+		return
 	}
+	// userId -> PO
+	userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.UserID })
+	userId2POMap.ForEach(func(userId uint, deductionList []*po.Deduction) {
+		// 1.1 批量更新处罚记录
+		ids := utils.Map[*po.Deduction, uint](deductions, func(in *po.Deduction) uint {
+			return in.ID
+		})
+		err = svc.deductionRepo.UpdateStatusByIds(ids, enum.Deduct_SUCCESS)
+		if err != nil {
+			syncDeductionInfoLogger.Errorf("UpdateStatusByIds ERROR:%v", err)
+		} else {
+			// 1.2 给用户发送消息，提示被处罚
+			builder := new(strings.Builder)
+			builder.WriteString("尊敬的打手您好，您有以下处罚内容已超过五天未申述，系统已经进行处罚：\n")
+			for _, deduction := range deductionList {
+				builder.WriteString(fmt.Sprintf("处罚Id：%v，处罚原因：%v\n", deduction.ID, deduction.Reason))
+			}
+			_ = svc.messageService.PushSystemMessage(xjet.NewDefaultJetContext(), userId, builder.String())
+		}
+	})
+
 	// 2. 处罚记录超过三天但是还没超过五天的
 	deductions, err = svc.deductionRepo.FindDeDuctListWithDurations(constant.Duration_3_Day, constant.Duration_5_Day)
 	if err != nil {
@@ -76,7 +77,7 @@ func (svc OrderService) SyncDeductionInfo() {
 		return
 	}
 	// userId -> PO
-	userId2POMap := utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.UserID })
+	userId2POMap = utils.SliceToMap(deductions, func(ele *po.Deduction) uint { return ele.UserID })
 	userId2POMap.ForEach(func(userId uint, deductionList []*po.Deduction) {
 		// 2.1 给用户发送消息，提示被处罚
 		builder := new(strings.Builder)

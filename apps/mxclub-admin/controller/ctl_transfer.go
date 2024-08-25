@@ -2,14 +2,15 @@ package controller
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
 )
 
-func (ctl OrderController) GetV1TransferList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+func (ctl OrderController) GetV1TransferList(ctx jet.Ctx, params *req.TransferListReq) (*api.Response, error) {
 	vos, count, err := ctl.orderService.ListTransferInfo(ctx, params)
-	pageResult := api.WrapPageResult(params, vos, count)
+	pageResult := api.WrapPageResult(&params.PageParams, vos, count)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 
