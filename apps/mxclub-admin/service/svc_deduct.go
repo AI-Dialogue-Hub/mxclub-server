@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
@@ -23,9 +24,22 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 		ctx.Logger().Errorf("[orderService]ListWithdraw ERROR:%v", err.Error())
 		return nil, 0, errors.New("获取失败")
 	}
-	vos := utils.CopySlice[*po.Deduction, *vo.DeductionVO](listDeduction)
-	utils.ForEach(vos, func(ele *vo.DeductionVO) {
-		ele.Status = enum.DeductStatus(ele.Status).DisPlayName()
+
+	vos := utils.Map[*po.Deduction, *vo.DeductionVO](listDeduction, func(in *po.Deduction) *vo.DeductionVO {
+		var userInfo string
+		if userPO, err := svc.userRepo.FindByIdAroundCache(ctx, in.UserID); err != nil {
+			userInfo = fmt.Sprintf("%v(%v)", userPO.MemberNumber, userPO.Name)
+		}
+		return &vo.DeductionVO{
+			ID:              in.ID,
+			UserID:          in.UserID,
+			UserInfo:        userInfo,
+			ConfirmPersonId: in.ConfirmPersonId,
+			Amount:          in.Amount,
+			Reason:          in.Reason,
+			Status:          in.Status.DisPlayName(),
+			CreatedAt:       in.CreatedAt,
+		}
 	})
 	return vos, total, nil
 }

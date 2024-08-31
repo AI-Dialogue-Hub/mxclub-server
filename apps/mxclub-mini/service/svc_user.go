@@ -285,6 +285,7 @@ func (svc UserService) checkUserGrade(ctx jet.Ctx, id uint) {
 }
 
 func (svc UserService) RemoveAssistant(ctx jet.Ctx) error {
+	// 1. 清除该打手member下所有订单组队情况，罚款记录
 	err := svc.userRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
 	if err != nil {
 		ctx.Logger().Errorf("[RemoveAssistant]ERROR:%v", err)
