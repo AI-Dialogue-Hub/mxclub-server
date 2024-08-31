@@ -27,7 +27,7 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 
 	vos := utils.Map[*po.Deduction, *vo.DeductionVO](listDeduction, func(in *po.Deduction) *vo.DeductionVO {
 		var userInfo string
-		if userPO, err := svc.userRepo.FindByIdAroundCache(ctx, in.UserID); err != nil {
+		if userPO, err := svc.userRepo.FindByIdAroundCache(ctx, in.UserID); err == nil {
 			userInfo = fmt.Sprintf("%v(%v)", userPO.MemberNumber, userPO.Name)
 		}
 		return &vo.DeductionVO{
