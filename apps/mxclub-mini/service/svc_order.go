@@ -465,8 +465,8 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		return nil, errors.New("系统查询错误，请联系管理员")
 	}
 	return &vo.WithDrawVO{
-		HistoryWithDrawAmount: approveWithdrawnAmount,
-		WithdrawAbleAmount:    orderWithdrawAbleAmount - withdrawnAmount - totalDeduct,
+		HistoryWithDrawAmount: utils.RoundToTwoDecimalPlaces(approveWithdrawnAmount),
+		WithdrawAbleAmount:    utils.RoundToTwoDecimalPlaces(orderWithdrawAbleAmount - withdrawnAmount - totalDeduct),
 		WithdrawRangeMax:      20000,
 		WithdrawRangeMin:      200,
 	}, nil

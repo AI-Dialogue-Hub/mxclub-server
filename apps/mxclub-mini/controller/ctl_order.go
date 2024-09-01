@@ -41,7 +41,7 @@ func (ctl OrderController) DeleteV1Order(ctx jet.Ctx, param *api.PathParam) (*ap
 	return xjet.WrapperResult(ctx, "ok", err)
 }
 
-// PostV1WithdrawInfo 这里是查询信息
+// PostV1WithdrawInfo 这里是查询可以提现的信息
 func (ctl OrderController) PostV1WithdrawInfo(ctx jet.Ctx) (*api.Response, error) {
 	withDrawVO, err := ctl.orderService.HistoryWithDrawAmount(ctx)
 	return xjet.WrapperResult(ctx, withDrawVO, err)

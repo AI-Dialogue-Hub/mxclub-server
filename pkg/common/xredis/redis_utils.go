@@ -16,7 +16,7 @@ func GetOrDefault[T any](ctx jet.Ctx, key string, defaultFunc func() (*T, error)
 	if err != nil {
 		return nil, err
 	}
-	err = SetJSONStr(key, got, constant.Duration_7_Day)
+	err = SetJSONStr(key, got, constant.Duration_Day)
 	if err != nil {
 		ctx.Logger().Errorf("SetJSONStr error:%v", err.Error())
 	}
@@ -34,12 +34,12 @@ func GetListOrDefault[T any](ctx jet.Ctx, listKey string, countKey string, defau
 		return nil, 0, err
 	}
 	if gotList != nil {
-		if err = SetJSONStr(listKey, gotList, constant.Duration_7_Day); err != nil {
+		if err = SetJSONStr(listKey, gotList, constant.Duration_Day); err != nil {
 			_ = Del(listKey)
 			ctx.Logger().Errorf("SetJSONStr error:%v", err.Error())
 		}
 	}
-	if err = SetJSONStr(countKey, gotCount, constant.Duration_7_Day); err != nil {
+	if err = SetJSONStr(countKey, gotCount, constant.Duration_Day); err != nil {
 		_ = Del(countKey)
 		ctx.Logger().Errorf("SetJSONStr error:%v", err.Error())
 	}
