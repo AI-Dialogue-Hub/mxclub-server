@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/entity/enum"
@@ -35,15 +36,21 @@ func NewWxPayService(
 	}
 }
 
-func (s WxPayService) Prepay(ctx jet.Ctx, id uint, amount float64) (*wxpay.PrePayDTO, error) {
+func (s WxPayService) Prepay(ctx jet.Ctx, id uint, orderReq *req.OrderReq) (*wxpay.PrePayDTO, error) {
+	// 给用户创建订单
+	orderPO, err := s.orderService.AddByOrderStatus(ctx, orderReq, enum.PrePay)
+	if err != nil {
+		return nil, err
+	}
 	userPO, _ := s.userService.FindUserById(ctx, id)
-	prePayRequestDTO := wxpay.NewPrepayRequest(amount, userPO.WxOpenId)
+	prePayRequestDTO := wxpay.NewPrepayRequest(orderPO.FinalPrice, userPO.WxOpenId, utils.ParseString(orderPO.OrderId))
 	prepayDTO, err := wxpay.Prepay(ctx, prePayRequestDTO)
 	if err != nil {
 		ctx.Logger().Errorf("[WxPayService]prepay ERROR: %v\nprepayDTO:%v", err.Error(), utils.ObjToJsonStr(prepayDTO))
 		return nil, errors.New("申请微信支付失败")
 	}
-	ctx.Logger().Infof("用户: %v 付款：%v，进行中，prepayDTO：%v", id, amount, utils.ObjToJsonStr(prepayDTO))
+	ctx.Logger().Infof("用户: %v 付款：%v，进行中，prepayDTO：%v", id, orderPO.FinalPrice, utils.ObjToJsonStr(prepayDTO))
+
 	return prepayDTO, nil
 }
 
@@ -89,6 +96,9 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 			return
 		}
 	}
+	// 修改订单状态为支付成功
+	_ = s.orderService.PaySuccessOrder(ctx, utils.SafeParseUint64(*transaction.OutTradeNo))
+
 	objToMap := utils.ObjToMap(*transaction)
 	err = s.wxpayCallbackRepo.InsertOne(&po.WxPayCallback{
 		OutTradeNo: *transaction.OutTradeNo,

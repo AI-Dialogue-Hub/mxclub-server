@@ -47,7 +47,7 @@ func (ctl WxPayController) GetWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMa
 	return xjet.WrapperResult(ctx, "ok", nil)
 }
 
-func (ctl WxPayController) PostV1WxpayPrepay(ctx jet.Ctx, params *req.WxPayReq) (*api.Response, error) {
-	prePayDTO, err := ctl.wxPayService.Prepay(ctx, middleware.MustGetUserId(ctx), params.Amount)
+func (ctl WxPayController) PostV1WxpayPrepay(ctx jet.Ctx, orderReq *req.OrderReq) (*api.Response, error) {
+	prePayDTO, err := ctl.wxPayService.Prepay(ctx, middleware.MustGetUserId(ctx), orderReq)
 	return xjet.WrapperResult(ctx, prePayDTO, err)
 }

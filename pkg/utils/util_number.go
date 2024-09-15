@@ -88,6 +88,7 @@ func ParseInt32(args interface{}) int32 {
 }
 
 func ParseUint(args interface{}) uint {
+	defer RecoverByPrefixNoCtx("ParseUint")
 	return uint(ParseInt64(args))
 }
 

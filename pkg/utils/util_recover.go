@@ -26,3 +26,10 @@ func RecoverByPrefix(logger *xlog.Logger, prefixInfo string) {
 		debug.PrintStack()
 	}
 }
+
+func RecoverByPrefixNoCtx(prefixInfo string) {
+	if r := recover(); r != nil {
+		xlog.Errorf("[%v]Recovered from panic: %v", prefixInfo, r)
+		debug.PrintStack()
+	}
+}

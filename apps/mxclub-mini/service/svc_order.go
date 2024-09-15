@@ -12,6 +12,7 @@ import (
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
+	"mxclub/pkg/common/wxpay"
 	"sync"
 
 	commonEnum "mxclub/domain/common/entity/enum"
@@ -69,28 +70,59 @@ func NewOrderService(
 // ===============================================================
 
 func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
+	if _, err := svc.AddByOrderStatus(ctx, req, enum.PrePay); err != nil {
+		return errors.New("订单添加失败，请联系客服")
+	}
+	return nil
+}
+
+func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
+	defer utils.RecoverAndLogError(ctx)
+	err := svc.orderRepo.UpdateOrderStatus(ctx, orderNo, enum.PROCESSING)
+	if err != nil {
+		return errors.New("更新失败")
+	}
+	orderPO, _ := svc.orderRepo.FindByOrderId(ctx, uint(orderNo))
+	// 4. 如果指定订单，给打手发送接单消息
+	if orderPO.SpecifyExecutor {
+		dasher, _ := svc.userService.FindUserByDashId(ctx, orderPO.ExecutorID)
+		svc.messageService.PushMessage(
+			ctx,
+			dto.NewDispatchMessage(dasher.ID, orderPO.ID, orderPO.GameRegion, orderPO.RoleId, ""),
+		)
+	}
+	ctx.Logger().Infof("pay success, order: %v", utils.ObjToJsonStr(orderPO))
+	return nil
+}
+
+func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status enum.OrderStatus) (*po.Order, error) {
 	var (
 		userId = middleware.MustGetUserId(ctx)
 		logger = ctx.Logger()
 	)
+	if req.OrderTradeNo == "" {
+		req.OrderTradeNo = wxpay.GenerateUniqueOrderNumber()
+	}
+	// 检查订单是否已经创建
+	order, err := svc.orderRepo.FindByOrderId(ctx, utils.ParseUint(req.OrderTradeNo))
+
+	if order != nil && order.ID > 0 {
+		logger.Errorf("has duplicates order, %+v", order)
+		return nil, err
+	}
+
 	if req.Phone != "" {
 		go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
 	}
 	var (
-		dasherName            string
-		executorId            int
-		specifyExecutorUserId uint
+		dasherName string
+		executorId int
 	)
 	if req.SpecifyExecutor {
 		// 特殊编号打手
 		executorId = req.ExecutorId
 		if executorId == -1 {
 			executorId = 0
-		}
-		dasher, err := svc.userService.FindUserByDashId(ctx, executorId)
-		if err == nil {
-			dasherName = dasher.Name
-			specifyExecutorUserId = dasher.ID
 		}
 	} else {
 		executorId = -1
@@ -101,12 +133,12 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 		logger.Errorf("Preferential ERROR:%v", err)
 	}
 	// 2. 创建订单
-	order := &po.Order{
+	order = &po.Order{
 		OrderId:         utils.SafeParseUint64(req.OrderTradeNo),
 		PurchaseId:      userId,
 		OrderName:       req.OrderName,
 		OrderIcon:       req.OrderIcon,
-		OrderStatus:     enum.PROCESSING,
+		OrderStatus:     status,
 		OriginalPrice:   preferentialVO.OriginalPrice,
 		ProductID:       req.ProductId,
 		Phone:           req.Phone,
@@ -128,13 +160,10 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]AddDeduction ERROR, %v", err.Error())
 		ctx.Logger().Errorf("order:%v", utils.ObjToJsonStr(order))
-		return errors.New("订单保存保存失败，请联系客服")
+		return nil, errors.New("订单保存保存失败，请联系客服")
 	}
-	// 4. 如果指定订单，给打手发送接单消息
-	if req.SpecifyExecutor {
-		go svc.messageService.PushMessage(ctx, dto.NewDispatchMessage(specifyExecutorUserId, order.ID, req.GameRegion, req.RoleId, ""))
-	}
-	return nil
+
+	return order, nil
 }
 
 func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {

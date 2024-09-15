@@ -12,6 +12,7 @@ const (
 	PAUSED                            // 暂停中
 	ORDER_ACCEPTED                    // 已接单
 	Refunds                           // 已退单
+	PrePay                            // 待支付
 )
 
 var OrderStatusMap = map[OrderStatus]string{
@@ -22,6 +23,7 @@ var OrderStatusMap = map[OrderStatus]string{
 	PROCESSING:     "配单中",
 	PAUSED:         "暂停中",
 	Refunds:        "已退单",
+	PrePay:         "待支付",
 }
 
 var OrderStatusStringMap = map[string]OrderStatus{
@@ -32,6 +34,7 @@ var OrderStatusStringMap = map[string]OrderStatus{
 	"PROCESSING":     PROCESSING,
 	"PAUSED":         PAUSED,
 	"Refunds":        Refunds,
+	"PrePay":         PrePay,
 }
 
 var OrderStatusParseMap = func() maps.IMap[OrderStatus, string] {

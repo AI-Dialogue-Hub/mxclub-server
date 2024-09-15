@@ -8,9 +8,9 @@ type prepayRequestDTO struct {
 	Openid     string // 用户的openId
 }
 
-func NewPrepayRequest(amount float64, openid string) *prepayRequestDTO {
+func NewPrepayRequest(amount float64, openid string, tradeNo string) *prepayRequestDTO {
 	return &prepayRequestDTO{
-		OutTradeNo: GenerateUniqueOrderNumber(),
+		OutTradeNo: tradeNo,
 		Amount:     int64(amount * 100),
 		Openid:     openid,
 	}
