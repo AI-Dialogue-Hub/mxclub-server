@@ -36,7 +36,10 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 	return vos, nil
 }
 
-var syncDeductionInfoLogger = xlog.NewWith("syncDeductionInfo")
+var (
+	syncDeductionInfoLogger = xlog.NewWith("syncDeductionInfo")
+	deductionDDL            = constant.Duration_2_Day
+)
 
 // SyncDeductionInfo 同步处罚情况
 // 1. 如果处罚记录超过五天，将处罚状态标记为正式处罚
@@ -44,7 +47,7 @@ var syncDeductionInfoLogger = xlog.NewWith("syncDeductionInfo")
 func (svc OrderService) SyncDeductionInfo() {
 	defer utils.RecoverByPrefix(syncDeductionInfoLogger, "syncDeductionInfo")
 	// 1. 处罚记录超过五天的
-	deductions, err := svc.deductionRepo.FindDeDuctListBeyondDuration(constant.Duration_5_Day)
+	deductions, err := svc.deductionRepo.FindDeDuctListBeyondDuration(deductionDDL)
 	if err != nil || len(deductions) <= 0 {
 		syncDeductionInfoLogger.Errorf("FindDeDuctListBeyondDuration ERROR:%v, deductions: %v", err, deductions)
 		return
@@ -70,8 +73,8 @@ func (svc OrderService) SyncDeductionInfo() {
 		}
 	})
 
-	// 2. 处罚记录超过三天但是还没超过五天的
-	deductions, err = svc.deductionRepo.FindDeDuctListWithDurations(constant.Duration_3_Day, constant.Duration_5_Day)
+	// 2. 处罚记录超过1天但是还没超过2天的
+	deductions, err = svc.deductionRepo.FindDeDuctListWithDurations(constant.Duration_1_Day, constant.Duration_2_Day)
 	if err != nil {
 		syncDeductionInfoLogger.Errorf("FindDeDuctListWithDurations ERROR:%v", err)
 		return
