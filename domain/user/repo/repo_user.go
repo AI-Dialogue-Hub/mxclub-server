@@ -30,7 +30,9 @@ type IUserRepo interface {
 	ExistsByOpenId(ctx jet.Ctx, openId string) bool
 	ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error)
 	ListByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error)
-	ListAroundCacheByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error)
+	// ListAroundCacheByUserTypeAndDasherId
+	// @cache
+	ListAroundCacheByUserTypeAndDasherId(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType, dasherId int) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
 	// UpdateUserIconAndNickName 如果为空会给默认的头像和昵称
 	UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error
@@ -105,7 +107,7 @@ func (repo UserRepo) ExistsByOpenId(ctx jet.Ctx, openId string) bool {
 }
 
 func (repo UserRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) ([]*po.User, int64, error) {
-	return repo.ListAroundCacheByUserType(ctx, params, "")
+	return repo.ListAroundCacheByUserTypeAndDasherId(ctx, params, "", -1)
 }
 
 func (repo UserRepo) ListByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error) {
@@ -123,13 +125,31 @@ func (repo UserRepo) ListByUserType(ctx jet.Ctx, params *api.PageParams, userTyp
 	return list, count, nil
 }
 
-func (repo UserRepo) ListAroundCacheByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error) {
+func (repo UserRepo) ListAroundCacheByUserTypeAndDasherId(
+	ctx jet.Ctx,
+	params *api.PageParams,
+	userType enum.RoleType,
+	dasherId int) ([]*po.User, int64, error) {
+
 	// 根据页码参数生成唯一的缓存键
-	cacheListKey := fmt.Sprintf("%s_%s", xredis.BuildListDataCacheKey(userCachePrefix, params), userType)
-	cacheCountKey := fmt.Sprintf("%s_%s", xredis.BuildListCountCacheKey(userListCachePrefix), userType)
+	cacheListKey := fmt.Sprintf("%s_%s_%v", xredis.BuildListDataCacheKey(userCachePrefix, params), userType, dasherId)
+	cacheCountKey := fmt.Sprintf("%s_%s_%v", xredis.BuildListCountCacheKey(userListCachePrefix), userType, dasherId)
 
 	list, count, err := xredis.GetListOrDefault[po.User](ctx, cacheListKey, cacheCountKey, func() ([]*po.User, int64, error) {
-		return repo.ListByUserType(ctx, params, userType)
+		query := xmysql.NewMysqlQuery()
+		query.SetPage(params.Page, params.PageSize)
+		if userType != "" {
+			query.SetFilter("role = ?", userType)
+		}
+		if dasherId > 0 {
+			query.SetFilter("member_number = ?", dasherId)
+		}
+		list, count, err := repo.ListByWrapper(ctx, query)
+		if err != nil {
+			ctx.Logger().Errorf("[repo list]error:%v", err.Error())
+			return nil, 0, err
+		}
+		return list, count, nil
 	})
 
 	if err != nil {

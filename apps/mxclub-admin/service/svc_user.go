@@ -46,7 +46,9 @@ func (svc UserService) List(ctx jet.Ctx, params *req.UserListReq) (*api.PageResu
 	if params.UserType == "all" {
 		params.UserType = ""
 	}
-	list, count, err := svc.userRepo.ListAroundCacheByUserType(ctx, params.PageParams, enum.RoleType(params.UserType))
+	list, count, err := svc.userRepo.ListAroundCacheByUserTypeAndDasherId(
+		ctx, params.PageParams, enum.RoleType(params.UserType), params.MemberNumber)
+
 	if err != nil {
 		ctx.Logger().Errorf("[UserService List] error:%v", err.Error())
 		return nil, errors.New("查询失败")

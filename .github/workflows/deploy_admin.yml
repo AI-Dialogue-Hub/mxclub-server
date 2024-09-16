@@ -3,9 +3,9 @@ name: Deploy admin with docker
 on:
   push:
     # 分支
-#    branches: [ main ]
+    branches: [ main ]
   pull_request:
-#    branches: [ main ]
+    branches: [ main ]
 
 jobs:
   build:

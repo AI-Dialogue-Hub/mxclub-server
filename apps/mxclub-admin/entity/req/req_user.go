@@ -17,5 +17,6 @@ type UserReq struct {
 
 type UserListReq struct {
 	*api.PageParams
-	UserType string `json:"role"` // 用户类型
+	UserType     string `json:"role"` // 用户类型
+	MemberNumber int    `json:"memberNumber"`
 }

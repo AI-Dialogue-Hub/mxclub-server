@@ -71,7 +71,7 @@ func NewOrderService(
 
 func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	if _, err := svc.AddByOrderStatus(ctx, req, enum.PrePay); err != nil {
-		return errors.New("订单添加失败，请联系客服")
+		return errors.New("订单已经添加成功")
 	}
 	return nil
 }
