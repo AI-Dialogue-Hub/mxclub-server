@@ -66,7 +66,7 @@ func (svc OrderService) SyncDeductionInfo() {
 		} else {
 			// 1.2 给用户发送消息，提示被处罚
 			builder := new(strings.Builder)
-			builder.WriteString("尊敬的打手您好，您有以下处罚内容已超过五天未申述，系统已经进行处罚：\n")
+			builder.WriteString("尊敬的打手您好，您有以下处罚内容已超过2天未申述，系统已经进行处罚：\n")
 			for _, deduction := range deductionList {
 				builder.WriteString(fmt.Sprintf("处罚Id：%v，处罚原因：%v\n", deduction.ID, deduction.Reason))
 			}
@@ -85,7 +85,7 @@ func (svc OrderService) SyncDeductionInfo() {
 	userId2POMap.ForEach(func(userId uint, deductionList []*po.Deduction) {
 		// 2.1 给用户发送消息，提示被处罚
 		builder := new(strings.Builder)
-		builder.WriteString("尊敬的打手您好，您有以下处罚内容已超过三天，如有异议请即使找客服进行申述，超过五天未申述，系统将进行处罚：\n")
+		builder.WriteString("尊敬的打手您好，您有以下处罚内容已超过一天，如有异议请即使找客服进行申述，超过两天未申述，系统将进行处罚：\n")
 		for _, deduction := range deductionList {
 			builder.WriteString(fmt.Sprintf("处罚Id：%v，处罚原因：%v\n", deduction.ID, deduction.Reason))
 		}
