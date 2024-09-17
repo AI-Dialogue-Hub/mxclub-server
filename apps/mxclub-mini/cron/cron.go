@@ -46,7 +46,7 @@ func (cronService *CronService) RunCron() {
 		cronService.logger.Infof("[RunCron Func SyncDeductionInfo]...")
 		cronService.orderService.SyncDeductionInfo()
 	})
-	cronService.c.AddFunc("*/1 * * * * *", func() {
+	cronService.c.AddFunc("*/5 * * * *", func() {
 		cronService.logger.Infof("[RunCron Func SyncPrePayOrder]...")
 		cronService.orderService.SyncPrePayOrder()
 	})
