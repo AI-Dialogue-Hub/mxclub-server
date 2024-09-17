@@ -13,7 +13,7 @@ type IBaseRepo[T any] interface {
 	InsertBatch(entities []any) (int, error)
 	InsertMany(entities []*T) (int, error)
 	RemoveByID(id interface{}) error
-	RemoveOne(filter any, data ...any) error
+	Remove(filter any, data ...any) error
 	Update(update any, filter any, data ...any) error
 	UpdateById(update any, id any) error
 	UpdateByWrapper(updateWrap *MysqlUpdate) error
@@ -69,7 +69,7 @@ func (r *BaseRepo[T]) RemoveByID(id interface{}) error {
 	return r.db.Model(r.ModelPO).WithContext(r.Ctx).Delete(new(T), id).Error
 }
 
-func (r *BaseRepo[T]) RemoveOne(filter any, data ...any) error {
+func (r *BaseRepo[T]) Remove(filter any, data ...any) error {
 	return r.db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Delete(new(T)).Error
 }
 

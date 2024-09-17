@@ -43,8 +43,12 @@ type CronService struct {
 func (cronService *CronService) RunCron() {
 	cronService.logger.Infof("[RunCron]...")
 	cronService.c.AddFunc("0 0 3 * * *", func() {
-		cronService.logger.Infof("[RunCron Func]...")
+		cronService.logger.Infof("[RunCron Func SyncDeductionInfo]...")
 		cronService.orderService.SyncDeductionInfo()
+	})
+	cronService.c.AddFunc("*/1 * * * * *", func() {
+		cronService.logger.Infof("[RunCron Func SyncPrePayOrder]...")
+		cronService.orderService.SyncPrePayOrder()
 	})
 	cronService.once.Do(func() {
 		cronService.c.Start()

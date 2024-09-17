@@ -15,6 +15,7 @@ import (
 	"mxclub/pkg/constant"
 	"mxclub/pkg/utils"
 	"strings"
+	"time"
 )
 
 func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, error) {
@@ -91,4 +92,12 @@ func (svc OrderService) SyncDeductionInfo() {
 		syncDeductionInfoLogger.Infof("push DeductionInfo, userId:%v, message: %v", userId, builder.String())
 		_ = svc.messageService.PushSystemMessage(xjet.NewDefaultJetContext(), userId, builder.String())
 	})
+}
+
+func (svc OrderService) SyncPrePayOrder() {
+	now := time.Now()
+	err := svc.orderRepo.Remove("created_at <= ? and order_status = ?", now.Add(-time.Second*60*5), enum.PrePay)
+	if err != nil {
+		xlog.Errorf("SyncPrePayOrder ERROR:%v", err)
+	}
 }

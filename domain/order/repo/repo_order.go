@@ -337,7 +337,7 @@ func (repo OrderRepo) DoneEvaluation(id uint) error {
 }
 
 func (repo OrderRepo) RemoveByTradeNo(orderNo string) error {
-	return repo.RemoveOne("order_id = ?", orderNo)
+	return repo.Remove("order_id = ?", orderNo)
 }
 
 func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error) {
