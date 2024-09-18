@@ -403,10 +403,23 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 	}
 	ctx.Logger().Errorf("deduction applyPenalty sucess: %+v", applyPenalty)
 
+	if applyPenalty.DeductType == penalty.DeductRuleTimeout {
+
+		record, err := svc.deductionRepo.FindByOrderNo(ordersId)
+
+		if err == nil && record != nil && record.ID > 0 {
+			// 已经有处罚记录了
+			ctx.Logger().Errorf("has durable Deduction info: %+v", utils.ObjToJsonStr(record))
+			return
+		}
+
+	}
+
 	dasherPO, _ := svc.userService.FindUserByDashId(ctx, executorId)
 
 	err = svc.deductionRepo.InsertOne(&po.Deduction{
 		UserID:          dasherPO.ID,
+		OrderNo:         ordersId,
 		ConfirmPersonId: 0,
 		Amount:          applyPenalty.PenaltyAmount,
 		Reason:          applyPenalty.Reason,

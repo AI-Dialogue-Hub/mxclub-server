@@ -31,6 +31,7 @@ func (p *LowRatingPenalty) ApplyPenalty(req *PenaltyReq) (*PenaltyResp, error) {
 		if index+1 < len(lowRatingSet) && req.Rating >= rating && req.Rating < lowRatingSet[index+1] {
 			penalty := penaltyLowRatingMap.MustGet(rating)
 			return &PenaltyResp{
+				DeductType:    DeductRuleLowRating,
 				PenaltyAmount: penalty,
 				Reason:        fmt.Sprintf("老板评价低星罚款，评星为：%v星，罚款：%v元", rating, penalty),
 				Message: fmt.Sprintf(

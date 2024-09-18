@@ -8,6 +8,7 @@ import (
 type Deduction struct {
 	ID              uint `gorm:"primaryKey"`
 	UserID          uint
+	OrderNo         uint
 	ConfirmPersonId uint
 	Amount          float64
 	Reason          string

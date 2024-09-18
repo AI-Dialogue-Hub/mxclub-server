@@ -35,6 +35,7 @@ func (p *TimeoutPenalty) ApplyPenalty(req *PenaltyReq) (*PenaltyResp, error) {
 		if minutes >= duration && minutes < durations[index+1] {
 			penalty := penaltyMap.MustGet(duration)
 			return &PenaltyResp{
+				DeductType:    DeductRuleTimeout,
 				PenaltyAmount: penalty,
 				Reason:        fmt.Sprintf("订单:[%v]接单后，%v分钟还没组队完成开始订单，罚款：%v元", req.OrdersId, duration.Minutes(), penalty),
 				Message: fmt.Sprintf(

@@ -28,4 +28,5 @@ type PenaltyResp struct {
 	PenaltyAmount float64 // 罚款的金额
 	Reason        string  // 罚款原因
 	Message       string  // 给打手发的消息
+	DeductType    DeductRule
 }

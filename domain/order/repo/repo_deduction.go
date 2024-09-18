@@ -30,6 +30,7 @@ type IDeductionRepo interface {
 	FindDeDuctListWithDurations(left, right time.Duration) ([]*po.Deduction, error)
 	// UpdateStatusByIds 批量更新处罚记录
 	UpdateStatusByIds(ids []uint, status enum.DeductStatus) error
+	FindByOrderNo(orderNo uint) (*po.Deduction, error)
 }
 
 func NewDeductionRepo(db *gorm.DB) IDeductionRepo {
@@ -102,4 +103,8 @@ func (repo DeductionRepo) UpdateStatusByIds(ids []uint, status enum.DeductStatus
 	update.SetFilter("id in (?)", ids)
 	update.Set("status", status)
 	return repo.UpdateByWrapper(update)
+}
+
+func (repo DeductionRepo) FindByOrderNo(orderNo uint) (*po.Deduction, error) {
+	return repo.FindOne("order_no = ?", orderNo)
 }
