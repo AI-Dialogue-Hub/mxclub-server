@@ -124,6 +124,9 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		if executorId == -1 {
 			executorId = 0
 		}
+		if dasherPO, err := svc.userService.FindUserByDashId(ctx, executorId); err == nil && dasherPO.ID > 0 {
+			dasherName = dasherPO.Name
+		}
 	} else {
 		executorId = -1
 	}
