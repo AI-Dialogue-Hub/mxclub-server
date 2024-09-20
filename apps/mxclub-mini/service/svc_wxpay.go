@@ -96,6 +96,13 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 			return
 		}
 	}
+
+	// 幂等保护
+	if callbackInfo, err := s.wxpayCallbackRepo.FindByTraceNo(*transaction.OutTradeNo); err == nil && callbackInfo != nil && callbackInfo.ID > 0 {
+		ctx.Logger().Errorf("duplicate callback, %v", utils.ObjToJsonStr(*transaction))
+		return
+	}
+
 	// 修改订单状态为支付成功
 	_ = s.orderService.PaySuccessOrder(ctx, utils.SafeParseUint64(*transaction.OutTradeNo))
 

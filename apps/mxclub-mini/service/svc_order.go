@@ -106,7 +106,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 	// 检查订单是否已经创建
 	order, err := svc.orderRepo.FindByOrderId(ctx, utils.ParseUint(req.OrderTradeNo))
 
-	if order != nil && order.ID > 0 {
+	if err != nil || (order != nil && order.ID > 0) {
 		logger.Errorf("has duplicates order, %+v", order)
 		return nil, err
 	}
@@ -401,7 +401,7 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: uint(orderPO.OrderId), GrabTime: orderPO.GrabAt})
 
 	if err != nil || applyPenalty.PenaltyAmount <= 0 {
-		ctx.Logger().Errorf("[ApplyPenalty]ERROR: %v", err.Error())
+		ctx.Logger().Errorf("[ApplyPenalty]ERROR: %v", err)
 		return
 	}
 	ctx.Logger().Errorf("deduction applyPenalty sucess: %+v", applyPenalty)

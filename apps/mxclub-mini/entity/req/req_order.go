@@ -67,6 +67,6 @@ type OrderExecutorInviteReq struct {
 }
 
 type OrderGrabReq struct {
-	OrderId    uint `json:"orderId" validate:"required"` // 订单流水号
+	OrderId    uint `json:"orderId" validate:"required"` // 订单db id
 	ExecutorId int  `json:"executor_id" validate:"required"`
 }

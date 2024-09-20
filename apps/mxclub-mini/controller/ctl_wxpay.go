@@ -42,7 +42,7 @@ func (ctl WxPayController) PostWxpayRefundsNotify(ctx jet.Ctx, params *maps.Link
 }
 
 func (ctl WxPayController) GetWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[string, any]) (*api.Response, error) {
-	ctx.Logger().Infof("[PostWxpayNotify] %v", utils.ObjToJsonStr(params))
+	ctx.Logger().Infof("[GetWxpayNotify] %v", utils.ObjToJsonStr(params))
 	go ctl.wxPayService.HandleWxpayNotify(ctx, params)
 	return xjet.WrapperResult(ctx, "ok", nil)
 }
