@@ -106,7 +106,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 	// 检查订单是否已经创建
 	order, err := svc.orderRepo.FindByOrderId(ctx, utils.ParseUint(req.OrderTradeNo))
 
-	if err != nil || (order != nil && order.ID > 0) {
+	if order != nil && order.ID > 0 {
 		logger.Errorf("has duplicates order, %+v", order)
 		return nil, err
 	}

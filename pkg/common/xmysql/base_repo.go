@@ -108,7 +108,7 @@ func (r *BaseRepo[T]) FindByWrapper(query *MysqlQuery) (*T, error) {
 
 func (r *BaseRepo[T]) FindOne(filter any, data ...any) (*T, error) {
 	var entity T
-	err := r.db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).Take(&entity).Error
+	err := r.db.Model(r.ModelPO).WithContext(r.Ctx).Where(filter, data...).First(&entity).Error
 	return &entity, err
 }
 
