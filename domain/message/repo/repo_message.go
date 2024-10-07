@@ -111,7 +111,7 @@ func (repo MessageRepo) CountUnReadMessageById(ctx jet.Ctx, id uint) (int64, err
 }
 
 func (repo MessageRepo) ReadByMessageId(ctx jet.Ctx, messageTo uint, messageId uint) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateMap := map[string]any{"message_status": 1}
 	err := repo.Update(updateMap, "id = ? and message_to = ?", messageId, messageTo)
 	if err != nil {
@@ -122,7 +122,7 @@ func (repo MessageRepo) ReadByMessageId(ctx jet.Ctx, messageTo uint, messageId u
 }
 
 func (repo MessageRepo) PushNormalMessage(ctx jet.Ctx, messageType enum.MessageType, messageTo uint, title, content string) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	messagePO := &po.Message{
 		MessageType:   messageType,
 		Title:         title,
@@ -134,7 +134,7 @@ func (repo MessageRepo) PushNormalMessage(ctx jet.Ctx, messageType enum.MessageT
 }
 
 func (repo MessageRepo) PushOrderMessage(ctx jet.Ctx, ordersId uint, messageType enum.MessageType, messageTo uint, title, content string) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	messagePO := &po.Message{
 		MessageType:   messageType,
 		Title:         title,

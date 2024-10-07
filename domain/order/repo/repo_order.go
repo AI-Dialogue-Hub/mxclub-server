@@ -48,6 +48,8 @@ type IOrderRepo interface {
 	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
 	ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error
 	ClearOrderCache(ctx jet.Ctx)
+	// FindTimeOutOrders timeout 单位秒
+	FindTimeOutOrders(timeout time.Duration) ([]*po.Order, error)
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -363,4 +365,16 @@ func (repo OrderRepo) ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error {
 
 func (repo OrderRepo) ClearOrderCache(ctx jet.Ctx) {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+}
+
+func (repo OrderRepo) FindTimeOutOrders(timeout time.Duration) ([]*po.Order, error) {
+	query := new(xmysql.MysqlQuery)
+	query.SetPage(1, 10000)
+	query.SetFilter("order_status = ?", enum.PROCESSING)
+	query.SetFilter("executor_id != ?", -1)
+	if timeout < 0 {
+		timeout = -timeout
+	}
+	query.SetFilter("grab_at < ?", time.Now().Add(-timeout))
+	return repo.ListNoCountByQuery(query)
 }

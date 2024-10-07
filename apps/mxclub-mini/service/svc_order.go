@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"math"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
@@ -13,6 +14,8 @@ import (
 	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
 	"mxclub/pkg/common/wxpay"
+	"mxclub/pkg/common/xjet"
+	"mxclub/pkg/constant"
 	"sync"
 
 	commonEnum "mxclub/domain/common/entity/enum"
@@ -22,6 +25,7 @@ import (
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
 	userEnum "mxclub/domain/user/entity/enum"
+	userPOInfo "mxclub/domain/user/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 	"time"
@@ -115,18 +119,31 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
 	}
 	var (
-		dasherName string
-		executorId int
+		executorId   int
+		dasherPO     *userPOInfo.User
+		orderTradeNo = utils.SafeParseUint64(req.OrderTradeNo)
+		grabTime     *time.Time
 	)
 	if req.SpecifyExecutor {
+		// 指定打手需要该打手同意
 		// 特殊编号打手
 		executorId = req.ExecutorId
 		if executorId == -1 {
 			executorId = 0
 		}
-		if dasherPO, err := svc.userService.FindUserByDashId(ctx, executorId); err == nil && dasherPO.ID > 0 {
-			dasherName = dasherPO.Name
+		dasherPO, err = svc.userService.FindUserByDashId(ctx, executorId)
+		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
+			go func() {
+				defer utils.RecoverAndLogError(ctx)
+				// 发送派单信息
+				svc.messageService.PushMessage(
+					ctx,
+					dto.NewDispatchMessage(dasherPO.ID, uint(orderTradeNo), req.GameRegion, req.RoleId, ""),
+				)
+			}()
 		}
+		// 默认抢单
+		grabTime = utils.Ptr(time.Now())
 	} else {
 		executorId = -1
 	}
@@ -137,7 +154,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 	}
 	// 2. 创建订单
 	order = &po.Order{
-		OrderId:         utils.SafeParseUint64(req.OrderTradeNo),
+		OrderId:         orderTradeNo,
 		PurchaseId:      userId,
 		OrderName:       req.OrderName,
 		OrderIcon:       req.OrderIcon,
@@ -148,15 +165,16 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		GameRegion:      req.GameRegion,
 		RoleId:          req.RoleId,
 		SpecifyExecutor: req.SpecifyExecutor,
-		ExecutorID:      executorId,
+		ExecutorID:      -1,
 		Executor2Id:     -1,
 		Executor3Id:     -1,
-		ExecutorName:    dasherName,
+		ExecutorName:    "",
 		Notes:           req.Notes,
 		DiscountPrice:   preferentialVO.OriginalPrice - preferentialVO.DiscountedPrice,
 		FinalPrice:      preferentialVO.DiscountedPrice,
 		ExecutorPrice:   0,
 		PurchaseDate:    utils.Ptr(time.Now()),
+		GrabAt:          grabTime,
 	}
 	// 3. 保存订单
 	err = svc.orderRepo.InsertOne(order)
@@ -234,7 +252,7 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.Pr
 		OriginalPrice:   productVO.Price,
 		DiscountedPrice: productVO.Price,
 		DiscountRate:    1.0,
-		DiscountInfo:    "商品金额大于100，不触发优惠",
+		DiscountInfo:    "商品金额大于100，触发优惠",
 	}
 
 	defer func() {
@@ -587,4 +605,41 @@ func (svc OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) 
 
 func (svc OrderService) RemoveByID(id int64) error {
 	return svc.orderRepo.RemoveByID(id)
+}
+
+// ClearAllDasherInfo 清空所有打手信息，重新派单到大厅
+func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
+	err := svc.orderRepo.ClearOrderDasherInfo(ctx, id)
+	if err != nil {
+		ctx.Logger().Errorf("[ClearAllDasherInfo]err:%v", err)
+		return errors.New("转单失败")
+	}
+	return nil
+}
+
+var (
+	syncTimeOutLogger = xlog.NewWith("syncTimeOutLogger")
+	dCtx              = xjet.NewDefaultJetContext()
+)
+
+// SyncTimeOutOrder 将超时的订单重新发往大厅
+func (svc OrderService) SyncTimeOutOrder() {
+	// 1. 找到所有打手抢单成功但超时未开始的订单
+	orders, err := svc.orderRepo.FindTimeOutOrders(constant.Duration_10_minute)
+	if err != nil || orders == nil || len(orders) <= 0 {
+		syncTimeOutLogger.Errorf("[SyncTimeOutOrder] ERROR: %v, orders is %+v", err, orders)
+		return
+	}
+	utils.ForEach(orders, func(order *po.Order) {
+		defer utils.RecoverAndLogError(dCtx)
+		_ = svc.ClearAllDasherInfo(dCtx, order.ID)
+		syncTimeOutLogger.Infof("[SyncTimeOutOrder] clear orderInfo, order is: %+v", order)
+		// 给打手发送消息
+		userPO, _ := svc.userService.FindUserByDashId(dCtx, order.ExecutorID)
+		_ = svc.messageService.PushSystemMessage(
+			dCtx,
+			userPO.ID,
+			fmt.Sprintf("您的订单超时未组队，已重新派往接单大厅，订单Id为:%v，如有问题请联系客服", order.OrderId),
+		)
+	})
 }

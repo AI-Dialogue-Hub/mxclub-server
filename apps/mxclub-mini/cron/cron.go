@@ -42,13 +42,19 @@ type CronService struct {
 // RunCron 注意在集群情况下需要指定单台机器执行定时任务，防止多次执行
 func (cronService *CronService) RunCron() {
 	cronService.logger.Infof("[RunCron]...")
+	// 同步处罚
 	cronService.c.AddFunc("0 0 3 * * *", func() {
 		cronService.logger.Infof("[RunCron Func SyncDeductionInfo]...")
 		cronService.orderService.SyncDeductionInfo()
 	})
+	// 同步支付
 	cronService.c.AddFunc("*/5 * * * *", func() {
 		cronService.logger.Infof("[RunCron Func SyncPrePayOrder]...")
 		cronService.orderService.SyncPrePayOrder()
+	})
+	cronService.c.AddFunc("* */1 * * *", func() {
+		cronService.logger.Infof("[RunCron Func Sync timeout order]...")
+		cronService.orderService.SyncTimeOutOrder()
 	})
 	cronService.once.Do(func() {
 		cronService.c.Start()
