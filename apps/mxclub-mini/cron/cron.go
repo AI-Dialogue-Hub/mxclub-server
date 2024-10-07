@@ -52,7 +52,7 @@ func (cronService *CronService) RunCron() {
 		cronService.logger.Infof("[RunCron Func SyncPrePayOrder]...")
 		cronService.orderService.SyncPrePayOrder()
 	})
-	cronService.c.AddFunc("* */1 * * *", func() {
+	cronService.c.AddFunc("* */10 * * *", func() {
 		cronService.logger.Infof("[RunCron Func Sync timeout order]...")
 		cronService.orderService.SyncTimeOutOrder()
 	})
