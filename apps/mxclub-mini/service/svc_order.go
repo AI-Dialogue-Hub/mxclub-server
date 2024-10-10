@@ -13,6 +13,7 @@ import (
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
+	userPOInfo "mxclub/domain/user/po"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/constant"
@@ -25,7 +26,6 @@ import (
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
 	userEnum "mxclub/domain/user/entity/enum"
-	userPOInfo "mxclub/domain/user/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 	"time"
@@ -90,14 +90,34 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	if err != nil {
 		return errors.New("更新失败")
 	}
-	orderPO, _ := svc.orderRepo.FindByOrderId(ctx, uint(orderNo))
+	orderPO, _ := svc.orderRepo.FindByOrderOrOrdersId(ctx, uint(orderNo))
+	var (
+		executorId   int
+		dasherPO     *userPOInfo.User
+		orderTradeNo = utils.SafeParseUint64(orderPO.OrderId)
+	)
 	// 4. 如果指定订单，给打手发送接单消息
 	if orderPO.SpecifyExecutor {
-		dasher, _ := svc.userService.FindUserByDashId(ctx, orderPO.ExecutorID)
-		svc.messageService.PushMessage(
-			ctx,
-			dto.NewDispatchMessage(dasher.ID, orderPO.ID, orderPO.GameRegion, orderPO.RoleId, ""),
-		)
+		// 指定打手需要该打手同意
+		// 特殊编号打手
+		executorId = orderPO.ExecutorID
+		if executorId == -1 {
+			executorId = 0
+		}
+		dasherPO, err = svc.userService.FindUserByDashId(ctx, executorId)
+		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
+			go func() {
+				defer utils.RecoverAndLogError(ctx)
+				ctx.Logger().Infof("指定订单:  order  = %v", orderPO)
+				// 发送派单信息
+				svc.messageService.PushMessage(
+					ctx,
+					dto.NewDispatchMessage(dasherPO.ID, uint(orderTradeNo), orderPO.GameRegion, orderPO.RoleId, ""),
+				)
+			}()
+		}
+	} else {
+		executorId = -1
 	}
 	ctx.Logger().Infof("pay success, order: %v", utils.ObjToJsonStr(orderPO))
 	return nil
@@ -123,34 +143,12 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
 	}
 	var (
-		executorId   int
-		dasherPO     *userPOInfo.User
 		orderTradeNo = utils.SafeParseUint64(req.OrderTradeNo)
 		grabTime     *time.Time
 	)
 	if req.SpecifyExecutor {
-		// 指定打手需要该打手同意
-		// 特殊编号打手
-		executorId = req.ExecutorId
-		if executorId == -1 {
-			executorId = 0
-		}
-		dasherPO, err = svc.userService.FindUserByDashId(ctx, executorId)
-		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
-			go func() {
-				defer utils.RecoverAndLogError(ctx)
-				ctx.Logger().Infof("指定订单:  order  = %v", order)
-				// 发送派单信息
-				svc.messageService.PushMessage(
-					ctx,
-					dto.NewDispatchMessage(dasherPO.ID, uint(orderTradeNo), req.GameRegion, req.RoleId, ""),
-				)
-			}()
-		}
 		// 默认抢单
 		grabTime = utils.Ptr(time.Now())
-	} else {
-		executorId = -1
 	}
 	// 1.2 折扣信息
 	preferentialVO, err := svc.Preferential(ctx, req.ProductId)
