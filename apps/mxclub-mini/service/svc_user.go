@@ -238,9 +238,10 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 		ctx.Logger().Errorf("invalid order id, handleReq: %+v", handleReq)
 		return errors.New("invalid order id")
 	}
-	if orderId > 1000000 {
+	if orderId > 10000000 {
 		// order id
 		orderPO, _ = svc.orderRepo.FindByOrderId(ctx, orderId)
+		orderId = orderPO.ID
 	} else {
 		// db id
 		orderPO, _ = svc.orderRepo.FindByID(orderId)
