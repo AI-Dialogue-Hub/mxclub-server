@@ -143,7 +143,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 				// 发送派单信息
 				svc.messageService.PushMessage(
 					ctx,
-					dto.NewDispatchMessage(dasherPO.ID, uint(order.OrderId), req.GameRegion, req.RoleId, ""),
+					dto.NewDispatchMessage(dasherPO.ID, uint(orderTradeNo), req.GameRegion, req.RoleId, ""),
 				)
 			}()
 		}

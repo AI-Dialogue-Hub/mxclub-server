@@ -12,6 +12,7 @@ import (
 	"mxclub/domain/order/repo"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/utils"
+	"runtime/debug"
 	"time"
 )
 
@@ -103,8 +104,15 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 		return
 	}
 
-	// 修改订单状态为支付成功
-	_ = s.orderService.PaySuccessOrder(ctx, utils.SafeParseUint64(*transaction.OutTradeNo))
+	go func() {
+		if r := recover(); r != nil {
+			ctx.Logger().Error("Recovered from panic:", r)
+			debug.PrintStack()
+		}
+		ctx.Logger().Infof("orderService: %v, transaction: %v", s.orderService, transaction)
+		// 修改订单状态为支付成功
+		_ = s.orderService.PaySuccessOrder(ctx, utils.SafeParseUint64(*transaction.OutTradeNo))
+	}()
 
 	objToMap := utils.ObjToMap(*transaction)
 	err = s.wxpayCallbackRepo.InsertOne(&po.WxPayCallback{
