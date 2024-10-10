@@ -82,6 +82,10 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 
 func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	defer utils.RecoverAndLogError(ctx)
+	if orderNo <= 0 {
+		ctx.Logger().Errorf("invalid orderNo: %v", orderNo)
+		return errors.New("invalid orderNo")
+	}
 	err := svc.orderRepo.UpdateOrderStatus(ctx, orderNo, enum.PROCESSING)
 	if err != nil {
 		return errors.New("更新失败")
@@ -135,11 +139,11 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
 			go func() {
 				defer utils.RecoverAndLogError(ctx)
-				ctx.Logger().Infof("指定订单:  order.ID = %v", order.ID)
+				ctx.Logger().Infof("指定订单:  order  = %v", order)
 				// 发送派单信息
 				svc.messageService.PushMessage(
 					ctx,
-					dto.NewDispatchMessage(dasherPO.ID, order.ID, req.GameRegion, req.RoleId, ""),
+					dto.NewDispatchMessage(dasherPO.ID, uint(order.OrderId), req.GameRegion, req.RoleId, ""),
 				)
 			}()
 		}

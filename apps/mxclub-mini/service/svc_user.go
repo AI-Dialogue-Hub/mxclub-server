@@ -12,6 +12,7 @@ import (
 	miniUtil "mxclub/apps/mxclub-mini/utils"
 	messageEnum "mxclub/domain/message/entity/enum"
 	orderEnum "mxclub/domain/order/entity/enum"
+	OrderPO "mxclub/domain/order/po"
 	orderRepo "mxclub/domain/order/repo"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
@@ -228,8 +229,22 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 }
 
 func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.MessageHandleReq) error {
-	orderId := handleReq.OrdersId
-	orderPO, _ := svc.orderRepo.FindByID(orderId)
+	var (
+		orderId = handleReq.OrdersId
+		orderPO *OrderPO.Order
+	)
+
+	if orderId <= 0 {
+		ctx.Logger().Errorf("invalid order id, handleReq: %+v", handleReq)
+		return errors.New("invalid order id")
+	}
+	if orderId > 1000000 {
+		// order id
+		orderPO, _ = svc.orderRepo.FindByOrderId(ctx, orderId)
+	} else {
+		// db id
+		orderPO, _ = svc.orderRepo.FindByID(orderId)
+	}
 	userPO, _ := svc.FindUserById(ctx, middleware.MustGetUserId(ctx))
 	memberNumber := userPO.MemberNumber
 	if orderPO.ExecutorID == memberNumber || orderPO.Executor2Id == memberNumber || orderPO.Executor3Id == memberNumber {

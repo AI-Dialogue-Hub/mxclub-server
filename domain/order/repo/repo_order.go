@@ -272,7 +272,7 @@ func (repo OrderRepo) AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDT
 
 func (repo OrderRepo) GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dasherName string) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("[%s]orderRepo GrabOrder", ctx.Logger().ReqId))
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	tx := repo.DB().Begin()
 	// 1. 读取一个未被抢单的订单，并锁定该行（读取锁）
 	var lockOrderId uint
