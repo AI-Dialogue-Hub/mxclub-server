@@ -100,7 +100,7 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	if orderPO.SpecifyExecutor {
 		// 指定打手需要该打手同意
 		// 特殊编号打手
-		executorId = orderPO.ExecutorID
+		executorId = utils.ParseInt(orderPO.OutRefundNo)
 		if executorId == -1 {
 			executorId = 0
 		}
@@ -145,8 +145,13 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 	var (
 		orderTradeNo = utils.SafeParseUint64(req.OrderTradeNo)
 		grabTime     *time.Time
+		executorId   int
 	)
 	if req.SpecifyExecutor {
+		executorId = req.ExecutorId
+		if executorId == -1 {
+			executorId = 0
+		}
 		// 默认抢单
 		grabTime = utils.Ptr(time.Now())
 	}
@@ -178,6 +183,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		ExecutorPrice:   0,
 		PurchaseDate:    utils.Ptr(time.Now()),
 		GrabAt:          grabTime,
+		OutRefundNo:     utils.ParseString(executorId), // 保存下用户选择的打手
 	}
 	// 3. 保存订单
 	err = svc.orderRepo.InsertOne(order)
