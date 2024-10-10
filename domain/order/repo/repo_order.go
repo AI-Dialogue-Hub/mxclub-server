@@ -41,6 +41,7 @@ type IOrderRepo interface {
 	GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dasherName string) error
 	// UpdateOrderByDasher 通过车头进行更新
 	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus, image string) error
+	UpdateOrderDasher1(ctx jet.Ctx, ordersId uint, executor1Id int, executor1Name string) error
 	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error
 	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id int, executor3Name string) error
 	DoneEvaluation(id uint) error
@@ -312,6 +313,15 @@ func (repo OrderRepo) UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId
 	update.Set("start_images", image)
 	return repo.UpdateByWrapper(update)
 }
+
+func (repo OrderRepo) UpdateOrderDasher1(ctx jet.Ctx, ordersId uint, executor1Id int, executor1Name string) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("id = ?", ordersId)
+	update.Set("executor_id", executor1Id)
+	update.Set("executor_name", executor1Name)
+	return repo.UpdateByWrapper(update)
+}
+
 func (repo OrderRepo) UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
@@ -319,6 +329,7 @@ func (repo OrderRepo) UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id
 	update.Set("executor2_name", executor2Name)
 	return repo.UpdateByWrapper(update)
 }
+
 func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id int, executor3Name string) error {
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)

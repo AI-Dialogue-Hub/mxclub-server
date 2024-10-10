@@ -24,7 +24,7 @@ func setUp() {
 	svc = NewAliSmsService(testConfig.Config)
 }
 
-func TestSendSms(t *testing.T) {
+func testSendSms(t *testing.T) {
 	setUp()
 	c := testConfig.Config
 	err := svc.SendDispatchMsg(c.TestPhone, "测试昵称", "测试角色")

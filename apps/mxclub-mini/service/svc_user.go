@@ -239,7 +239,11 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 		ctx.Logger().Errorf("[handleAcceptApplication]ERROR, 不能接受已完成的订单: %v", utils.ObjToJsonStr(handleReq))
 		return errors.New("不能接受已完成的订单")
 	}
-	if orderPO.Executor2Id == -1 {
+	if orderPO.ExecutorID == -1 {
+		// 更新角色
+		_ = svc.orderRepo.UpdateOrderDasher1(ctx, orderId, memberNumber, userPO.Name)
+		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您已同意接单"))
+	} else if orderPO.Executor2Id == -1 {
 		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", memberNumber, userPO.Name))
 		// 更新角色
 		_ = svc.orderRepo.UpdateOrderDasher2(ctx, orderId, memberNumber, userPO.Name)

@@ -135,10 +135,11 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
 			go func() {
 				defer utils.RecoverAndLogError(ctx)
+				ctx.Logger().Infof("指定订单:  order.ID = %v", order.ID)
 				// 发送派单信息
 				svc.messageService.PushMessage(
 					ctx,
-					dto.NewDispatchMessage(dasherPO.ID, uint(orderTradeNo), req.GameRegion, req.RoleId, ""),
+					dto.NewDispatchMessage(dasherPO.ID, order.ID, req.GameRegion, req.RoleId, ""),
 				)
 			}()
 		}
