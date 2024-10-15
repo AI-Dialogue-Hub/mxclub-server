@@ -391,7 +391,7 @@ func (repo OrderRepo) FindTimeOutOrders(timeout time.Duration) ([]*po.Order, err
 	query := new(xmysql.MysqlQuery)
 	query.SetPage(1, 10000)
 	query.SetFilter("order_status = ?", enum.PROCESSING)
-	query.SetFilter("executor_id != ?", -1)
+	query.SetFilter("( executor_id != ? ) or ( specify_executor = true and executor_id == -1)", -1)
 	if timeout < 0 {
 		timeout = -timeout
 	}
