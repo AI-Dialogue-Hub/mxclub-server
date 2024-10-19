@@ -220,7 +220,11 @@ func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
 	update.Set("executor_price", d.ExecutorPrice)
 	update.Set("cut_rate", d.CutRate)
 	if d.ExecutorNum == 2 {
-		update.Set("executor2_price", d.ExecutorPrice)
+		if d.OrderInfo.Executor2Id >= 0 {
+			update.Set("executor2_price", d.ExecutorPrice)
+		} else if d.OrderInfo.Executor3Id >= 0 {
+			update.Set("executor3_price", d.ExecutorPrice)
+		}
 	} else if d.ExecutorNum == 3 {
 		update.Set("executor2_price", d.ExecutorPrice)
 		update.Set("executor3_price", d.ExecutorPrice)

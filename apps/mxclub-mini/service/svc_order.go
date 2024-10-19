@@ -312,6 +312,7 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 		ExecutorNum:   executorNum,
 		ExecutorPrice: executorPrice,
 		CutRate:       cutRate,
+		OrderInfo:     orderPO,
 	})
 	if err != nil {
 		ctx.Logger().Errorf("[Finish]ERROR: %v", err.Error())

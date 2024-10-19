@@ -2,6 +2,7 @@ package dto
 
 import (
 	"mxclub/domain/order/entity/enum"
+	"mxclub/domain/order/po"
 	"mxclub/pkg/api"
 )
 
@@ -22,6 +23,7 @@ type FinishOrderDTO struct {
 	ExecutorNum   int
 	ExecutorPrice float64
 	CutRate       float64 // aka 0.2
+	OrderInfo     *po.Order
 }
 
 type WithdrawListDTO struct {
