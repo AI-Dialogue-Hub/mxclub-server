@@ -199,6 +199,7 @@ func (svc UserService) AssistantStatus(ctx jet.Ctx) string {
 	return string(userPO.MemberStatus)
 }
 
+// HandleMessage 处理用户响应的消息
 func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleReq) error {
 	switch handleReq.MessageTypeNumber {
 	case 101:
@@ -259,6 +260,8 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 		// 更新角色
 		_ = svc.orderRepo.UpdateOrderDasher1(ctx, orderId, memberNumber, userPO.Name)
 		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您已同意接单"))
+		// 更新接单时间
+		_ = svc.orderRepo.UpdateOrderGrabTime(ctx, orderPO.ID)
 	} else if orderPO.Executor2Id == -1 {
 		_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您邀请打手:%v(%v)的申请已同意", memberNumber, userPO.Name))
 		// 更新角色

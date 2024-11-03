@@ -15,6 +15,7 @@ import (
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
+	"mxclub/pkg/utils"
 	"time"
 )
 
@@ -39,12 +40,17 @@ type IOrderRepo interface {
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
+	// GrabOrder 抢单
+	//
+	// @param ordersId is db id
 	GrabOrder(ctx jet.Ctx, ordersId uint, executorId int, dasherName string) error
 	// UpdateOrderByDasher 通过车头进行更新
 	UpdateOrderByDasher(ctx jet.Ctx, ordersId uint, executorId int, status enum.OrderStatus, image string) error
 	UpdateOrderDasher1(ctx jet.Ctx, ordersId uint, executor1Id int, executor1Name string) error
 	UpdateOrderDasher2(ctx jet.Ctx, ordersId uint, executor2Id int, executor2Name string) error
 	UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id int, executor3Name string) error
+	// UpdateOrderGrabTime 修改订单抢单的时间
+	UpdateOrderGrabTime(ctx jet.Ctx, ordersId uint) error
 	DoneEvaluation(id uint) error
 	RemoveByTradeNo(orderNo string) error
 	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
@@ -401,4 +407,11 @@ func (repo OrderRepo) FindTimeOutOrders(timeout time.Duration) ([]*po.Order, err
 	}
 	query.SetFilter("grab_at < ?", time.Now().Add(-timeout))
 	return repo.ListNoCountByQuery(query)
+}
+
+func (repo OrderRepo) UpdateOrderGrabTime(ctx jet.Ctx, ordersId uint) error {
+	update := new(xmysql.MysqlUpdate)
+	update.SetFilter("id = ?", ordersId)
+	update.Set("grab_at", utils.Ptr(time.Now()))
+	return repo.UpdateByWrapper(update)
 }

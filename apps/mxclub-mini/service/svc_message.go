@@ -15,14 +15,14 @@ import (
 )
 
 func init() {
-	jet.Provide(NeMessageService)
+	jet.Provide(NewMessageService)
 }
 
 type MessageService struct {
 	messageRepo repo.IMessageRepo
 }
 
-func NeMessageService(repo repo.IMessageRepo) *MessageService {
+func NewMessageService(repo repo.IMessageRepo) *MessageService {
 	return &MessageService{messageRepo: repo}
 }
 

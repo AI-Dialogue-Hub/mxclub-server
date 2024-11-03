@@ -144,7 +144,6 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 	}
 	var (
 		orderTradeNo = utils.SafeParseUint64(req.OrderTradeNo)
-		grabTime     *time.Time
 		executorId   int
 	)
 	if req.SpecifyExecutor {
@@ -152,8 +151,6 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		if executorId == -1 {
 			executorId = 0
 		}
-		// 默认抢单
-		grabTime = utils.Ptr(time.Now())
 	}
 	// 1.2 折扣信息
 	preferentialVO, err := svc.Preferential(ctx, req.ProductId)
@@ -182,7 +179,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		FinalPrice:      preferentialVO.DiscountedPrice,
 		ExecutorPrice:   0,
 		PurchaseDate:    utils.Ptr(time.Now()),
-		GrabAt:          grabTime,
+		GrabAt:          nil,
 		OutRefundNo:     utils.ParseString(executorId), // 保存下用户选择的打手
 	}
 	// 3. 保存订单
@@ -426,7 +423,11 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 		ctx.Logger().Errorf("fetch penaltyRule ERROR: %v", err)
 		return
 	}
-	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: uint(orderPO.OrderId), GrabTime: orderPO.GrabAt})
+	applyPenalty, err := penaltyStrategy.ApplyPenalty(
+		&penalty.PenaltyReq{
+			OrdersId: uint(orderPO.OrderId), GrabTime: orderPO.GrabAt,
+		},
+	)
 
 	if err != nil || applyPenalty.PenaltyAmount <= 0 {
 		ctx.Logger().Errorf("[ApplyPenalty]ERROR: %v", err)
@@ -549,6 +550,8 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	// 1. 添加提现记录
 	userById, _ := svc.userService.FindUserById(ctx, userId)
+	// 2. 检查提现金额
+
 	err := svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userId, userById.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
