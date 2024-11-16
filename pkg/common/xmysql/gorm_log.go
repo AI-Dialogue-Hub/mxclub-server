@@ -14,8 +14,9 @@ func NewGormLogAdapter() *GormLogAdapter {
 }
 
 var gormDefaultLogger = func() *xlog.Logger {
+	xlog.Info(2222)
 	logger := xlog.NewWith("GormLogger")
-	logger.SetOutputLevel(xlog.Linfo)
+	logger.SetOutputLevel(xlog.Ldebug)
 	logger.SetCalldPath(6)
 	return logger
 }()

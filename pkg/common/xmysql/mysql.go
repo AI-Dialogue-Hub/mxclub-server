@@ -15,7 +15,8 @@ var (
 )
 
 var (
-	cli *MysqlClient
+	cli  *MysqlClient
+	conf *MySqlConfig
 )
 
 type MysqlClient struct {
@@ -79,6 +80,7 @@ func ConnectDB(cfg *MySqlConfig) (db *gorm.DB, err error) {
 		opts  *gorm.Config
 		sqlDB *sql.DB
 	)
+
 	dsn = fmt.Sprintf("%s:%s@(%s)/%s?charset=utf8mb4&parseTime=true&loc=Local",
 		cfg.Username,
 		cfg.Password,
@@ -97,11 +99,15 @@ func ConnectDB(cfg *MySqlConfig) (db *gorm.DB, err error) {
 	//		Colorful:                  false,                         // 禁用彩色打印
 	//	},
 	//)
+
 	opts = &gorm.Config{
 		SkipDefaultTransaction: false, // 禁用默认事务(true: Error 1295: This command is not supported in the prepared statement protocol yet)
 		PrepareStmt:            false, // 创建并缓存预编译语句(true: Error 1295)
 		Logger:                 NewGormLogAdapter(),
 	}
+
+	conf = cfg
+	gormDefaultLogger.SetOutputLevel(cfg.LogLevel)
 
 	db, err = gorm.Open(mysql.Open(dsn), opts)
 	if err != nil {
