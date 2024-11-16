@@ -53,7 +53,7 @@ func (cronService *CronService) RunCron() {
 		cronService.orderService.SyncPrePayOrder()
 	})
 	// 移除超时未开始订单或者未同意接单的订单
-	cronService.c.AddFunc("* */10 * * *", func() {
+	cronService.c.AddFunc("* */1 * * *", func() {
 		cronService.logger.Infof("[RunCron Func Sync timeout order]...")
 		cronService.orderService.SyncTimeOutOrder()
 	})

@@ -401,11 +401,16 @@ func (repo OrderRepo) FindTimeOutOrders(timeout time.Duration) ([]*po.Order, err
 	query := new(xmysql.MysqlQuery)
 	query.SetPage(1, 10000)
 	query.SetFilter("order_status = ?", enum.PROCESSING)
-	query.SetFilter("(( executor_id != ? ) or ( specify_executor = true and executor_id = -1))", -1)
 	if timeout < 0 {
 		timeout = -timeout
 	}
-	query.SetFilter("grab_at < ?", time.Now().Add(-timeout))
+	var t = time.Now().Add(-timeout)
+	query.SetFilter(
+		`(( executor_id != ? and  grab_at < ?) 
+				or 
+				( specify_executor = true and executor_id = -1 and purchase_date < ?))`,
+		-1, t, t)
+
 	return repo.ListNoCountByQuery(query)
 }
 
