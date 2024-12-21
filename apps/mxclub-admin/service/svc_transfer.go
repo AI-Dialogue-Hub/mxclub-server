@@ -35,8 +35,8 @@ func (svc OrderService) ListTransferInfo(ctx jet.Ctx, params *req.TransferListRe
 	for _, transferPO := range transfers {
 		p1, e1 := svc.userRepo.FindByMemberNumber(ctx, transferPO.ExecutorFrom)
 		if e1 != nil {
-			ctx.Logger().Errorf("FindByMemberNumber ERROR:%v  p1:%v", e1, p1)
-			return nil, 0, errors.New("查找失败")
+			ctx.Logger().Errorf("FindByMemberNumber ERROR:%v  p1:%v, transferPO:%v", e1, p1, transferPO)
+			continue
 		}
 		var p2Name string
 		if transferPO.ExecutorTo >= 0 {
