@@ -15,6 +15,7 @@ func init() {
 type IEvaluationRepo interface {
 	xmysql.IBaseRepo[po.OrderEvaluation]
 	FindStaring(ctx jet.Ctx, dasherId int) (float64, error)
+	RemoveEvaluation(ctx jet.Ctx, dasherId int) error
 }
 
 func NewEvaluationRepo(db *gorm.DB) IEvaluationRepo {
@@ -56,4 +57,8 @@ func (repo EvaluationRepo) FindStaring(ctx jet.Ctx, dasherId int) (float64, erro
 
 	averageScore := float64(staringResult.TotalScore) / float64(staringResult.TotalCount)
 	return averageScore, nil
+}
+
+func (repo EvaluationRepo) RemoveEvaluation(ctx jet.Ctx, dasherId int) error {
+	return repo.Remove("executor_id = ?", dasherId)
 }

@@ -47,6 +47,8 @@ type OrderService struct {
 	transferRepo   repo.ITransferRepo
 }
 
+var orderService *OrderService
+
 func NewOrderService(
 	repo repo.IOrderRepo,
 	withdrawalRepo repo.IWithdrawalRepo,
@@ -57,8 +59,7 @@ func NewOrderService(
 	deductionRepo repo.IDeductionRepo,
 	evaluationRepo repo.IEvaluationRepo,
 	transferRepo repo.ITransferRepo) *OrderService {
-
-	return &OrderService{
+	orderService = &OrderService{
 		orderRepo:      repo,
 		withdrawalRepo: withdrawalRepo,
 		userService:    userService,
@@ -69,6 +70,7 @@ func NewOrderService(
 		evaluationRepo: evaluationRepo,
 		transferRepo:   transferRepo,
 	}
+	return orderService
 }
 
 // ===============================================================
@@ -655,4 +657,10 @@ func (svc OrderService) SyncTimeOutOrder() {
 			fmt.Sprintf("您的订单超时未组队，已重新派往接单大厅，订单Id为:%v，如有问题请联系客服", order.OrderId),
 		)
 	})
+}
+
+func (svc OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
+	userId := middleware.MustGetUserId(ctx)
+	userPO, _ := svc.userService.FindUserById(ctx, userId)
+	return svc.orderRepo.RemoveDasher(ctx, userPO.MemberNumber)
 }

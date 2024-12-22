@@ -10,6 +10,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	miniUtil "mxclub/apps/mxclub-mini/utils"
+	"mxclub/domain/event"
 	messageEnum "mxclub/domain/message/entity/enum"
 	orderEnum "mxclub/domain/order/entity/enum"
 	OrderPO "mxclub/domain/order/po"
@@ -24,6 +25,9 @@ import (
 
 func init() {
 	jet.Provide(NewUserService)
+	jet.Invoke(func(u *UserService) {
+		event.RegisterEvent("UserService", event.EventRemoveDasher, u.RemoveAssistantEvent)
+	})
 }
 
 type UserService struct {
@@ -308,8 +312,14 @@ func (svc UserService) checkUserGrade(ctx jet.Ctx, id uint) {
 }
 
 func (svc UserService) RemoveAssistant(ctx jet.Ctx) error {
-	// 1. 清除该打手member下所有订单组队情况，罚款记录
-	err := svc.userRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
+	event.PublishEvent(event.EventRemoveDasher, ctx)
+	return nil
+}
+
+func (svc UserService) RemoveAssistantEvent(ctx jet.Ctx) error {
+	var userId = middleware.MustGetUserId(ctx)
+	// 1. 修改用户身份
+	err := svc.userRepo.RemoveDasher(ctx, userId)
 	if err != nil {
 		ctx.Logger().Errorf("[RemoveAssistant]ERROR:%v", err)
 		return errors.New("注销打手失败")

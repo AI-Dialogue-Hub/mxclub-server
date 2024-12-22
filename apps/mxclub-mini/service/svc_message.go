@@ -7,6 +7,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/event"
 	"mxclub/domain/message/entity/enum"
 	"mxclub/domain/message/po"
 	"mxclub/domain/message/repo"
@@ -16,6 +17,9 @@ import (
 
 func init() {
 	jet.Provide(NewMessageService)
+	jet.Invoke(func(svc *MessageService) {
+		event.RegisterEvent("MessageService", event.EventRemoveDasher, svc.RemoveAllMessage)
+	})
 }
 
 type MessageService struct {
@@ -84,4 +88,8 @@ func (svc MessageService) PushSystemMessage(ctx jet.Ctx, messageTo uint, content
 
 func (svc MessageService) PushRemoveMessage(ctx jet.Ctx, ordersId uint, messageTo uint, content string) error {
 	return svc.messageRepo.PushOrderMessage(ctx, ordersId, enum.REMOVE_MESSAGE, messageTo, "系统通知", content)
+}
+
+func (svc MessageService) RemoveAllMessage(ctx jet.Ctx) error {
+	return svc.messageRepo.RemoveAllMessage(ctx, middleware.MustGetUserId(ctx))
 }

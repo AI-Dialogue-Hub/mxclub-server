@@ -7,6 +7,7 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/domain/event"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -19,6 +20,13 @@ import (
 
 func init() {
 	jet.Provide(NewOrderService)
+	jet.Invoke(func(u *OrderService) {
+		event.RegisterEvent("OrderService", event.EventRemoveDasher, u.RemoveAssistantEvent)
+		event.RegisterEvent("TransferService", event.EventRemoveDasher, u.RemoveTransferRecord)
+		event.RegisterEvent("DeductService", event.EventRemoveDasher, u.RemoveDeductRecord)
+		event.RegisterEvent("WithdrawalService", event.EventRemoveDasher, u.RemoveWithdrawalRecord)
+		event.RegisterEvent("EvaluationService", event.EventRemoveDasher, u.RemoveEvaluation)
+	})
 }
 
 type OrderService struct {
@@ -29,6 +37,7 @@ type OrderService struct {
 	userRepo          userRepo.IUserRepo
 	messageService    *MessageService
 	transferRepo      repo.ITransferRepo
+	evaluationRepo    repo.IEvaluationRepo
 }
 
 func NewOrderService(repo repo.IOrderRepo,
@@ -37,7 +46,8 @@ func NewOrderService(repo repo.IOrderRepo,
 	wxPayCallbackRepo repo.IWxPayCallbackRepo,
 	messageService *MessageService,
 	userRepo userRepo.IUserRepo,
-	transferRepo repo.ITransferRepo) *OrderService {
+	transferRepo repo.ITransferRepo,
+	evaluationRepo repo.IEvaluationRepo) *OrderService {
 	return &OrderService{orderRepo: repo,
 		withdrawRepo:      withdrawRepo,
 		deductionRepo:     deductionRepo,
@@ -45,6 +55,7 @@ func NewOrderService(repo repo.IOrderRepo,
 		messageService:    messageService,
 		userRepo:          userRepo,
 		transferRepo:      transferRepo,
+		evaluationRepo:    evaluationRepo,
 	}
 }
 
@@ -147,4 +158,32 @@ func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
 func (svc OrderService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int) bool {
 	orderPO, err := svc.orderRepo.FindByDasherId(ctx, memberNumber)
 	return err != nil && orderPO != nil && orderPO.ID > 0
+}
+
+// ==============  清除打手记录   =====================
+
+func (svc OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
+	userId := ctx.MustGet("userId").(uint)
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
+	return svc.orderRepo.RemoveDasher(ctx, userPO.MemberNumber)
+}
+
+func (svc OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
+	userId := ctx.MustGet("userId").(uint)
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
+	return svc.transferRepo.RemoveByDasherId(ctx, userPO.MemberNumber)
+}
+
+func (svc OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
+	return svc.deductionRepo.RemoveDasher(ctx, ctx.MustGet("userId").(uint))
+}
+
+func (svc OrderService) RemoveWithdrawalRecord(ctx jet.Ctx) error {
+	return svc.withdrawRepo.RemoveWithdrawalRecord(ctx, ctx.MustGet("userId").(uint))
+}
+
+func (svc OrderService) RemoveEvaluation(ctx jet.Ctx) error {
+	userId := ctx.MustGet("userId").(uint)
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
+	return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)
 }

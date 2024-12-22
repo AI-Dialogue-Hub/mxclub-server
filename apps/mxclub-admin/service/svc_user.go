@@ -6,6 +6,7 @@ import (
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
+	"mxclub/domain/event"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
@@ -16,6 +17,9 @@ import (
 
 func init() {
 	jet.Provide(NewUserService)
+	jet.Invoke(func(u *UserService) {
+		event.RegisterEvent("UserService", event.EventRemoveDasher, u.RemoveAssistantEvent)
+	})
 }
 
 type UserService struct {
@@ -65,6 +69,13 @@ func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 }
 
 func (svc UserService) RemoveAssistant(ctx jet.Ctx, userId uint) error {
+	ctx.Put("userId", userId)
+	event.PublishEvent(event.EventRemoveDasher, ctx)
+	return nil
+}
+
+func (svc UserService) RemoveAssistantEvent(ctx jet.Ctx) error {
+	userId := ctx.MustGet("userId").(uint)
 	return svc.userRepo.RemoveDasher(ctx, userId)
 }
 

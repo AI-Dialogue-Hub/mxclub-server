@@ -41,3 +41,9 @@ func (svc OrderService) Transfer(ctx jet.Ctx, req *req.TransferReq) error {
 	}
 	return nil
 }
+
+func (svc OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
+	userId := middleware.MustGetUserId(ctx)
+	userPO, _ := svc.userService.FindUserById(ctx, userId)
+	return svc.transferRepo.RemoveByDasherId(ctx, userPO.MemberNumber)
+}

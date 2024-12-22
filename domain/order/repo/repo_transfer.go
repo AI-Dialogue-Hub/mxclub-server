@@ -14,6 +14,7 @@ func init() {
 
 type ITransferRepo interface {
 	xmysql.IBaseRepo[po.OrderTransfer]
+	RemoveByDasherId(ctx jet.Ctx, dasherId int) error
 }
 
 func NewTransferRepo(db *gorm.DB) ITransferRepo {
@@ -26,4 +27,8 @@ func NewTransferRepo(db *gorm.DB) ITransferRepo {
 
 type TransferRepo struct {
 	xmysql.BaseRepo[po.OrderTransfer]
+}
+
+func (repo TransferRepo) RemoveByDasherId(ctx jet.Ctx, dasherId int) error {
+	return repo.Remove("executor_from = ?", dasherId)
 }

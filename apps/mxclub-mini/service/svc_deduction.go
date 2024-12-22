@@ -101,3 +101,7 @@ func (svc OrderService) SyncPrePayOrder() {
 		xlog.Errorf("SyncPrePayOrder ERROR:%v", err)
 	}
 }
+
+func (svc OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
+	return svc.deductionRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
+}

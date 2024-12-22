@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
+	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/biz/penalty"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
@@ -49,7 +50,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 
 	many, err := svc.evaluationRepo.InsertMany(evaluationList)
 	if err != nil {
-		ctx.Logger().Errorf("[AddEvaluation]insrtNum:%v, ERROR %v", many, err)
+		ctx.Logger().Errorf("[AddEvaluation]insertNum:%v, ERROR %v", many, err)
 		return errors.New("评价失败")
 	}
 
@@ -109,4 +110,10 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 		logger.Errorf("deduction insert ERROR: %v", err)
 		return
 	}
+}
+
+func (svc OrderService) RemoveEvaluation(ctx jet.Ctx) error {
+	userId := middleware.MustGetUserId(ctx)
+	userPO, _ := svc.userService.FindUserById(ctx, userId)
+	return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)
 }

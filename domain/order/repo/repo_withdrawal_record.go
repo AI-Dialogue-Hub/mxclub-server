@@ -28,6 +28,7 @@ type IWithdrawalRepo interface {
 	// ApproveWithdrawnAmountByDasherIds 打手们运行提现的钱
 	// @return 打手id -> 可以提现的钱
 	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, error)
+	RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -143,4 +144,8 @@ func (repo WithdrawalRepo) ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]
 		return nil, err
 	}
 	return listNoCountByQuery, nil
+}
+
+func (repo WithdrawalRepo) RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error {
+	return repo.Remove("dasher_user_id = ?", userId)
 }

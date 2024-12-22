@@ -29,6 +29,7 @@ type IMessageRepo interface {
 	PushNormalMessage(ctx jet.Ctx, messageType enum.MessageType, messageTo uint, title, content string) error
 	PushOrderMessage(ctx jet.Ctx, ordersId uint, messageType enum.MessageType, messageTo uint, title, content string) error
 	ClearCache(ctx jet.Ctx)
+	RemoveAllMessage(ctx jet.Ctx, userId uint) error
 }
 
 func NewMessageRepo(db *gorm.DB) IMessageRepo {
@@ -148,4 +149,8 @@ func (repo MessageRepo) PushOrderMessage(ctx jet.Ctx, ordersId uint, messageType
 
 func (repo MessageRepo) ClearCache(ctx jet.Ctx) {
 	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+}
+
+func (repo MessageRepo) RemoveAllMessage(ctx jet.Ctx, userId uint) error {
+	return repo.Remove("message_from = ?", userId)
 }
