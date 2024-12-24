@@ -29,7 +29,7 @@ func PublishEvent(eventCode int, ctx jet.Ctx) {
 	defer utils.RecoverByPrefix(logger, "[event#PublishEvent]")
 	events, ok := eventFactory.Get(eventCode)
 	if !ok {
-		ctx.Logger().Errorf("[event#PublishEvent] cannot find eventCode: %v")
+		ctx.Logger().Errorf("[event#PublishEvent] cannot find eventCode: %v", eventCode)
 		return
 	}
 	for _, event := range events {

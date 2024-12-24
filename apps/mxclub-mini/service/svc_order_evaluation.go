@@ -2,16 +2,27 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/biz/penalty"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
+	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
 )
 
 func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.EvaluationReq) error {
+
+	// 防抖
+	if err := xredis.DebounceForOneDay(
+		fmt.Sprintf("orderId_%v_executorId_%v", evaluationReq.OrderID, evaluationReq.ExecutorID),
+	); err != nil {
+		ctx.Logger().Errorf("duplicated evaluation,evaluationReq => %v", utils.ObjToJsonStr(evaluationReq))
+		return errors.New("已评价成功")
+	}
+
 	var evaluationList = make([]*po.OrderEvaluation, 0)
 
 	evaluation1 := &po.OrderEvaluation{
