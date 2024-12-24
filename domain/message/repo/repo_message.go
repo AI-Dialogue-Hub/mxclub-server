@@ -152,5 +152,6 @@ func (repo MessageRepo) ClearCache(ctx jet.Ctx) {
 }
 
 func (repo MessageRepo) RemoveAllMessage(ctx jet.Ctx, userId uint) error {
-	return repo.Remove("message_from = ?", userId)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
+	return repo.Remove("message_from = ? or message_to = ?", userId, userId)
 }

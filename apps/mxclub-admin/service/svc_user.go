@@ -17,9 +17,6 @@ import (
 
 func init() {
 	jet.Provide(NewUserService)
-	jet.Invoke(func(u *UserService) {
-		event.RegisterEvent("UserService", event.EventRemoveDasher, u.RemoveAssistantEvent)
-	})
 }
 
 type UserService struct {
@@ -69,6 +66,8 @@ func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 }
 
 func (svc UserService) RemoveAssistant(ctx jet.Ctx, userId uint) error {
+	// 最后再注销打手信息
+	defer svc.RemoveAssistantEvent(ctx)
 	ctx.Put("userId", userId)
 	event.PublishEvent(event.EventRemoveDasher, ctx)
 	return nil
