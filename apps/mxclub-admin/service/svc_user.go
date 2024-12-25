@@ -70,6 +70,8 @@ func (svc UserService) RemoveAssistant(ctx jet.Ctx, userId uint) error {
 	defer svc.RemoveAssistantEvent(ctx)
 	ctx.Put("userId", userId)
 	event.PublishEvent(event.EventRemoveDasher, ctx)
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
+	ctx.Logger().Infof("remove dasher, dasherId:%v, dasherName: %v", userId, utils.ObjToJsonStr(userPO))
 	return nil
 }
 

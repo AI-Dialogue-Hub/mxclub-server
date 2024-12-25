@@ -312,6 +312,9 @@ func (svc UserService) RemoveAssistant(ctx jet.Ctx) error {
 	// 最后再注销打手信息
 	defer svc.RemoveAssistantEvent(ctx)
 	event.PublishEvent(event.EventRemoveDasher, ctx)
+	userId := middleware.MustGetUserId(ctx)
+	userPO, _ := svc.FindUserById(ctx, userId)
+	ctx.Logger().Infof("remove dasher, dasherId:%v, dasherName: %v", userId, utils.ObjToJsonStr(userPO))
 	return nil
 }
 
