@@ -19,17 +19,13 @@ require (
 require (
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.9
 	github.com/alibabacloud-go/dysmsapi-20170525/v4 v4.0.0
-	github.com/alibabacloud-go/facebody-20191230 v1.1.12
 	github.com/alibabacloud-go/tea v1.2.2
-	github.com/alibabacloud-go/tea-rpc v1.3.3
-	github.com/alibabacloud-go/tea-utils v1.3.5
 	github.com/alibabacloud-go/tea-utils/v2 v2.0.7
 	github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.0.2
-	github.com/aliyun/credentials-go v1.3.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/stretchr/testify v1.8.4
-	github.com/wechatpay-apiv3/wechatpay-go v0.2.18
+	github.com/wechatpay-apiv3/wechatpay-go v0.2.20
 	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5
 )
 
@@ -38,12 +34,9 @@ require (
 	github.com/alibabacloud-go/debug v1.0.0 // indirect
 	github.com/alibabacloud-go/endpoint-util v1.1.0 // indirect
 	github.com/alibabacloud-go/openapi-util v0.1.0 // indirect
-	github.com/alibabacloud-go/openplatform-20191219 v1.1.5 // indirect
-	github.com/alibabacloud-go/tea-fileform v1.1.0 // indirect
-	github.com/alibabacloud-go/tea-oss-sdk v1.1.0 // indirect
-	github.com/alibabacloud-go/tea-oss-utils v1.1.0 // indirect
-	github.com/alibabacloud-go/tea-rpc-utils v1.1.2 // indirect
+	github.com/alibabacloud-go/tea-utils v1.3.5 // indirect
 	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
+	github.com/aliyun/credentials-go v1.3.1 // indirect
 	github.com/clbanning/mxj/v2 v2.5.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect

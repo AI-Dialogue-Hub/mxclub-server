@@ -58,3 +58,4 @@ jobs:
           script: |
             # 部署脚本 后面的vars是传递给脚本的参数
             sh /home/lfy/workspace/script/deploy.sh ${{ vars.USER_NAME }} ${{ vars.IMAGE_NAME }} ${{ vars.PORT }} ${{ vars.CONTAINS_PORT }} ${{ vars.hubAddr }} ${{ vars.tag }}
+            sh /home/lfy/workspace/script/baozao-deploy.sh fengyuan-liang mxclub-mini 8010 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1

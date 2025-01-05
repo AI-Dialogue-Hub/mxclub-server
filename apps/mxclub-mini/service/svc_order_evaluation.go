@@ -109,6 +109,7 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 
 	err = svc.deductionRepo.InsertOne(&po.Deduction{
 		UserID:          dasherPO.ID,
+		DasherId:        dasherPO.MemberNumber,
 		ConfirmPersonId: 0,
 		Amount:          applyPenalty.PenaltyAmount,
 		Reason:          applyPenalty.Reason,

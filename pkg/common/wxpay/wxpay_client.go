@@ -3,6 +3,7 @@ package wxpay
 import (
 	"context"
 	"crypto/rsa"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
@@ -37,8 +38,25 @@ func NewWxPayClient(config *WxPayConfig) *core.Client {
 	}
 	ctx := context.Background()
 	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力
-	opts := []core.ClientOption{
-		option.WithWechatPayAutoAuthCipher(config.MchID, config.MchCertificateSerialNumber, mchPrivateKey, config.MchAPIv3Key),
+	var opts []core.ClientOption
+	if config.IsBaoZaoClub() {
+		// 2024年之后使用公钥加载
+		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(config.PublicKeyPath)
+		if err != nil {
+			panic(fmt.Errorf("load wechatpay public key err:%s", err.Error()))
+		}
+		opts = []core.ClientOption{
+			option.WithWechatPayPublicKeyAuthCipher(
+				config.MchID,
+				config.MchCertificateSerialNumber, mchPrivateKey,
+				config.WechatpayPublicKeyID, wechatpayPublicKey),
+		}
+	} else {
+		// 2024年11月份之前的注册方式
+		opts = []core.ClientOption{
+			option.WithWechatPayAutoAuthCipher(
+				config.MchID, config.MchCertificateSerialNumber, mchPrivateKey, config.MchAPIv3Key),
+		}
 	}
 	client, err := core.NewClient(ctx, opts...)
 	if err != nil {
@@ -52,6 +70,11 @@ func NewWxPayClient(config *WxPayConfig) *core.Client {
 
 // NewWxPayCertHandler 处理回调参数
 func NewWxPayCertHandler(config *WxPayConfig) *Handler {
+
+	if config.IsBaoZaoClub() {
+		return NewWxPayCertHandlerWithPublicKey(config)
+	}
+
 	var (
 		ctx = context.Background()
 		err error
@@ -77,6 +100,20 @@ func NewWxPayCertHandler(config *WxPayConfig) *Handler {
 		xlog.Fatal("NewRSANotifyHandler error", err)
 	}
 	return notifyHandler
+}
+
+// NewWxPayCertHandlerWithPublicKey 新商户，初始化 notify.Handler
+func NewWxPayCertHandlerWithPublicKey(config *WxPayConfig) *Handler {
+	wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(config.PublicKeyPath)
+	if err != nil {
+		panic(fmt.Errorf("load wechatpay public key err:%s", err.Error()))
+	}
+
+	handler := NewNotifyHandler(
+		config.MchAPIv3Key,
+		verifiers.NewSHA256WithRSAPubkeyVerifier(config.WechatpayPublicKeyID, *wechatpayPublicKey))
+
+	return handler
 }
 
 func NewRefundsApiService() *refunddomestic.RefundsApiService {

@@ -453,6 +453,7 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 
 	err = svc.deductionRepo.InsertOne(&po.Deduction{
 		UserID:          dasherPO.ID,
+		DasherId:        executorId,
 		OrderNo:         ordersId,
 		ConfirmPersonId: 0,
 		Amount:          applyPenalty.PenaltyAmount,
