@@ -9,6 +9,7 @@ type WxPayConfig struct {
 	WechatpayPublicKeyID       string `yaml:"wechatpay_public_key_id"`
 	AppId                      string `yaml:"app_id"`
 	PayName                    string `yaml:"pay_name"` // 是哪个小程序在使用
+	CallBackURL                string `yaml:"call_back_url"`
 }
 
 func (c *WxPayConfig) IsBaoZaoClub() bool {

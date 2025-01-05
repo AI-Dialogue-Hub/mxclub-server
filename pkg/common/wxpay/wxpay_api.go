@@ -28,7 +28,7 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 		OutTradeNo:    core.String(outTradeNo),
 		TimeExpire:    core.Time(time.Now().Add(time.Minute * 15)),
 		Attach:        core.String("自定义数据说明"),
-		NotifyUrl:     core.String("https://mx.fengxianhub.top/wxpay/notify"),
+		NotifyUrl:     core.String(wxPayConfig.CallBackURL),
 		GoodsTag:      core.String("MX"),
 		SupportFapiao: core.Bool(false),
 		Amount: &jsapi.Amount{
