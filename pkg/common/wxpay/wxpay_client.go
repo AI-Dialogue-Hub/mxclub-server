@@ -72,7 +72,8 @@ func NewWxPayClient(config *WxPayConfig) *core.Client {
 func NewWxPayCertHandler(config *WxPayConfig) *Handler {
 
 	if config.IsBaoZaoClub() {
-		return NewWxPayCertHandlerWithPublicKey(config)
+		notifyHandler = NewWxPayCertHandlerWithPublicKey(config)
+		return notifyHandler
 	}
 
 	var (
