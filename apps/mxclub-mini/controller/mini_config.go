@@ -35,3 +35,7 @@ func (ctl MiniConfigController) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.
 	result, err := ctl.miniConfigService.GetConfigByName(ctx, configName)
 	return xjet.WrapperResult(ctx, result, err)
 }
+
+func (ctr MiniConfigController) GetV1ProductSellingpoint(ctx jet.Ctx) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, ctr.miniConfigService.FetchSellingPoints(ctx), nil)
+}

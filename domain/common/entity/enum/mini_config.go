@@ -11,6 +11,7 @@ var (
 	DelayTime        MiniConfigEnum = "gold_order_delay_time" // 非金牌单打手多久能看到单
 	DasherEvaluation MiniConfigEnum = "dasher_evaluation"     // 打手评价
 	WarningInfo      MiniConfigEnum = "warningInfo"           // warningInfo
+	SellingPoint     MiniConfigEnum = "SellingPoint"          // 滚动卖点
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -22,6 +23,7 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	DelayTime:        "金牌打手可以提前多少秒看到单(例如：20 单位s)",
 	DasherEvaluation: "提示给用户看到评价信息",
 	WarningInfo:      "提示打手接单的信息",
+	SellingPoint:     "滚动卖点",
 }
 
 func (m MiniConfigEnum) IsValid() bool {

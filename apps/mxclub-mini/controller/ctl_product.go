@@ -26,11 +26,6 @@ func NewProductController(ProductService *service.ProductService) jet.Controller
 
 // ============================================================
 
-func (ctr ProductController) GetV1ProductSellingpoint(ctx jet.Ctx) (*api.Response, error) {
-	// TODO@lfy
-	return xjet.WrapperResult(ctx, new([]string), nil)
-}
-
 func (ctr ProductController) GetV1Product0(ctx jet.Ctx, args *api.PathParam) (*api.Response, error) {
 	productId := args.CmdArgs[0]
 	if xjet.IsAnyEmpty(productId) {

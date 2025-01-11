@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/vo"
+	"mxclub/domain/common/entity/enum"
 	"mxclub/domain/common/repo"
 )
 
@@ -28,4 +29,22 @@ func (svc MiniConfigService) GetConfigByName(ctx jet.Ctx, configName string) (*v
 		ConfigName: configPO.ConfigName,
 		Content:    configPO.Content,
 	}, err
+}
+
+func (svc MiniConfigService) FetchSellingPoints(ctx jet.Ctx) (vos []map[string]string) {
+	configVO, err := svc.GetConfigByName(ctx, enum.SellingPoint.String())
+	if err != nil {
+		return
+	}
+	content := configVO.Content
+	if err != nil {
+		return
+	}
+	for _, chunk := range content {
+		desc := chunk["desc"]
+		if descStr, ok := desc.(string); ok {
+			vos = append(vos, map[string]string{"text": descStr})
+		}
+	}
+	return
 }
