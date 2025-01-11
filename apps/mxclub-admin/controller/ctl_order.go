@@ -17,11 +17,13 @@ func init() {
 type OrderController struct {
 	jet.BaseJetController
 	orderService *service.OrderService
+	excelService *service.ExcelService
 }
 
-func NewOrderController(orderService *service.OrderService) jet.ControllerResult {
+func NewOrderController(orderService *service.OrderService, excelService *service.ExcelService) jet.ControllerResult {
 	return jet.NewJetController(&OrderController{
 		orderService: orderService,
+		excelService: excelService,
 	})
 }
 
@@ -59,4 +61,8 @@ func (ctl OrderController) PostV1WithdrawList(ctx jet.Ctx, req *req.WitchDrawLis
 func (ctl OrderController) PostV1WithdrawUpdate(ctx jet.Ctx, req *req.WitchDrawUpdateReq) (*api.Response, error) {
 	err := ctl.orderService.UpdateWithdraw(ctx, req)
 	return xjet.WrapperResult(ctx, "ok", err)
+}
+
+func (ctl OrderController) PostV1ExportTrade(ctx jet.Ctx, req *req.OrderTradeExportReq) {
+	ctl.excelService.ExportExcel(ctx, req.StartDate, req.EndDate)
 }

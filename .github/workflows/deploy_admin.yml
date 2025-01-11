@@ -16,7 +16,7 @@ jobs:
       - name: Set up Go 1.18
         uses: actions/setup-go@v2
         with:
-          go-version: 1.18
+          go-version: 1.23
       # 缓存，不加的话每次都会去重新拉取，会影响速度
       - name: Cache Go modules
         uses: actions/cache@v2

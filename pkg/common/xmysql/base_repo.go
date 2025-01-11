@@ -187,7 +187,7 @@ func (r *BaseRepo[T]) ListNoCount(pageNo int64, pageSize int64, order string, fi
 func (r *BaseRepo[T]) ListNoCountByQuery(query *MysqlQuery) ([]*T, error) {
 	entities := make([]*T, 0)
 	if query.Limit <= 0 {
-		query.Limit = 10
+		query.Limit = 1000
 	}
 	var err error
 	err = r.db.Model(r.ModelPO).WithContext(r.Ctx).

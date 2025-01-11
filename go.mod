@@ -1,6 +1,6 @@
 module mxclub
 
-go 1.18
+go 1.23
 
 require (
 	github.com/fengyuan-liang/GoKit v0.1.4
@@ -26,6 +26,7 @@ require (
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/stretchr/testify v1.8.4
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.20
+	github.com/xuri/excelize/v2 v2.9.0
 	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5
 )
 
@@ -40,8 +41,13 @@ require (
 	github.com/clbanning/mxj/v2 v2.5.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/richardlehane/mscfb v1.0.4 // indirect
+	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
+	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
+	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	gopkg.in/ini.v1 v1.56.0 // indirect
@@ -68,8 +74,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	go.uber.org/dig v1.17.1 // indirect
-	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 )

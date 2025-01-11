@@ -29,3 +29,8 @@ type WxPayRefundsReq struct {
 	OutTradeNo string `json:"out_trade_no,omitempty" validate:"required" reg_err_info:"不能为空"`
 	Reason     string `json:"reason"`
 }
+
+type OrderTradeExportReq struct {
+	StartDate string `json:"start_date,omitempty" validate:"required" reg_err_info:"不能为空"`
+	EndDate   string `json:"end_date"`
+}
