@@ -21,10 +21,16 @@ import (
 
 func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
 	outTradeNo := prePayRequestDTO.OutTradeNo
+	var desc string
+	if wxPayConfig.IsBaoZaoClub() {
+		desc = "暴躁电竞-代打订单"
+	} else {
+		desc = "明星电竞-代打订单"
+	}
 	request := jsapi.PrepayRequest{
 		Appid:         core.String(wxPayConfig.AppId),
 		Mchid:         core.String(wxPayConfig.MchID),
-		Description:   core.String("明星电竞-代打订单"),
+		Description:   core.String(desc),
 		OutTradeNo:    core.String(outTradeNo),
 		TimeExpire:    core.Time(time.Now().Add(time.Minute * 15)),
 		Attach:        core.String("自定义数据说明"),

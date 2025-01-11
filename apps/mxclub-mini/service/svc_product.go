@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/config"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/entity/enum"
@@ -11,6 +12,7 @@ import (
 	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
+	"sort"
 )
 
 func init() {
@@ -88,5 +90,10 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 	// 老板已经保存电话了，选用上一次老板保存的电话
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
 	utils.ForEach(productVOS, func(ele *vo.ProductVO) { ele.Phone = userPO.Phone })
+	if config.GetConfig().WxPayConfig.IsBaoZaoClub() {
+		sort.Slice(productVOS, func(i, j int) bool {
+			return productVOS[i].FinalPrice < productVOS[j].FinalPrice
+		})
+	}
 	return productVOS, err
 }
