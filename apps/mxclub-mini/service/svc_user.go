@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/config"
 	"mxclub/apps/mxclub-mini/entity/bo"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
@@ -104,6 +105,13 @@ func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) 
 	}
 	if err != nil {
 		imageURL = ""
+	}
+	if imageURL == "" {
+		if config.GetConfig().WxPayConfig.IsBaoZaoClub() {
+			imageURL = "https://cdn.fengxianhub.top/resources-master/20250111193118.jpg"
+		} else {
+			imageURL = "https://mx.fengxianhub.top/v1/file/2024071622064557713.jpg"
+		}
 	}
 	err = svc.userRepo.UpdateUserIconAndNickName(ctx, userId, imageURL, "", "")
 	if err != nil {

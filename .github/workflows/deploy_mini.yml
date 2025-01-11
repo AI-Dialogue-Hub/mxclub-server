@@ -3,7 +3,7 @@ name: Deploy mini with docker
 on:
   push:
     # 分支
-    branches: [ release ] # main
+    branches: [ main ] # main
   pull_request:
     branches: [ main ]
 
