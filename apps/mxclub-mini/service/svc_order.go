@@ -541,12 +541,46 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		)
 		return nil, errors.New("系统查询错误，请联系管理员")
 	}
+
+	minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
+
 	return &vo.WithDrawVO{
 		HistoryWithDrawAmount: utils.RoundToTwoDecimalPlaces(approveWithdrawnAmount),
 		WithdrawAbleAmount:    utils.RoundToTwoDecimalPlaces(orderWithdrawAbleAmount - withdrawnAmount - totalDeduct),
-		WithdrawRangeMax:      20000,
-		WithdrawRangeMin:      200,
+		WithdrawRangeMax:      float64(maxRangeNum),
+		WithdrawRangeMin:      float64(minRangeNum),
 	}, nil
+}
+
+func (svc OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
+	utils.RecoverAndLogError(ctx)
+
+	// 获取抽成比例
+	minRange := svc.commonRepo.FindConfigByNameOrDefault(
+		ctx,
+		commonEnum.WithdrawRangeMin.String(),
+		nil,
+	)
+
+	maxRange := svc.commonRepo.FindConfigByNameOrDefault(
+		ctx,
+		commonEnum.WithdrawRangeMax.String(),
+		nil,
+	)
+
+	var (
+		minRangeNum = 200
+		maxRangeNum = 2000
+	)
+
+	if minRange != nil && len(minRange.Content) > 0 && minRange.Content[0] != nil && minRange.Content[0]["desc"] != nil {
+		minRangeNum = utils.SafeParseNumber[int](minRange.Content[0]["desc"])
+	}
+
+	if maxRange != nil && len(maxRange.Content) > 0 && maxRange.Content[0] != nil && maxRange.Content[0]["desc"] != nil {
+		maxRangeNum = utils.SafeParseNumber[int](maxRange.Content[0]["desc"])
+	}
+	return minRangeNum, maxRangeNum
 }
 
 func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {

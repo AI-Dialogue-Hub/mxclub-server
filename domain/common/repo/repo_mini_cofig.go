@@ -18,6 +18,7 @@ func init() {
 type IMiniConfigRepo interface {
 	xmysql.IBaseRepo[po.MiniConfig]
 	FindConfigByName(ctx jet.Ctx, configName string) (*po.MiniConfig, error)
+	FindConfigByNameOrDefault(ctx jet.Ctx, configName string, defaultConfig *po.MiniConfig) *po.MiniConfig
 	FindSwiperConfig(ctx jet.Ctx) (*po.MiniConfig, error)
 	AddConfig(ctx jet.Ctx, configName string, content []map[string]any) error
 	ExistConfig(ctx jet.Ctx, configName string) (bool, error)
@@ -112,4 +113,13 @@ func (repo MiniConfigRepo) UpdateConfigByConfigName(ctx jet.Ctx, configName stri
 		ctx.Logger().Errorf("[UpdateConfigByConfigName]error: %v", err.Error())
 	}
 	return err
+}
+
+func (repo MiniConfigRepo) FindConfigByNameOrDefault(ctx jet.Ctx, configName string,
+	defaultConfig *po.MiniConfig) *po.MiniConfig {
+	miniConfig, err := repo.FindConfigByName(ctx, configName)
+	if err != nil {
+		return defaultConfig
+	}
+	return miniConfig
 }

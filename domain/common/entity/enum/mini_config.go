@@ -12,6 +12,8 @@ var (
 	DasherEvaluation MiniConfigEnum = "dasher_evaluation"     // 打手评价
 	WarningInfo      MiniConfigEnum = "warningInfo"           // warningInfo
 	SellingPoint     MiniConfigEnum = "SellingPoint"          // 滚动卖点
+	WithdrawRangeMin MiniConfigEnum = "WithdrawRangeMin"      // 滚动卖点
+	WithdrawRangeMax MiniConfigEnum = "WithdrawRangeMax"      // 滚动卖点
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -24,6 +26,8 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	DasherEvaluation: "提示给用户看到评价信息",
 	WarningInfo:      "提示打手接单的信息",
 	SellingPoint:     "滚动卖点",
+	WithdrawRangeMin: "最小提现阈值",
+	WithdrawRangeMax: "最大提现阈值",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
