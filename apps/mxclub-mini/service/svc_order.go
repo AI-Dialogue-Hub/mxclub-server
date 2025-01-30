@@ -509,16 +509,20 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		defer wg.Done()
 		// 提现成功的钱
 		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userById.MemberNumber)
+		// 四舍五入
+		approveWithdrawnAmount = utils.RoundToTwoDecimalPlaces(approveWithdrawnAmount)
 	}()
 	go func() {
 		defer wg.Done()
 		// 用户发起提现的钱，包括未提现和提现成功的
 		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userById.MemberNumber)
+		withdrawnAmount = utils.RoundToTwoDecimalPlaces(withdrawnAmount)
 	}()
 	go func() {
 		defer wg.Done()
 		// 订单中能提现的钱
 		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userById.MemberNumber)
+		orderWithdrawAbleAmount = utils.RoundToTwoDecimalPlaces(orderWithdrawAbleAmount)
 	}()
 
 	go func() {
