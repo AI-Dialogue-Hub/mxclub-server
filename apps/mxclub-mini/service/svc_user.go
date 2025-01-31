@@ -350,10 +350,15 @@ func (svc UserService) PushInviteMessage(ctx jet.Ctx, req *req.OrderExecutorInvi
 		logger.Errorf("[FindUserByDashId]ERROR:%v", err)
 		return errors.New("打手不存在")
 	}
-	go func() {
-		message := dto.NewDispatchMessage(user.ID, req.OrderId, req.GameRegion, req.RoleId, "")
-		_ = svc.messageService.PushMessage(ctx, message)
-	}()
+	// 查找订单价格
+	orderInfo, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, req.OrderId)
+	if err != nil {
+		logger.Errorf("[PushInviteMessage]ERROR:%v", err)
+		return errors.New("订单查找失败")
+	}
+	message := dto.NewDispatchMessageWithFinalPrice(
+		user.ID, req.OrderId, req.GameRegion, req.RoleId, "", orderInfo.FinalPrice)
+	_ = svc.messageService.PushMessage(ctx, message)
 	return nil
 }
 

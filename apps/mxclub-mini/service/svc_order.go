@@ -114,7 +114,9 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 				// 发送派单信息
 				svc.messageService.PushMessage(
 					ctx,
-					dto.NewDispatchMessage(dasherPO.ID, uint(orderTradeNo), orderPO.GameRegion, orderPO.RoleId, ""),
+					dto.NewDispatchMessageWithFinalPrice(
+						dasherPO.ID, uint(orderTradeNo), orderPO.GameRegion, orderPO.RoleId, "",
+						utils.RoundToTwoDecimalPlaces(orderPO.FinalPrice)),
 				)
 			}()
 		}
