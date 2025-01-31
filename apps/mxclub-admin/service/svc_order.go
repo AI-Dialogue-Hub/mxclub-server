@@ -63,7 +63,12 @@ func NewOrderService(repo repo.IOrderRepo,
 
 func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.PageResult, error) {
 	status := enum.ParseOrderStatusByString(orderReq.OrderStatus)
-	list, count, err := svc.orderRepo.ListAroundCache(ctx, orderReq.PageParams, orderReq.Ge, orderReq.Le, status)
+	var orderId = -1
+	if orderReq.OrderId != "" {
+		orderId = utils.SafeParseNumber[int](orderReq.OrderId)
+	}
+	list, count, err := svc.orderRepo.ListAroundCache(
+		ctx, orderReq.PageParams, orderReq.Ge, orderReq.Le, status, orderId)
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]List ERROR:%v", err.Error())
 		return nil, errors.New("获取失败")

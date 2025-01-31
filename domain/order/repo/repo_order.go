@@ -26,7 +26,9 @@ func init() {
 type IOrderRepo interface {
 	xmysql.IBaseRepo[po.Order]
 	ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO) ([]*po.Order, error)
-	ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error)
+	ListAroundCache(
+		ctx jet.Ctx, params *api.PageParams,
+		ge, le string, status enum.OrderStatus, orderId int) ([]*po.Order, int64, error)
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
 	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
@@ -112,7 +114,8 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO
 	return repo.ListNoCountByQuery(query)
 }
 
-func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus) ([]*po.Order, int64, error) {
+func (repo OrderRepo) ListAroundCache(
+	ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus, orderId int) ([]*po.Order, int64, error) {
 	// 根据页码参数生成唯一的缓存键
 	//cacheListKey := xredis.BuildListDataCacheKey(cachePrefix+ge+le+status.String(), params)
 	//cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + ge + le + status.String())
@@ -131,6 +134,11 @@ func (repo OrderRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams, ge, l
 	// })
 
 	query := xmysql.NewMysqlQuery()
+
+	if orderId > 0 {
+		query.SetFilter("order_id = ?", orderId)
+		return repo.ListByWrapper(ctx, query)
+	}
 
 	query.SetPage(params.Page, params.PageSize)
 

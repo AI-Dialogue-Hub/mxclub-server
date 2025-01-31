@@ -10,6 +10,7 @@ type OrderListReq struct {
 	Ge          string `json:"search_GE_createTime"` // start time
 	Le          string `json:"search_LE_createTime"` // end time
 	ExecutorId  uint   `json:"executor_id"`
+	OrderId     string `json:"order_id"`
 }
 
 type WitchDrawListReq struct {
