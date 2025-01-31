@@ -83,3 +83,8 @@ func TestRoundToDecimalPlaces(t *testing.T) {
 		}
 	}
 }
+
+func TestGetDayStartAndEndTimes(t *testing.T) {
+	start, end := GetTodayStartAndEndTimes()
+	t.Logf("%+v, %+v", start, end)
+}

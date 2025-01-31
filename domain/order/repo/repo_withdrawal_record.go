@@ -29,6 +29,9 @@ type IWithdrawalRepo interface {
 	// @return 打手id -> 可以提现的钱
 	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, error)
 	RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error
+	// FindWithdrawnWithDuration 查找指定日期的提现记录
+	FindWithdrawnWithDuration(
+		ctx jet.Ctx, dasherId int, status enum.WithdrawalStatus, start, end time.Time) ([]*po.WithdrawalRecord, error)
 }
 
 func NewWithdrawalRepo(db *gorm.DB) IWithdrawalRepo {
@@ -148,4 +151,19 @@ func (repo WithdrawalRepo) ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]
 
 func (repo WithdrawalRepo) RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error {
 	return repo.Remove("dasher_user_id = ?", userId)
+}
+
+func (repo WithdrawalRepo) FindWithdrawnWithDuration(
+	ctx jet.Ctx, dasherId int, status enum.WithdrawalStatus, ge, le time.Time) ([]*po.WithdrawalRecord, error) {
+
+	query := xmysql.NewMysqlQuery()
+	query.SetFilter("status = ?", status)
+	query.SetFilter("dasher_id = ?", dasherId)
+	query.SetFilter("created_at >= ? and created_at <= ?", ge, le)
+	records, err := repo.ListNoCountByQuery(query)
+	if err != nil {
+		ctx.Logger().Errorf("[FindWithdrawnWithDuration]ERROR:%v", err)
+		return nil, err
+	}
+	return records, nil
 }

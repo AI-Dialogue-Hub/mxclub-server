@@ -433,6 +433,16 @@ func GetDayStartAndEndTimes(dateStr string) (time.Time, time.Time, error) {
 	return startTime, endTime, nil
 }
 
+// GetTodayStartAndEndTimes 给定当天时间返回这天开始和结束的时间
+func GetTodayStartAndEndTimes() (time.Time, time.Time) {
+	var t = time.Now()
+
+	startTime := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	endTime := time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, int(time.Second-time.Nanosecond), t.Location())
+
+	return startTime, endTime
+}
+
 func GetRandomInt(min, max int) int {
 	if min > max {
 		panic("min cannot more than max")
