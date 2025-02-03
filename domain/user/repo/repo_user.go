@@ -183,7 +183,8 @@ func (repo UserRepo) ToBeAssistant(ctx jet.Ctx, userId uint, phone string, membe
 }
 
 func (repo UserRepo) ExistsAssistant(ctx jet.Ctx, phone string, memberNumber int64) bool {
-	count, _ := repo.Count("phone = ? or member_number = ?", phone, memberNumber)
+	count, _ := repo.Count("(phone = ? or member_number = ?) and role = ?",
+		phone, memberNumber, enum.RoleAssistant.String())
 	return count >= 1
 }
 
