@@ -157,7 +157,7 @@ func (repo WithdrawalRepo) FindWithdrawnWithDuration(
 	ctx jet.Ctx, dasherId int, status enum.WithdrawalStatus, ge, le time.Time) ([]*po.WithdrawalRecord, error) {
 
 	query := xmysql.NewMysqlQuery()
-	query.SetFilter("status = ?", status)
+	query.SetFilter("withdrawal_status = ?", status)
 	query.SetFilter("dasher_id = ?", dasherId)
 	query.SetFilter("created_at >= ? and created_at <= ?", ge, le)
 	records, err := repo.ListNoCountByQuery(query)
