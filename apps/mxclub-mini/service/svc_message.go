@@ -69,7 +69,7 @@ func (svc MessageService) CountUnReadMessage(ctx jet.Ctx) (int64, error) {
 }
 
 func (svc MessageService) PushMessage(ctx jet.Ctx, messageDTO *dto.MessageDTO) error {
-	svc.messageRepo.ClearCache(ctx)
+	defer svc.messageRepo.ClearCache(ctx)
 	return svc.messageRepo.InsertOne(&po.Message{
 		MessageType:   messageDTO.MessageType,
 		Title:         messageDTO.Title,
@@ -92,4 +92,8 @@ func (svc MessageService) PushRemoveMessage(ctx jet.Ctx, ordersId uint, messageT
 
 func (svc MessageService) RemoveAllMessage(ctx jet.Ctx) error {
 	return svc.messageRepo.RemoveAllMessage(ctx, middleware.MustGetUserId(ctx))
+}
+
+func (svc MessageService) ClearDispatchMessage(orderId uint64, userId uint) error {
+	return svc.messageRepo.RemoveMessageByOrderIdAndUserId(orderId, userId)
 }

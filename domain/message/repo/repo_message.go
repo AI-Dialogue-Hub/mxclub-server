@@ -8,6 +8,7 @@ import (
 	"mxclub/domain/message/entity/enum"
 	"mxclub/domain/message/po"
 	"mxclub/pkg/api"
+	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
@@ -30,6 +31,7 @@ type IMessageRepo interface {
 	PushOrderMessage(ctx jet.Ctx, ordersId uint, messageType enum.MessageType, messageTo uint, title, content string) error
 	ClearCache(ctx jet.Ctx)
 	RemoveAllMessage(ctx jet.Ctx, userId uint) error
+	RemoveMessageByOrderIdAndUserId(uint64 uint64, userId uint) error
 }
 
 func NewMessageRepo(db *gorm.DB) IMessageRepo {
@@ -154,4 +156,9 @@ func (repo MessageRepo) ClearCache(ctx jet.Ctx) {
 func (repo MessageRepo) RemoveAllMessage(ctx jet.Ctx, userId uint) error {
 	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	return repo.Remove("message_from = ? or message_to = ?", userId, userId)
+}
+
+func (repo MessageRepo) RemoveMessageByOrderIdAndUserId(orderId uint64, userId uint) error {
+	defer xredis.DelMatchingKeys(xjet.NewDefaultJetContext(), cachePrefix)
+	return repo.Remove("message_type = ? and message_to = ? and order_id = ?", enum.DISPATCH_MESSAGE, userId, orderId)
 }

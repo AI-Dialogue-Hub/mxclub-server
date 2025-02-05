@@ -702,6 +702,19 @@ func (svc OrderService) SyncTimeOutOrder() {
 			userPO.ID,
 			fmt.Sprintf("您的订单超时未组队，已重新派往接单大厅，订单Id为:%v，如有问题请联系客服", order.OrderId),
 		)
+		if order.SpecifyExecutor && order.ExecutorID >= 0 {
+			var userByDashId *userPOInfo.User
+			if userByDashId, err =
+				svc.userService.FindUserByDashId(dCtx, order.ExecutorID); err == nil && userByDashId != nil {
+				// 清除指定打手的接单消息
+				if err = svc.messageService.ClearDispatchMessage(order.OrderId, userByDashId.ID); err != nil {
+					syncTimeOutLogger.Errorf("[SyncTimeOutOrder#ClearDispatchMessage]error:%v", err)
+				} else {
+					syncTimeOutLogger.Infof("[SyncTimeOutOrder#ClearDispatchMessage]SUCCESS, orderInfo:%v",
+						utils.ObjToJsonStr(order))
+				}
+			}
+		}
 	})
 }
 
