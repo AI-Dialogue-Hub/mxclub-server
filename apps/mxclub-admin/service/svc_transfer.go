@@ -76,7 +76,7 @@ func (svc OrderService) UpdateTransfer(ctx jet.Ctx, transferVO *vo.TransferVO) e
 	fromDasherPO, _ := svc.userRepo.FindByMemberNumber(ctx, transferVO.ExecutorFrom)
 
 	if oldInfo.Status != transferVO.Status {
-		if transferVO.Status == enum.Transfer_SUCCES {
+		if transferVO.Status == enum.Transfer_SUCCESS {
 			// 通过申请，查找是否指定打手
 			executorTo := transferVO.ExecutorTo
 			if executorTo >= 0 {
@@ -86,9 +86,11 @@ func (svc OrderService) UpdateTransfer(ctx jet.Ctx, transferVO *vo.TransferVO) e
 				if inRunningOrder := svc.CheckDasherInRunningOrder(ctx, executorTo); inRunningOrder {
 					return errors.New(fmt.Sprintf("指定打手正在进行中订单，打手Id为:%v", executorTo))
 				}
-				svc.transferRepo.UpdateById(map[string]any{"status": enum.Transfer_SUCCES}, transferVO.ID)
+				svc.transferRepo.UpdateById(map[string]any{"status": enum.Transfer_SUCCESS}, transferVO.ID)
 				// 1. 更新订单
 				toDasherPO, _ := svc.userRepo.FindByMemberNumber(ctx, transferVO.ExecutorTo)
+				// 清空订单组队信息
+				_ = svc.ClearAllDasherInfo(ctx, transferVO.ID)
 				orderUpdate := map[string]any{"executor_id": toDasherPO.MemberNumber, "executor_name": toDasherPO.Name}
 				if err := svc.orderRepo.UpdateById(orderUpdate, transferVO.OrderId); err != nil {
 					ctx.Logger().Errorf("UpdateById ERROR:%v", err)
@@ -107,7 +109,7 @@ func (svc OrderService) UpdateTransfer(ctx jet.Ctx, transferVO *vo.TransferVO) e
 					return err
 				}
 				// 更新转单订单
-				svc.transferRepo.UpdateById(map[string]any{"status": enum.Transfer_SUCCES}, transferVO.ID)
+				svc.transferRepo.UpdateById(map[string]any{"status": enum.Transfer_SUCCESS}, transferVO.ID)
 			}
 		} else if transferVO.Status == enum.Transfer_REJECT {
 			if err := svc.transferRepo.UpdateById(map[string]any{"status": enum.Transfer_REJECT}, transferVO.ID); err != nil {

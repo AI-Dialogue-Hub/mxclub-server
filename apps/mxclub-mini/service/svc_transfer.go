@@ -39,6 +39,7 @@ func (svc OrderService) Transfer(ctx jet.Ctx, req *req.TransferReq) error {
 		ctx.Logger().Errorf("Transfer ERROR:%v", err)
 		return errors.New("转单失败，请联系客服")
 	}
+	_ = svc.messageService.PushSystemMessage(ctx, userId, "转单申请已提交，请联系董事长同意")
 	return nil
 }
 

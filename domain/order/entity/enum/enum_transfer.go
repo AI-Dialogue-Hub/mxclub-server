@@ -4,7 +4,7 @@ type TransferEnum int
 
 const (
 	Transfer_PENDING TransferEnum = iota
-	Transfer_SUCCES
+	Transfer_SUCCESS
 	Transfer_REJECT
 )
 
