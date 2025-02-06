@@ -497,6 +497,10 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, cannot find user:%v", userId)
 		return nil, errors.New("cannot find user info")
 	}
+	if userById.Role != userEnum.RoleAssistant || userById.MemberNumber < 0 {
+		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, user not dasher:%v", userId)
+		return nil, errors.New("您还不是打手")
+	}
 	var (
 		approveWithdrawnAmount  float64
 		withdrawnAmount         float64
