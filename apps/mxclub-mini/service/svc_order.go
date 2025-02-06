@@ -630,6 +630,7 @@ func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error 
 		ctx.Logger().Errorf("[GrabOrder]ERROR, err:%v", err.Error())
 		return errors.New("订单已被抢走")
 	}
+	ctx.Logger().Infof("GrabOrder success, dasherId:%v, orderId:%v", dasher.MemberNumber, grabReq.OrderId)
 	go func() {
 		defer utils.RecoverAndLogError(ctx)
 		// 2. 给买家发送消息
