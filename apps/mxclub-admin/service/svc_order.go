@@ -131,7 +131,7 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 	transaction := utils.MustMapToObj[payments.Transaction](wxPayCallbackInfo.RawData)
 	// 2. 进行退款
 	outRefundNo := wxpay.GenerateOutRefundNo()
-	logger.Infof("outRefundNo:%v", outRefundNo)
+	logger.Infof("outRefundNo:%v, orderId:%v", outRefundNo, params.OutTradeNo)
 	err = wxpay.Refunds(ctx, transaction, outRefundNo, params.Reason)
 	if err != nil {
 		logger.Errorf("err:%v", err)
@@ -140,7 +140,7 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 	// 3. 修改订单状态
 	err = svc.orderRepo.UpdateOrderStatus(ctx, utils.SafeParseUint64(params.OutTradeNo), enum.Refunds)
 	if err != nil {
-		logger.Errorf("err:%v", err)
+		logger.Errorf("[OrderService#Refunds]err:%v", err)
 		return errors.New("退款失败")
 	}
 	return nil

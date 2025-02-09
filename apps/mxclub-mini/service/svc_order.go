@@ -551,7 +551,6 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		)
 		return nil, errors.New("系统查询错误，请联系管理员")
 	}
-
 	minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
 
 	return &vo.WithDrawVO{
