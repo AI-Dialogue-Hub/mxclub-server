@@ -158,59 +158,36 @@ func (repo OrderRepo) ListAroundCache(
 
 }
 
-func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (result float64, err error) {
+func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error) {
 	defer traceUtil.TraceElapsedByName(time.Now(), "OrderWithdrawAbleAmount")
+
 	var totalAmount float64
 	var amount1, amount2, amount3 float64
-	c1 := make(chan struct{})
-	c2 := make(chan struct{})
-	c3 := make(chan struct{})
-	// 查询executor_id匹配的金额
-	go func() {
-		defer traceUtil.TraceElapsedByName(time.Now(), "c1")
-		defer func() { c1 <- struct{}{} }()
-		sql1 := `select COALESCE(sum(executor_price), 0) 
-			 from orders 
-			 where executor_id = ? and order_status = ?`
-		if err = repo.DB().Raw(sql1, dasherId, enum.SUCCESS).Scan(&amount1).Error; err != nil {
-			ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql1: %v", err.Error())
-			result = 0
-		}
-	}()
+	var err error
 
-	// 查询executor2_id匹配的金额
-	go func() {
-		defer traceUtil.TraceElapsedByName(time.Now(), "c2")
-		defer func() { c2 <- struct{}{} }()
-		sql2 := `select COALESCE(sum(executor2_price), 0) 
-			 from orders 
-			 where executor2_id = ? and order_status = ?`
-		if err = repo.DB().Raw(sql2, dasherId, enum.SUCCESS).Scan(&amount2).Error; err != nil {
-			ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql2: %v", err.Error())
-			result = 0
-		}
-	}()
+	// 查询 executor_id 匹配的金额
+	sql1 := `SELECT COALESCE(SUM(executor_price), 0) FROM orders WHERE executor_id = ? AND order_status = ?`
+	if err = repo.DB().Raw(sql1, dasherId, enum.SUCCESS).Scan(&amount1).Error; err != nil {
+		ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql1: %v", err)
+		return 0, fmt.Errorf("failed to query executor_id amount: %v", err)
+	}
 
-	// 查询executor3_id匹配的金额
-	go func() {
-		defer traceUtil.TraceElapsedByName(time.Now(), "c3")
-		defer func() { c3 <- struct{}{} }()
-		sql3 := `select COALESCE(sum(executor3_price), 0) 
-			 from orders 
-			 where executor3_id = ? and order_status = ?`
-		if err = repo.DB().Raw(sql3, dasherId, enum.SUCCESS).Scan(&amount3).Error; err != nil {
-			ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql3: %v", err.Error())
-			result = 0
-		}
-	}()
+	// 查询 executor2_id 匹配的金额
+	sql2 := `SELECT COALESCE(SUM(executor2_price), 0) FROM orders WHERE executor2_id = ? AND order_status = ?`
+	if err = repo.DB().Raw(sql2, dasherId, enum.SUCCESS).Scan(&amount2).Error; err != nil {
+		ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql2: %v", err)
+		return 0, fmt.Errorf("failed to query executor2_id amount: %v", err)
+	}
 
-	<-c1
-	<-c2
-	<-c3
+	// 查询 executor3_id 匹配的金额
+	sql3 := `SELECT COALESCE(SUM(executor3_price), 0) FROM orders WHERE executor3_id = ? AND order_status = ?`
+	if err = repo.DB().Raw(sql3, dasherId, enum.SUCCESS).Scan(&amount3).Error; err != nil {
+		ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql3: %v", err)
+		return 0, fmt.Errorf("failed to query executor3_id amount: %v", err)
+	}
 
-	// 总金额
+	// 计算总金额
 	totalAmount = amount1 + amount2 + amount3
-
 	return totalAmount, nil
 }
 
