@@ -9,7 +9,7 @@ type OrderListReq struct {
 	OrderStatus string `json:"status" validate:"required"`
 	Ge          string `json:"search_GE_createTime"` // start time
 	Le          string `json:"search_LE_createTime"` // end time
-	ExecutorId  uint   `json:"executor_id"`
+	ExecutorId  int    `json:"executor_id"`
 	OrderId     string `json:"order_id"`
 }
 

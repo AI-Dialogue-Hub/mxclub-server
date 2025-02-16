@@ -28,7 +28,7 @@ type IOrderRepo interface {
 	ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO) ([]*po.Order, error)
 	ListAroundCache(
 		ctx jet.Ctx, params *api.PageParams,
-		ge, le string, status enum.OrderStatus, orderId int) ([]*po.Order, int64, error)
+		ge, le string, status enum.OrderStatus, orderId, executorId int) ([]*po.Order, int64, error)
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
 	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
@@ -115,7 +115,8 @@ func (repo OrderRepo) ListByOrderStatus(ctx jet.Ctx, d *dto.ListByOrderStatusDTO
 }
 
 func (repo OrderRepo) ListAroundCache(
-	ctx jet.Ctx, params *api.PageParams, ge, le string, status enum.OrderStatus, orderId int) ([]*po.Order, int64, error) {
+	ctx jet.Ctx, params *api.PageParams, ge, le string,
+	status enum.OrderStatus, orderId, executorId int) ([]*po.Order, int64, error) {
 	// 根据页码参数生成唯一的缓存键
 	//cacheListKey := xredis.BuildListDataCacheKey(cachePrefix+ge+le+status.String(), params)
 	//cacheCountKey := xredis.BuildListCountCacheKey(listCachePrefix + ge + le + status.String())
@@ -137,6 +138,11 @@ func (repo OrderRepo) ListAroundCache(
 
 	if orderId > 0 {
 		query.SetFilter("order_id = ?", orderId)
+		return repo.ListByWrapper(ctx, query)
+	}
+
+	if executorId > 0 {
+		query.SetFilter("executor_id = ? or executor2_id = ? or executor3_id = ?", executorId, executorId, executorId)
 		return repo.ListByWrapper(ctx, query)
 	}
 
