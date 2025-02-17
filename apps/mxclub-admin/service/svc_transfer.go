@@ -12,7 +12,16 @@ import (
 
 // ClearAllDasherInfo 清空所有打手信息，重新派单到大厅
 func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
-	err := svc.orderRepo.ClearOrderDasherInfo(ctx, id)
+	ctx.Logger().Infof("ClearAllDasherInfo id:%v", id)
+	// 只有进行中的订单才可以转单
+	orderPO, err := svc.orderRepo.FindByID(id)
+	if err != nil || orderPO == nil || orderPO.ID <= 0 {
+		return errors.New("订单查询失败")
+	}
+	if orderPO.OrderStatus != enum.PROCESSING && orderPO.OrderStatus != enum.RUNNING {
+		return errors.New("只有进行中和配单中订单才可以转单")
+	}
+	err = svc.orderRepo.ClearOrderDasherInfo(ctx, id)
 	if err != nil {
 		ctx.Logger().Errorf("[ClearAllDasherInfo]err:%v", err)
 		return errors.New("转单失败")
