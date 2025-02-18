@@ -111,7 +111,7 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 		OutTradeNo: *transaction.OutTradeNo,
 		RawData:    objToMap,
 	})
-	ctx.Logger().Infof("%v", utils.ObjToJsonStr(objToMap))
+	ctx.Logger().Infof("HandleWxpayNotify:%v", utils.ObjToJsonStr(objToMap))
 	if err != nil {
 		ctx.Logger().Errorf("[DecryptWxpayCallBack] %v", err)
 	}

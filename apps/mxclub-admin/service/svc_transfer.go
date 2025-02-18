@@ -8,6 +8,7 @@ import (
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/utils"
 )
 
 // ClearAllDasherInfo 清空所有打手信息，重新派单到大厅
@@ -26,6 +27,7 @@ func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
 		ctx.Logger().Errorf("[ClearAllDasherInfo]err:%v", err)
 		return errors.New("转单失败")
 	}
+	ctx.Logger().Infof("clear order info:%v", utils.ObjToJsonStr(orderPO))
 	return nil
 }
 

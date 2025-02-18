@@ -404,7 +404,20 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
-	err := svc.startOrder(ctx, req.OrderId, req.ExecutorId, req.StartImages)
+	// 需要确保订单不会被打两次
+	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, req.OrderId)
+	if err != nil {
+		ctx.Logger().Errorf(
+			"[OrderService#Start]cannot find order, "+
+				"req:%v, invalid order:%v", utils.ObjToJsonStr(req), utils.ObjToJsonStr(orderPO))
+		return errors.New("订单不存在")
+	}
+	if orderPO.ExecutorID >= 0 {
+		ctx.Logger().Errorf(
+			"[OrderService#Start]req:%v, invalid order:%v", utils.ObjToJsonStr(req), utils.ObjToJsonStr(orderPO))
+		return errors.New("该订单状态异常，请联系管理员")
+	}
+	err = svc.startOrder(ctx, req.OrderId, req.ExecutorId, req.StartImages)
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return errors.New("订单开始失败，请联系客服")
@@ -629,24 +642,21 @@ func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error 
 		ctx.Logger().Errorf("[GrabOrder]ERROR, err:%v", err.Error())
 		return errors.New("订单已被抢走")
 	}
-	ctx.Logger().Infof("GrabOrder success, dasherId:%v, orderId:%v", dasher.MemberNumber, grabReq.OrderId)
-	go func() {
-		defer utils.RecoverAndLogError(ctx)
-		// 2. 给买家发送消息
-		orderPO, _ := svc.orderRepo.FindByID(grabReq.OrderId)
-		dasherPO, _ := svc.userService.FindUserByDashId(ctx, grabReq.ExecutorId)
-		toUserMessage := fmt.Sprintf(
-			"您的订单:%v，已被打手:%v(%v)接受，可前往订单，选中日期%v进行查看",
-			orderPO.OrderName, dasherPO.MemberNumber, dasherPO.Name, formatDate(orderPO.PurchaseDate),
-		)
-		_ = svc.messageService.PushSystemMessage(ctx, orderPO.PurchaseId, toUserMessage)
-		// 3. 给打手发消息
-		toDasherMessage := fmt.Sprintf(
-			"您的订单:%v，已抢单成功，可前往订单，选中日期%v进行查看，请尽快组件队伍开始订单",
-			orderPO.OrderName, formatDate(orderPO.PurchaseDate),
-		)
-		_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, toDasherMessage)
-	}()
+	// 2. 给买家发送消息
+	orderPO, _ := svc.orderRepo.FindByID(grabReq.OrderId)
+	dasherPO, _ := svc.userService.FindUserByDashId(ctx, grabReq.ExecutorId)
+	toUserMessage := fmt.Sprintf(
+		"您的订单:%v，已被打手:%v(%v)接受，可前往订单，选中日期%v进行查看",
+		orderPO.OrderName, dasherPO.MemberNumber, dasherPO.Name, formatDate(orderPO.PurchaseDate),
+	)
+	_ = svc.messageService.PushSystemMessage(ctx, orderPO.PurchaseId, toUserMessage)
+	// 3. 给打手发消息
+	toDasherMessage := fmt.Sprintf(
+		"您的订单:%v，订单号:%v,已抢单成功，可前往订单，选中日期%v进行查看，请尽快组件队伍开始订单",
+		orderPO.OrderName, orderPO.OrderId, formatDate(orderPO.PurchaseDate),
+	)
+	_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, toDasherMessage)
+	ctx.Logger().Infof("GrabOrder success, dasherId:%v, orderId:%v", dasher.MemberNumber, orderPO.OrderId)
 	return nil
 }
 
@@ -698,6 +708,11 @@ func (svc OrderService) SyncTimeOutOrder() {
 	}
 	utils.ForEach(orders, func(order *po.Order) {
 		defer utils.RecoverAndLogError(dCtx)
+		if order.CompletionDate != nil {
+			syncTimeOutLogger.Errorf(
+				"[SyncTimeOutOrder#]has order CompletionDate is not nil:%v", utils.ObjToJsonStr(order))
+			return
+		}
 		_ = svc.ClearAllDasherInfo(dCtx, order.ID)
 		syncTimeOutLogger.Infof("[SyncTimeOutOrder] clear orderInfo, order is: %+v", order)
 		// 给打手发送消息
