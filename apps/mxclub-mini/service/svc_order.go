@@ -412,7 +412,7 @@ func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 				"req:%v, invalid order:%v", utils.ObjToJsonStr(req), utils.ObjToJsonStr(orderPO))
 		return errors.New("订单不存在")
 	}
-	if orderPO.ExecutorID >= 0 {
+	if orderPO.CompletionDate != nil {
 		ctx.Logger().Errorf(
 			"[OrderService#Start]req:%v, invalid order:%v", utils.ObjToJsonStr(req), utils.ObjToJsonStr(orderPO))
 		return errors.New("该订单状态异常，请联系管理员")
