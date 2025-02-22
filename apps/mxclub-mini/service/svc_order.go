@@ -110,7 +110,7 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
 			go func() {
 				defer utils.RecoverAndLogError(ctx)
-				ctx.Logger().Infof("指定订单:  order  = %v", orderPO)
+				ctx.Logger().Infof("指定订单, id:%v,order: %v", orderPO.OrderId, orderPO)
 				// 发送派单信息
 				svc.messageService.PushMessage(
 					ctx,
@@ -722,6 +722,7 @@ func (svc OrderService) SyncTimeOutOrder() {
 			userPO.ID,
 			fmt.Sprintf("您的订单超时未组队，已重新派往接单大厅，订单Id为:%v，如有问题请联系客服", order.OrderId),
 		)
+		// 清理打手接单的派单消息
 		if order.SpecifyExecutor && order.ExecutorID >= 0 {
 			var userByDashId *userPOInfo.User
 			if userByDashId, err =
@@ -733,6 +734,18 @@ func (svc OrderService) SyncTimeOutOrder() {
 					syncTimeOutLogger.Infof("[SyncTimeOutOrder#ClearDispatchMessage]SUCCESS, orderInfo:%v",
 						utils.ObjToJsonStr(order))
 				}
+			}
+		}
+		// 清理指定打手的派单消息
+		if order.OutRefundNo != "" {
+			// 清除指定打手的接单消息
+			err = svc.messageService.ClearDispatchMessage(order.OrderId, utils.SafeParseNumber[uint](order.OutRefundNo))
+			if err != nil {
+				syncTimeOutLogger.Errorf("[SyncTimeOutOrder#ClearDispatchMessage]OutRefundNo message error:%v", err)
+			} else {
+				syncTimeOutLogger.Infof("[SyncTimeOutOrder#ClearDispatchMessage]OutRefundNo message "+
+					"SUCCESS, orderInfo:%v",
+					utils.ObjToJsonStr(order))
 			}
 		}
 	})

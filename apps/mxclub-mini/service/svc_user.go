@@ -265,6 +265,9 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 		ctx.Logger().Errorf("[handleAcceptApplication]ERROR, 不能接受已完成的订单: %v", utils.ObjToJsonStr(handleReq))
 		return errors.New("不能接受已完成的订单")
 	}
+
+	ctx.Logger().Infof("[UserService#handleAcceptApplication]handleReq info:%v", utils.ObjToJsonStr(handleReq))
+
 	if orderPO.ExecutorID == -1 {
 		// 更新角色
 		_ = svc.orderRepo.UpdateOrderDasher1(ctx, orderId, memberNumber, userPO.Name)
