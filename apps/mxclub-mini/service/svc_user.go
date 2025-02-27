@@ -242,6 +242,7 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 	var (
 		orderId = handleReq.OrdersId
 		orderPO *OrderPO.Order
+		logger  = ctx.Logger()
 	)
 
 	if orderId <= 0 {
@@ -266,7 +267,15 @@ func (svc UserService) handleAcceptApplication(ctx jet.Ctx, handleReq *req.Messa
 		return errors.New("不能接受已完成的订单")
 	}
 
-	ctx.Logger().Infof("[UserService#handleAcceptApplication]handleReq info:%v", utils.ObjToJsonStr(handleReq))
+	// 检查是否是已经派到大厅的单
+	if orderPO.OutRefundNo != "" &&
+		utils.ParseInt(orderPO.OutRefundNo) == userPO.MemberNumber &&
+		orderPO.ExecutorID >= 0 {
+		logger.Errorf("accept invalid order, orderId:%v, dasherId:%v", orderPO.OrderId, userPO.MemberNumber)
+		return errors.New("您的指定订单已被转到大厅，无法接单")
+	}
+
+	logger.Infof("[UserService#handleAcceptApplication]handleReq info:%v", utils.ObjToJsonStr(handleReq))
 
 	if orderPO.ExecutorID == -1 {
 		// 更新角色
