@@ -169,6 +169,5 @@ func (ctl UserController) GetV1AssistantStatus(ctx jet.Ctx) (*api.Response, erro
 }
 
 func (ctl UserController) PostV1AssistantRemove(ctx jet.Ctx) (*api.Response, error) {
-	return nil, errors.New("请联系客服进行注销")
-	//return xjet.WrapperResult(ctx, "注销成功，请重新登录", ctl.userService.RemoveAssistant(ctx))
+	return xjet.WrapperResult(ctx, "注销成功，请重新登录", ctl.userService.RemoveAssistant(ctx))
 }
