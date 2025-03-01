@@ -53,7 +53,7 @@ func (repo WithdrawalRepo) WithdrawnAmountNotReject(ctx jet.Ctx, dasherId int) (
 
 	sql := `select COALESCE(sum(withdrawal_amount), 0) 
 			from withdrawal_records 
-			where dasher_id = ? and withdrawal_status != ?`
+			where dasher_id = ? and withdrawal_status != ? and deleted_at is null`
 
 	if err := repo.DB().Raw(sql, dasherId, enum.Reject()).Scan(&amount).Error; err != nil {
 		ctx.Logger().Errorf("[WithdrawnAmountNotReject]ERROR:%v", err.Error())
@@ -68,7 +68,7 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmount(ctx jet.Ctx, dasherId int) (fl
 
 	sql := `select COALESCE(sum(withdrawal_amount), 0) 
 			from withdrawal_records 
-			where dasher_id = ? and withdrawal_status = ?`
+			where dasher_id = ? and withdrawal_status = ?  and deleted_at is null`
 
 	if err := repo.DB().Raw(sql, dasherId, enum.Completed()).Scan(&amount).Error; err != nil {
 		ctx.Logger().Errorf("[WithdrawnAmountNotReject]ERROR:%v", err.Error())
@@ -92,7 +92,7 @@ func (repo WithdrawalRepo) ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasher
 	// 编写SQL查询，使用IN子句
 	sql := fmt.Sprintf(`SELECT dasher_id, COALESCE(SUM(withdrawal_amount), 0) AS amount 
                         FROM withdrawal_records 
-                        WHERE dasher_id IN (%s) AND withdrawal_status = ? 
+                        WHERE dasher_id IN (%s) AND withdrawal_status = ?  and deleted_at is null
                         GROUP BY dasher_id`, idsStr)
 
 	// 执行查询

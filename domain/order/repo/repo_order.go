@@ -172,21 +172,21 @@ func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float6
 	var err error
 
 	// 查询 executor_id 匹配的金额
-	sql1 := `SELECT COALESCE(SUM(executor_price), 0) FROM orders WHERE executor_id = ? AND order_status = ?`
+	sql1 := `SELECT COALESCE(SUM(executor_price), 0) FROM orders WHERE executor_id = ? AND order_status = ?  and deleted_at is null`
 	if err = repo.DB().Raw(sql1, dasherId, enum.SUCCESS).Scan(&amount1).Error; err != nil {
 		ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql1: %v", err)
 		return 0, fmt.Errorf("failed to query executor_id amount: %v", err)
 	}
 
 	// 查询 executor2_id 匹配的金额
-	sql2 := `SELECT COALESCE(SUM(executor2_price), 0) FROM orders WHERE executor2_id = ? AND order_status = ?`
+	sql2 := `SELECT COALESCE(SUM(executor2_price), 0) FROM orders WHERE executor2_id = ? AND order_status = ?  and deleted_at is null`
 	if err = repo.DB().Raw(sql2, dasherId, enum.SUCCESS).Scan(&amount2).Error; err != nil {
 		ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql2: %v", err)
 		return 0, fmt.Errorf("failed to query executor2_id amount: %v", err)
 	}
 
 	// 查询 executor3_id 匹配的金额
-	sql3 := `SELECT COALESCE(SUM(executor3_price), 0) FROM orders WHERE executor3_id = ? AND order_status = ?`
+	sql3 := `SELECT COALESCE(SUM(executor3_price), 0) FROM orders WHERE executor3_id = ? AND order_status = ?  and deleted_at is null`
 	if err = repo.DB().Raw(sql3, dasherId, enum.SUCCESS).Scan(&amount3).Error; err != nil {
 		ctx.Logger().Errorf("[OrderWithdrawAbleAmount] ERROR in sql3: %v", err)
 		return 0, fmt.Errorf("failed to query executor3_id amount: %v", err)
@@ -200,7 +200,7 @@ func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float6
 func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 	sql := `select COALESCE(SUM(final_price), 0) AS total_price
 			from orders
-			where purchase_id = ? and order_status = ?`
+			where purchase_id = ? and order_status = ?  and deleted_at is null`
 
 	var totalAmount float64
 
@@ -414,7 +414,7 @@ func (repo OrderRepo) FindTimeOutOrders(timeout time.Duration) ([]*po.Order, err
 }
 
 func (repo OrderRepo) UpdateOrderGrabTime(ctx jet.Ctx, ordersId uint) error {
-	update := new(xmysql.MysqlUpdate)
+	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
 	update.Set("grab_at", utils.Ptr(time.Now()))
 	return repo.UpdateByWrapper(update)
