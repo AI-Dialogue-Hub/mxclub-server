@@ -616,6 +616,12 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 		return errors.New("您当天还有其他提现记录未完结，请结束后再进行提现")
 	}
 	// 1. 检查提现金额
+	minAmount, _ := svc.fetchWithDrawRange(ctx)
+	if drawReq.Amount < float64(minAmount) {
+		ctx.Logger().Errorf("withDraw Amount:%v less more minAmount:%v", drawReq.Amount, minAmount)
+		return errors.New(fmt.Sprintf("提现金额不能小于最小限制:%v", minAmount))
+	}
+
 	err = svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userId, userById.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
