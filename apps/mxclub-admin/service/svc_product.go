@@ -16,11 +16,15 @@ func init() {
 }
 
 type ProductService struct {
-	productRepo repo.IProductRepo
+	productRepo      repo.IProductRepo
+	productSalesRepo repo.IProductSalesRepo
 }
 
-func NewProductService(repo repo.IProductRepo) *ProductService {
-	return &ProductService{productRepo: repo}
+func NewProductService(repo repo.IProductRepo, productSalesRepo repo.IProductSalesRepo) *ProductService {
+	return &ProductService{
+		productRepo:      repo,
+		productSalesRepo: productSalesRepo,
+	}
 }
 
 // =============================================================
@@ -31,7 +35,20 @@ func (s ProductService) List(ctx jet.Ctx, params *req.ProductListReq) (*api.Page
 	if err != nil {
 		return nil, err
 	}
-	return api.WrapPageResult(pageParams, utils.CopySlice[*po.Product, *vo.ProductVO](list), count), nil
+	productVOS := utils.CopySlice[*po.Product, *vo.ProductVO](list)
+	productIds := utils.Map[*vo.ProductVO, uint64](productVOS, func(in *vo.ProductVO) uint64 {
+		return in.ID
+	})
+	// 销量
+	id2ProductSaleMap, err := s.productSalesRepo.FindByProductIds(ctx, productIds)
+	if err == nil && id2ProductSaleMap != nil && !id2ProductSaleMap.IsEmpty() {
+		utils.ForEach(productVOS, func(ele *vo.ProductVO) {
+			if productSalePO, ok := id2ProductSaleMap.Get(ele.ID); ok {
+				ele.Sale = int(productSalePO.SalesVolume)
+			}
+		})
+	}
+	return api.WrapPageResult(pageParams, productVOS, count), nil
 }
 
 func (s ProductService) Update(ctx jet.Ctx, req *req.ProductReq) error {
@@ -59,4 +76,12 @@ func (s ProductService) Add(ctx jet.Ctx, productReq *req.ProductReq) error {
 	product := utils.MustCopy[po.Product](productReq)
 	product.FinalPrice = product.Price - product.DiscountPrice
 	return s.productRepo.Add(ctx, product)
+}
+
+func (s ProductService) UpdateSales(ctx jet.Ctx, req *req.ProductSaleReq) error {
+	if err := s.productSalesRepo.ReplaceSale(ctx, req.ProductId, req.Sale); err != nil {
+		ctx.Logger().Errorf("UpdateSales failed, err:%v", err)
+		return errors.New("更新失败")
+	}
+	return nil
 }

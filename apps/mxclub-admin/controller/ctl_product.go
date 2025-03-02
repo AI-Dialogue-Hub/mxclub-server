@@ -49,3 +49,7 @@ func (ctl ProductController) DeleteV1Product0(ctx jet.Ctx, param *api.PathParam)
 func (ctl ProductController) PutV1Product(ctx jet.Ctx, req *req.ProductReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "ok", ctl.productService.Add(ctx, req))
 }
+
+func (ctl ProductController) PostV1ProductSale(ctx jet.Ctx, req *req.ProductSaleReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", ctl.productService.UpdateSales(ctx, req))
+}

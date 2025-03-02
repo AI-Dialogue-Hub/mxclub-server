@@ -22,6 +22,7 @@ type IProductSalesRepo interface {
 
 	AddOrUpdateSale(ctx jet.Ctx, productId uint, salesVolume int) (err error)
 	FindByProductIds(ctx jet.Ctx, ids []uint64) (maps.IMap[uint64, *po.ProductSale], error)
+	ReplaceSale(ctx jet.Ctx, productId uint, salesVolume int) error
 }
 
 func NewProductSalesRepo(db *gorm.DB) IProductSalesRepo {
@@ -62,4 +63,11 @@ func (repo ProductSalesRepoImpl) FindByProductIds(ctx jet.Ctx, ids []uint64) (ma
 		return ele.ID
 	})
 	return sliceToMap, nil
+}
+
+func (repo ProductSalesRepoImpl) ReplaceSale(ctx jet.Ctx, productId uint, salesVolume int) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("product_id = ?", productId)
+	update.Set("sales_volume", salesVolume)
+	return repo.UpdateByWrapper(update)
 }

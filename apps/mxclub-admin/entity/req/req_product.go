@@ -30,3 +30,8 @@ type ProductListReq struct {
 	PageSize    int64 `json:"page_size" form:"page_size" validate:"gt=0" reg_error_info:"参数有误"` // 分页大小
 	ProductType uint  `form:"product_type"`
 }
+
+type ProductSaleReq struct {
+	ProductId uint `json:"product_id"  validate:"gt=0" reg_error_info:"参数有误"`
+	Sale      int  `json:"sale"`
+}

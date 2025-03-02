@@ -16,4 +16,5 @@ type ProductVO struct {
 	DetailImages     xmysql.StringArray `json:"detail_images"`
 	Thumbnail        string             `json:"thumbnail"`
 	IsHot            bool               `json:"isHot"`
+	Sale             int                `json:"sale"`
 }
