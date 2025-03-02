@@ -60,14 +60,20 @@ func (repo ProductSalesRepoImpl) FindByProductIds(ctx jet.Ctx, ids []uint64) (ma
 		return nil, err
 	}
 	sliceToMap := utils.SliceToSingleMap[*po.ProductSale, uint64](productSales, func(ele *po.ProductSale) uint64 {
-		return ele.ID
+		return uint64(ele.ProductID)
 	})
 	return sliceToMap, nil
 }
 
-func (repo ProductSalesRepoImpl) ReplaceSale(ctx jet.Ctx, productId uint, salesVolume int) error {
-	update := xmysql.NewMysqlUpdate()
-	update.SetFilter("product_id = ?", productId)
-	update.Set("sales_volume", salesVolume)
-	return repo.UpdateByWrapper(update)
+func (repo ProductSalesRepoImpl) ReplaceSale(ctx jet.Ctx, productId uint, salesVolume int) (err error) {
+	sql := fmt.Sprintf(
+		`INSERT INTO %v (product_id, sales_volume, sale_date) VALUES (?, ?, ?) 
+            ON DUPLICATE KEY UPDATE sales_volume = VALUES(sales_volume)`, repo.ModelPO.TableName(),
+	)
+
+	if err = repo.DB().Exec(sql, productId, salesVolume, time.Now()).Error; err != nil {
+		ctx.Logger().Errorf("[ProductSales#AddOrUpdateSale]ERROR:%v", err)
+	}
+
+	return
 }
