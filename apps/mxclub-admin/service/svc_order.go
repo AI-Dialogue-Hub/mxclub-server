@@ -176,7 +176,7 @@ func (svc OrderService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int)
 func (svc OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
-	return svc.orderRepo.RemoveDasher(ctx, userPO.MemberNumber)
+	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }
 
 func (svc OrderService) RemoveTransferRecord(ctx jet.Ctx) error {

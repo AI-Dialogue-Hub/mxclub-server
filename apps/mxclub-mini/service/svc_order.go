@@ -760,5 +760,5 @@ func (svc OrderService) SyncTimeOutOrder() {
 func (svc OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userId := middleware.MustGetUserId(ctx)
 	userPO, _ := svc.userService.FindUserById(ctx, userId)
-	return svc.orderRepo.RemoveDasher(ctx, userPO.MemberNumber)
+	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }

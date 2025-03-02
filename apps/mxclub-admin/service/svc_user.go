@@ -2,11 +2,13 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
 	"mxclub/domain/event"
+	orderRepo "mxclub/domain/order/repo"
 	"mxclub/domain/user/entity/enum"
 	"mxclub/domain/user/po"
 	"mxclub/domain/user/repo"
@@ -20,11 +22,13 @@ func init() {
 }
 
 type UserService struct {
-	userRepo repo.IUserRepo
+	userRepo       repo.IUserRepo
+	orderRepo      orderRepo.IOrderRepo
+	messageService MessageService
 }
 
-func NewUserService(repo repo.IUserRepo) *UserService {
-	return &UserService{userRepo: repo}
+func NewUserService(repo repo.IUserRepo, orderRepo orderRepo.IOrderRepo, messageService MessageService) *UserService {
+	return &UserService{userRepo: repo, orderRepo: orderRepo, messageService: messageService}
 }
 
 // =============================================================
@@ -96,4 +100,32 @@ func (svc UserService) AssistantOnline(ctx jet.Ctx) []*vo.AssistantOnlineVO {
 			Name:   in.Name,
 		}
 	})
+}
+
+// RemoveDasher 移除队友
+func (svc UserService) RemoveDasher(ctx jet.Ctx, req *req.UserRemoveReq) error {
+	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, req.OrderId)
+	if err != nil {
+		return errors.New(fmt.Sprintf("订单不存在，订单Id:%v", req.OrderId))
+	}
+	for _, dasherId := range req.DasherIds {
+		if orderPO.Executor2Id == dasherId {
+			err = svc.orderRepo.RemoveDasher(ctx, req.OrderId, 2)
+			userPO, _ := svc.userRepo.FindByMemberNumber(ctx, dasherId)
+			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您已被管理员移出订单:%v", req.OrderId))
+			if err != nil {
+				ctx.Logger().Errorf("[UserService#RemoveDasher] remove failed, err:%v", err)
+				return errors.New("移除失败")
+			}
+		} else if orderPO.Executor3Id == dasherId {
+			err = svc.orderRepo.RemoveDasher(ctx, req.OrderId, 3)
+			userPO, _ := svc.userRepo.FindByMemberNumber(ctx, dasherId)
+			_ = svc.messageService.PushSystemMessage(ctx, userPO.ID, fmt.Sprintf("您已被管理员移出订单:%v", req.OrderId))
+			if err != nil {
+				ctx.Logger().Errorf("[UserService#RemoveDasher] remove failed, err:%v", err)
+				return errors.New("移除失败")
+			}
+		}
+	}
+	return nil
 }

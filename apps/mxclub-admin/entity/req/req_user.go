@@ -20,3 +20,8 @@ type UserListReq struct {
 	UserType     string `json:"role"` // 用户类型
 	MemberNumber int    `json:"memberNumber"`
 }
+
+type UserRemoveReq struct {
+	DasherIds []int `json:"dasher_ids" validate:"required" reg_err_info:"不能为空"`
+	OrderId   uint  `json:"order_id" validate:"required" reg_err_info:"不能为空"`
+}

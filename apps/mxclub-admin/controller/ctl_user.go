@@ -99,3 +99,7 @@ func (ctl UserController) DeleteV1UserDasher0(ctx jet.Ctx, param *api.PathParam)
 func (ctl UserController) GetV1AssistantOnline(ctx jet.Ctx) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, ctl.userService.AssistantOnline(ctx), nil)
 }
+
+func (ctl UserController) PostV1Dasher(ctx jet.Ctx, removeReq *req.UserRemoveReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, ctl.userService.RemoveDasher(ctx, removeReq), nil)
+}

@@ -60,10 +60,13 @@ type IOrderRepo interface {
 	ClearOrderCache(ctx jet.Ctx)
 	// FindTimeOutOrders timeout 单位秒
 	FindTimeOutOrders(timeout time.Duration) ([]*po.Order, error)
-	// RemoveDasher 移除指定打手的订单记录
+	// RemoveDasherAllOrderInfo 移除指定打手的订单记录
 	//
 	// @param id is dasherId
-	RemoveDasher(ctx jet.Ctx, dasherId int) error
+	RemoveDasherAllOrderInfo(ctx jet.Ctx, dasherId int) error
+
+	// RemoveDasher 移除订单指定打手
+	RemoveDasher(ctx jet.Ctx, orderId uint, index int) error
 }
 
 func NewOrderRepo(db *gorm.DB) IOrderRepo {
@@ -420,25 +423,38 @@ func (repo OrderRepo) UpdateOrderGrabTime(ctx jet.Ctx, ordersId uint) error {
 	return repo.UpdateByWrapper(update)
 }
 
-func (repo OrderRepo) RemoveDasher(ctx jet.Ctx, dasherId int) error {
+func (repo OrderRepo) RemoveDasherAllOrderInfo(ctx jet.Ctx, dasherId int) error {
 	// 这里可能是打手 1 2 3
 	tx := repo.DB().Begin()
 	if err := tx.Exec(`update orders set executor_id = -1 where executor_id = ?`, dasherId).Error; err != nil {
-		ctx.Logger().Errorf("[OrderRepo#RemoveDasher]ERROR, %v", err)
+		ctx.Logger().Errorf("[OrderRepo#RemoveDasherAllOrderInfo]ERROR, %v", err)
 		tx.Rollback()
 		return err
 	}
 	if err := tx.Exec(`update orders set executor2_id = -1 where executor2_id = ?`, dasherId).Error; err != nil {
-		ctx.Logger().Errorf("[OrderRepo#RemoveDasher]ERROR, %v", err)
+		ctx.Logger().Errorf("[OrderRepo#RemoveDasherAllOrderInfo]ERROR, %v", err)
 		tx.Rollback()
 		return err
 	}
 	if err := tx.Exec(`update orders set executor3_id = -1 where executor3_id = ?`, dasherId).Error; err != nil {
-		ctx.Logger().Errorf("[OrderRepo#RemoveDasher]ERROR, %v", err)
+		ctx.Logger().Errorf("[OrderRepo#RemoveDasherAllOrderInfo]ERROR, %v", err)
 		tx.Rollback()
 		return err
 	}
 	tx.Commit()
-	ctx.Logger().Infof("[OrderRepo#RemoveDasher] dasherId:%v, remove success", dasherId)
+	ctx.Logger().Infof("[OrderRepo#RemoveDasherAllOrderInfo] dasherId:%v, remove success", dasherId)
 	return nil
+}
+
+func (repo OrderRepo) RemoveDasher(ctx jet.Ctx, orderId uint, index int) error {
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("order_id = ?", orderId)
+	if index == 2 {
+		update.Set("executor2_id", -1)
+		update.Set("executor2_name", "")
+	} else if index == 3 {
+		update.Set("executor3_id", -1)
+		update.Set("executor3_name", "")
+	}
+	return repo.UpdateByWrapper(update)
 }
