@@ -24,10 +24,10 @@ func init() {
 type UserService struct {
 	userRepo       repo.IUserRepo
 	orderRepo      orderRepo.IOrderRepo
-	messageService MessageService
+	messageService *MessageService
 }
 
-func NewUserService(repo repo.IUserRepo, orderRepo orderRepo.IOrderRepo, messageService MessageService) *UserService {
+func NewUserService(repo repo.IUserRepo, orderRepo orderRepo.IOrderRepo, messageService *MessageService) *UserService {
 	return &UserService{userRepo: repo, orderRepo: orderRepo, messageService: messageService}
 }
 

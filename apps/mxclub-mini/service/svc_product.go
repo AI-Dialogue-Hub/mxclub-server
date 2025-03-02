@@ -20,12 +20,20 @@ func init() {
 }
 
 type ProductService struct {
-	productRepo repo.IProductRepo
-	userRepo    userRepo.IUserRepo
+	productRepo      repo.IProductRepo
+	userRepo         userRepo.IUserRepo
+	productSalesRepo repo.IProductSalesRepo
 }
 
-func NewProductService(repo repo.IProductRepo, userRepo userRepo.IUserRepo) *ProductService {
-	return &ProductService{productRepo: repo, userRepo: userRepo}
+func NewProductService(
+	repo repo.IProductRepo,
+	userRepo userRepo.IUserRepo,
+	productSalesRepo repo.IProductSalesRepo) *ProductService {
+	return &ProductService{
+		productRepo:      repo,
+		userRepo:         userRepo,
+		productSalesRepo: productSalesRepo,
+	}
 }
 
 func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) {
@@ -71,8 +79,9 @@ func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) 
 
 func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, error) {
 	var (
-		list []*po.Product
-		err  error
+		list   []*po.Product
+		err    error
+		userId = middleware.MustGetUserId(ctx)
 	)
 	query := xmysql.NewMysqlQuery()
 	query.SetPage(1, 1000)
@@ -83,17 +92,28 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 		query.SetFilter("type = ?", typeValue)
 	}
 	list, err = svc.productRepo.ListNoCountByQuery(query)
-	if err != nil {
-		return nil, err
+	if err != nil || list == nil || len(list) == 0 {
+		ctx.Logger().Errorf("list product failed, err:%v", err)
+		return nil, errors.New("查询失败")
 	}
 	productVOS := utils.CopySlice[*po.Product, *vo.ProductVO](list)
 	// 老板已经保存电话了，选用上一次老板保存的电话
-	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	utils.ForEach(productVOS, func(ele *vo.ProductVO) { ele.Phone = userPO.Phone })
 	if config.GetConfig().WxPayConfig.IsBaoZaoClub() {
 		sort.Slice(productVOS, func(i, j int) bool {
 			return productVOS[i].FinalPrice < productVOS[j].FinalPrice
 		})
 	}
-	return productVOS, err
+	// 查询商品的销量
+	productIds := utils.Map[*po.Product, uint64](list, func(in *po.Product) uint64 { return in.ID })
+	id2ProductMap, err := svc.productSalesRepo.FindByProductIds(ctx, productIds)
+	if err == nil && id2ProductMap != nil && !id2ProductMap.IsEmpty() {
+		utils.ForEach(productVOS, func(ele *vo.ProductVO) {
+			if value, ok := id2ProductMap.Get(uint64(ele.ID)); ok {
+				ele.SalesVolume = int(value.SalesVolume)
+			}
+		})
+	}
+	return productVOS, nil
 }

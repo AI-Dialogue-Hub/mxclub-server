@@ -13,6 +13,7 @@ import (
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
+	productRepo "mxclub/domain/product/repo"
 	userPOInfo "mxclub/domain/user/po"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
@@ -36,15 +37,16 @@ func init() {
 }
 
 type OrderService struct {
-	orderRepo      repo.IOrderRepo
-	withdrawalRepo repo.IWithdrawalRepo
-	userService    *UserService
-	productService *ProductService
-	messageService *MessageService
-	commonRepo     commonRepo.IMiniConfigRepo
-	deductionRepo  repo.IDeductionRepo
-	evaluationRepo repo.IEvaluationRepo
-	transferRepo   repo.ITransferRepo
+	orderRepo        repo.IOrderRepo
+	withdrawalRepo   repo.IWithdrawalRepo
+	userService      *UserService
+	productService   *ProductService
+	messageService   *MessageService
+	commonRepo       commonRepo.IMiniConfigRepo
+	deductionRepo    repo.IDeductionRepo
+	evaluationRepo   repo.IEvaluationRepo
+	transferRepo     repo.ITransferRepo
+	productSalesRepo productRepo.IProductSalesRepo
 }
 
 var orderService *OrderService
@@ -58,17 +60,19 @@ func NewOrderService(
 	commonRepo commonRepo.IMiniConfigRepo,
 	deductionRepo repo.IDeductionRepo,
 	evaluationRepo repo.IEvaluationRepo,
-	transferRepo repo.ITransferRepo) *OrderService {
+	transferRepo repo.ITransferRepo,
+	productSalesRepo productRepo.IProductSalesRepo) *OrderService {
 	orderService = &OrderService{
-		orderRepo:      repo,
-		withdrawalRepo: withdrawalRepo,
-		userService:    userService,
-		productService: productService,
-		messageService: messageService,
-		commonRepo:     commonRepo,
-		deductionRepo:  deductionRepo,
-		evaluationRepo: evaluationRepo,
-		transferRepo:   transferRepo,
+		orderRepo:        repo,
+		withdrawalRepo:   withdrawalRepo,
+		userService:      userService,
+		productService:   productService,
+		messageService:   messageService,
+		commonRepo:       commonRepo,
+		deductionRepo:    deductionRepo,
+		evaluationRepo:   evaluationRepo,
+		transferRepo:     transferRepo,
+		productSalesRepo: productSalesRepo,
 	}
 	return orderService
 }
@@ -98,7 +102,11 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 		dasherPO     *userPOInfo.User
 		orderTradeNo = utils.SafeParseUint64(orderPO.OrderId)
 	)
-	// 4. 如果指定订单，给打手发送接单消息
+	// 增加销量
+	if err = svc.productSalesRepo.AddOrUpdateSale(ctx, orderPO.ProductID, productRepo.Default_Sale_Volume); err != nil {
+		ctx.Logger().Errorf("[PaySuccessOrder]sales add failed, err:%v", err)
+	}
+	// 如果指定订单，给打手发送接单消息
 	if orderPO.SpecifyExecutor {
 		// 指定打手需要该打手同意
 		// 特殊编号打手

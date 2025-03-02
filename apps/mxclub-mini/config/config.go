@@ -18,7 +18,7 @@ import (
 
 var (
 	config   = new(Config)
-	confFile = flag.String("f", "./configs/dpp_server.yaml", "config file")
+	confFile = flag.String("f", "E:\\workspace\\goland\\config\\baozao-mxclub.yml", "config file")
 )
 
 func init() {

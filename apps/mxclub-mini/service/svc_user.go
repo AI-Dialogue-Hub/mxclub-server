@@ -310,7 +310,7 @@ func (svc UserService) handleRemoveDasher(ctx jet.Ctx, handleReq *req.MessageHan
 	}
 	//executorPO, _ := svc.userRepo.FindByMemberNumber(ctx, orderPO.ExecutorID)
 	//message := fmt.Sprintf("您移除打手:%v(%v)的申请已同意", userPO.MemberNumber, userPO.Name)
-	//_ = svc.messageService.PushSystemMessage(ctx, executorPO.ID, message)
+	//_ = svc.messageService.PushSystemMessage(ctx, executorPO.Id, message)
 	return nil
 }
 

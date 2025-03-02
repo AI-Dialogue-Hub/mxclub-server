@@ -30,3 +30,12 @@ func SliceToMap[T any, KEY comparable](arr []T, f func(ele T) KEY) maps.IMap[KEY
 	}
 	return linkedHashMap
 }
+
+func SliceToSingleMap[T any, KEY comparable](arr []T, f func(ele T) KEY) maps.IMap[KEY, T] {
+	linkedHashMap := maps.NewLinkedHashMap[KEY, T]()
+	for _, ele := range arr {
+		parseKey := f(ele)
+		linkedHashMap.Put(parseKey, ele)
+	}
+	return linkedHashMap
+}
