@@ -19,7 +19,7 @@ type TimeoutPenalty struct{}
 // 定义超时与罚款金额的映射
 var penaltyMap = utils.NewLinkedHashMapWithPairs[time.Duration, float64]([]*maps.Pair[time.Duration, float64]{
 	{time.Duration(0), 0},
-	{time.Minute * 10, 10}, // 超时10分钟罚款10
+	{time.Minute * 20, 10}, // 超时10分钟罚款10
 	{time.Duration(math.MaxInt64), 0},
 })
 
