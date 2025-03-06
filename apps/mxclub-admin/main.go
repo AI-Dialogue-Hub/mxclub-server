@@ -14,6 +14,7 @@ import (
 func main() {
 	jet.AddMiddleware(
 		xjet.CorsMiddleware,
+		middleware.OperatorMiddleware,
 		middleware.AuthMiddleware,
 		jet.TraceJetMiddleware,
 		jet.RecoverJetMiddleware,
