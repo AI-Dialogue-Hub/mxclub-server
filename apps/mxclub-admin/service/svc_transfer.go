@@ -34,6 +34,7 @@ func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
 func (svc OrderService) ListTransferInfo(ctx jet.Ctx, params *req.TransferListReq) ([]*vo.TransferVO, int64, error) {
 	query := new(xmysql.MysqlQuery)
 	query.SetPage(params.Page, params.PageSize)
+	query.SetSort("id desc")
 	if params.Status >= 0 {
 		query.SetFilter("status = ?", params.Status)
 	}

@@ -14,6 +14,7 @@ var (
 	SellingPoint     MiniConfigEnum = "SellingPoint"          // 滚动卖点
 	WithdrawRangeMin MiniConfigEnum = "WithdrawRangeMin"      // 滚动卖点
 	WithdrawRangeMax MiniConfigEnum = "WithdrawRangeMax"      // 滚动卖点
+	SalesThreshold   MiniConfigEnum = "sales_threshold"       // 出销量热门标阈值
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -28,6 +29,7 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	SellingPoint:     "滚动卖点",
 	WithdrawRangeMin: "最小提现阈值",
 	WithdrawRangeMax: "最大提现阈值",
+	SalesThreshold:   "出销量热门标阈值",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
