@@ -41,14 +41,14 @@ func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) 
 	productPO, err := svc.productRepo.FindByID(id)
 	if err != nil {
 		ctx.Logger().Errorf("cannot find product, productId is:%v", id)
-		return nil, errors.New("查找商品出错，请联系客服")
+		return nil, errors.New("查找商品出错或商品已下架，请联系客服")
 	}
 
 	// 复制 productPO 到 productVO
 	productVO, err := utils.Copy[vo.ProductVO](productPO)
 	if err != nil {
 		ctx.Logger().Errorf("cannot copy product, productId is:%v", id)
-		return nil, errors.New("查找商品出错，请联系客服")
+		return nil, errors.New("查找商品出错或商品已下架，请联系客服")
 	}
 
 	// 拼接 Description 字段

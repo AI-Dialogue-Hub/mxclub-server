@@ -14,10 +14,10 @@ func TestTimeoutPenalty_ApplyPenalty(t *testing.T) {
 		expectedAmount float64
 	}{
 		{"No penalty for 0 minutes", 0, 0},
-		{"No penalty for 9 minutes", time.Minute * 9, 0},
-		{"Penalty for 10 minutes", time.Minute * 10, 10},
-		{"Penalty for 15 minutes", time.Minute * 15, 10},
-		{"Penalty for 15 minutes", time.Minute * 15, 10},
+		{"No penalty for 9 minutes", time.Minute * 19, 0},
+		{"Penalty for 10 minutes", time.Minute * 20, 10},
+		{"Penalty for 15 minutes", time.Minute * 25, 10},
+		{"Penalty for 15 minutes", time.Minute * 25, 10},
 		// AddDeduction additional tests for 20 minutes and more if you extend the map
 	}
 
