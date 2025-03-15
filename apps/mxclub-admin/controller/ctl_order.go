@@ -7,7 +7,6 @@ import (
 	"mxclub/apps/mxclub-admin/service"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
-	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -43,12 +42,6 @@ func (ctl OrderController) DeleteV1Order0(ctx jet.Ctx, param *api.PathParam) (*a
 func (ctl OrderController) PostV1Order(ctx jet.Ctx, param *vo.OrderVO) (*api.Response, error) {
 	err := ctl.orderService.UpdateOrder(ctx, param)
 	return xjet.WrapperResult(ctx, "ok", err)
-}
-
-func (ctl OrderController) PostV1OrderTransfer0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
-	orderId, _ := param.GetInt64(0)
-	err := ctl.orderService.ClearAllDasherInfo(ctx, utils.ParseUint(orderId))
-	return xjet.WrapperResult(ctx, "转单成功，订单已回到订单中心", err)
 }
 
 // 提现相关
