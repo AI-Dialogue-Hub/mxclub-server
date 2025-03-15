@@ -53,7 +53,7 @@ func (svc OrderService) ListTransferInfo(ctx jet.Ctx, params *req.TransferListRe
 		var p2Name string
 		if transferPO.ExecutorTo >= 0 {
 			p2, e2 := svc.userRepo.FindByMemberNumber(ctx, transferPO.ExecutorTo)
-			if e2 != nil && p2 != nil {
+			if e2 == nil && p2 != nil {
 				p2Name = p2.Name
 			}
 		}

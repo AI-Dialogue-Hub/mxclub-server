@@ -214,8 +214,9 @@ func (svc UserService) HandleMessage(ctx jet.Ctx, handleReq *req.MessageHandleRe
 	case 101:
 		// 订单进行中 移除队友操作 ext为打手编号
 		memberNumber := utils.ParseInt(handleReq.Ext)
+		orderPO, _ := svc.orderRepo.FindByOrderOrOrdersId(ctx, handleReq.OrdersId)
 		if userPO, err := svc.userRepo.FindByMemberNumber(ctx, memberNumber); err == nil {
-			message := fmt.Sprintf("您将被移除在进行中的订单，订单id:%v", handleReq.OrdersId)
+			message := fmt.Sprintf("您将被移除在进行中的订单，订单id:%v, d_id为:%v", orderPO.OrderId, orderPO.ID)
 			_ = svc.messageService.PushRemoveMessage(ctx, handleReq.OrdersId, userPO.ID, message)
 		}
 	case 201:

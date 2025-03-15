@@ -23,7 +23,7 @@ func DebounceForOneDay(key string) error {
 // @param duration 过期时间
 func Debounce(key string, duration time.Duration) error {
 	defer utils.RecoverByPrefixNoCtx("Debounce")
-	ok, err := cli.SetNX(key, fmt.Sprintf("%v_%v_%v", "debouce", key, time.Now()), duration)
+	ok, err := cli.SetNX(key, fmt.Sprintf("%v_%v", "debounce", key), duration)
 	if err != nil {
 		return fmt.Errorf("error setting debounce key: %w", err)
 	}
