@@ -107,16 +107,18 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 		return
 	}
 
+	var applyPenaltyMessage = fmt.Sprintf("%v,评论:%v", applyPenalty.Reason, evaluation.Comments)
+
 	err = svc.deductionRepo.InsertOne(&po.Deduction{
 		UserID:          dasherPO.ID,
 		DasherId:        dasherPO.MemberNumber,
 		ConfirmPersonId: 0,
 		Amount:          applyPenalty.PenaltyAmount,
-		Reason:          applyPenalty.Reason,
+		Reason:          applyPenaltyMessage,
 		Status:          enum.Deduct_PENDING,
 	})
 
-	_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, applyPenalty.Message)
+	_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, applyPenaltyMessage)
 
 	if err != nil {
 		logger.Errorf("deduction insert ERROR: %v", err)
