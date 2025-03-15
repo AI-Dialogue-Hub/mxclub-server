@@ -73,6 +73,7 @@ func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.Page
 	if orderReq.ExecutorId > 0 {
 		executorId = orderReq.ExecutorId
 	}
+	// 1. 订单数据
 	list, count, err := svc.orderRepo.ListAroundCache(
 		ctx, orderReq.PageParams, orderReq.Ge, orderReq.Le, status, orderId, executorId)
 	if err != nil {
@@ -83,6 +84,21 @@ func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.Page
 	utils.ForEach(orderVOS, func(vo *vo.OrderVO) {
 		vo.OrderStatusStr = vo.OrderStatus.String()
 	})
+	// 2. 评论数据
+	orderIdList := utils.Map[*vo.OrderVO, uint64](orderVOS, func(in *vo.OrderVO) uint64 { return in.OrderId })
+	orderId2EvaluationMap, err := svc.evaluationRepo.FindByOrderList(ctx, orderIdList)
+	if err != nil && orderId2EvaluationMap != nil && !orderId2EvaluationMap.IsEmpty() {
+		for _, orderVO := range orderVOS {
+			if evaluationPO, ok := orderId2EvaluationMap.Get(orderVO.OrderId); ok {
+				evaluationVO := utils.CopySlice[*po.OrderEvaluation, *vo.EvaluationVO](evaluationPO)
+				dasherId2EvaluationMap := utils.SliceToSingleMap[*vo.EvaluationVO, int](evaluationVO,
+					func(ele *vo.EvaluationVO) int {
+						return ele.ExecutorID
+					})
+				orderVO.EvaluationInfo = dasherId2EvaluationMap
+			}
+		}
+	}
 	return api.WrapPageResult(orderReq.PageParams, orderVOS, count), nil
 }
 
