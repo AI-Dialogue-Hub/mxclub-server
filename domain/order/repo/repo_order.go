@@ -146,7 +146,6 @@ func (repo OrderRepo) ListAroundCache(
 
 	if executorId > 0 {
 		query.SetFilter("executor_id = ? or executor2_id = ? or executor3_id = ?", executorId, executorId, executorId)
-		return repo.ListByWrapper(ctx, query)
 	}
 
 	query.SetPage(params.Page, params.PageSize)
