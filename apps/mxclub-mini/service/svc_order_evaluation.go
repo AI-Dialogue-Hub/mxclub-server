@@ -27,7 +27,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 
 	evaluation1 := &po.OrderEvaluation{
 		OrdersID:   evaluationReq.OrdersID,
-		OrderID:    evaluationReq.OrderID,
+		OrderID:    uint64(evaluationReq.OrderID),
 		ExecutorID: evaluationReq.ExecutorID,
 		Rating:     evaluationReq.Rating,
 		Comments:   evaluationReq.Comments,
@@ -39,7 +39,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 	if evaluationReq.Executor2ID >= 0 && evaluationReq.Rating2 > 0 {
 		evaluation2 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
-			OrderID:    evaluationReq.OrderID,
+			OrderID:    uint64(evaluationReq.OrderID),
 			ExecutorID: evaluationReq.Executor2ID,
 			Rating:     evaluationReq.Rating2,
 			Comments:   evaluationReq.Comments2,
@@ -50,7 +50,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 	if evaluationReq.Executor3ID >= 0 && evaluationReq.Rating3 > 0 {
 		evaluation3 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
-			OrderID:    evaluationReq.OrderID,
+			OrderID:    uint64(evaluationReq.OrderID),
 			ExecutorID: evaluationReq.Executor3ID,
 			Rating:     evaluationReq.Rating3,
 			Comments:   evaluationReq.Comments3,
@@ -100,7 +100,7 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 		return
 	}
 
-	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: orderNo, Rating: rating})
+	applyPenalty, err := penaltyStrategy.ApplyPenalty(&penalty.PenaltyReq{OrdersId: uint(orderNo), Rating: rating})
 
 	if err != nil || applyPenalty.PenaltyAmount <= 0 {
 		logger.Errorf("fetch penaltyRule ERROR: %v, applyPenalty: %v", err, utils.ObjToJsonStr(applyPenalty))

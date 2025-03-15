@@ -87,15 +87,19 @@ func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.Page
 	// 2. 评论数据
 	orderIdList := utils.Map[*vo.OrderVO, uint64](orderVOS, func(in *vo.OrderVO) uint64 { return in.OrderId })
 	orderId2EvaluationMap, err := svc.evaluationRepo.FindByOrderList(ctx, orderIdList)
-	if err != nil && orderId2EvaluationMap != nil && !orderId2EvaluationMap.IsEmpty() {
+	if err == nil && orderId2EvaluationMap != nil && len(orderId2EvaluationMap) > 0 {
 		for _, orderVO := range orderVOS {
-			if evaluationPO, ok := orderId2EvaluationMap.Get(orderVO.OrderId); ok {
-				evaluationVO := utils.CopySlice[*po.OrderEvaluation, *vo.EvaluationVO](evaluationPO)
-				dasherId2EvaluationMap := utils.SliceToSingleMap[*vo.EvaluationVO, int](evaluationVO,
-					func(ele *vo.EvaluationVO) int {
-						return ele.ExecutorID
-					})
-				orderVO.EvaluationInfo = dasherId2EvaluationMap
+			if evaluationPOs, ok := orderId2EvaluationMap[orderVO.OrderId]; ok {
+				evaluationVOs := utils.CopySlice[*po.OrderEvaluation, *vo.EvaluationVO](evaluationPOs)
+				m := make(map[int]*vo.EvaluationVO)
+				for _, evaluationVO := range evaluationVOs {
+					if evaluationVO.ExecutorID <= 0 && evaluationVO.Rating <= 0 {
+						ctx.Logger().Errorf("invalid evaluation => %v", utils.ObjToJsonStr(evaluationVO))
+						continue
+					}
+					m[evaluationVO.ExecutorID] = evaluationVO
+				}
+				orderVO.EvaluationInfo = m
 			}
 		}
 	}

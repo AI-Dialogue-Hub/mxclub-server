@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
 	"mxclub/domain/order/po"
@@ -17,7 +16,7 @@ type IEvaluationRepo interface {
 	xmysql.IBaseRepo[po.OrderEvaluation]
 	FindStaring(ctx jet.Ctx, dasherId int) (float64, error)
 	RemoveEvaluation(ctx jet.Ctx, dasherId int) error
-	FindByOrderList(ctx jet.Ctx, orderList []uint64) (maps.IMap[uint64, []*po.OrderEvaluation], error)
+	FindByOrderList(ctx jet.Ctx, orderList []uint64) (map[uint64][]*po.OrderEvaluation, error)
 }
 
 func NewEvaluationRepo(db *gorm.DB) IEvaluationRepo {
@@ -67,7 +66,7 @@ func (repo EvaluationRepo) RemoveEvaluation(ctx jet.Ctx, dasherId int) error {
 	return repo.Remove("executor_id = ?", dasherId)
 }
 
-func (repo EvaluationRepo) FindByOrderList(ctx jet.Ctx, orderList []uint64) (maps.IMap[uint64, []*po.OrderEvaluation], error) {
+func (repo EvaluationRepo) FindByOrderList(ctx jet.Ctx, orderList []uint64) (map[uint64][]*po.OrderEvaluation, error) {
 	queryWrapper := xmysql.NewMysqlQuery()
 	queryWrapper.SetFilter("order_id in (?)", orderList)
 	evaluationPOList, err := repo.ListNoCountByQuery(queryWrapper)
@@ -75,17 +74,17 @@ func (repo EvaluationRepo) FindByOrderList(ctx jet.Ctx, orderList []uint64) (map
 		ctx.Logger().Errorf("cannot find evaluation by orderIds => %v", orderList)
 		return nil, err
 	}
-	orderId2EvaluationPOMap := maps.NewHashMap[uint64, []*po.OrderEvaluation]()
+	orderId2EvaluationPOMap := make(map[uint64][]*po.OrderEvaluation)
 	for _, evaluationPO := range evaluationPOList {
 		var orderId = evaluationPO.OrderID
-		if orderId2EvaluationPOMap.ContainsKey(orderId) {
-			evaluations := orderId2EvaluationPOMap.MustGet(orderId)
+		if _, ok := orderId2EvaluationPOMap[orderId]; ok {
+			evaluations, _ := orderId2EvaluationPOMap[orderId]
 			evaluations = append(evaluationPOList, evaluationPO)
-			orderId2EvaluationPOMap.Put(orderId, evaluations)
+			orderId2EvaluationPOMap[orderId] = evaluations
 		} else {
 			evaluations := make([]*po.OrderEvaluation, 1)
 			evaluations = append(evaluations, evaluationPO)
-			orderId2EvaluationPOMap.Put(evaluationPO.OrderID, evaluations)
+			orderId2EvaluationPOMap[orderId] = evaluations
 		}
 	}
 	return orderId2EvaluationPOMap, nil
