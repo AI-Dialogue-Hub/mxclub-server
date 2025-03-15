@@ -16,6 +16,7 @@ type OrderListReq struct {
 type WitchDrawListReq struct {
 	*api.PageParams
 	WithdrawalStatus string `json:"withdrawal_status"`
+	DasherId         int    `json:"dasher_id"`
 }
 
 type WitchDrawUpdateReq struct {

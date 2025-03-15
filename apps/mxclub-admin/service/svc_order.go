@@ -112,6 +112,9 @@ func (svc OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) 
 	if params.WithdrawalStatus != "" && params.WithdrawalStatus != "ALL" {
 		query.SetFilter("withdrawal_status = ?", params.WithdrawalStatus)
 	}
+	if params.DasherId >= 0 {
+		query.SetFilter("dasher_id = ?", params.DasherId)
+	}
 	records, count, err := svc.withdrawRepo.ListByWrapper(ctx, query)
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]ListWithdraw ERROR:%v", err.Error())
