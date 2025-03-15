@@ -24,7 +24,7 @@ func NewMiniConfigController(miniConfigService *service.MiniConfigService) jet.C
 	})
 }
 
-func (ctl MiniConfigController) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
+func (ctr MiniConfigController) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.Response, error) {
 	if args == nil || xjet.IsAnyEmpty(args.CmdArgs...) {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "configName is empty")
 	}
@@ -32,10 +32,15 @@ func (ctl MiniConfigController) GetV1Config0(ctx jet.Ctx, args *jet.Args) (*api.
 	if enum.MiniConfigEnum(configName).IsNotValid() {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "config type is not valid")
 	}
-	result, err := ctl.miniConfigService.GetConfigByName(ctx, configName)
+	result, err := ctr.miniConfigService.GetConfigByName(ctx, configName)
 	return xjet.WrapperResult(ctx, result, err)
 }
 
 func (ctr MiniConfigController) GetV1ProductSellingpoint(ctx jet.Ctx) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, ctr.miniConfigService.FetchSellingPoints(ctx), nil)
+}
+
+func (ctr MiniConfigController) GetV1ConfigList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	list, count, err := ctr.miniConfigService.List(ctx, params)
+	return xjet.WrapperResult(ctx, api.WrapPageResult(params, list, count), err)
 }
