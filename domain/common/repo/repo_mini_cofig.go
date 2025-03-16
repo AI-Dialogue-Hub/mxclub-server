@@ -84,14 +84,15 @@ func (repo MiniConfigRepo) ListAroundCache(ctx jet.Ctx, params *api.PageParams) 
 	cacheListKey := xredis.BuildListDataCacheKey(configCachePrefix, params)
 	cacheCountKey := xredis.BuildListCountCacheKey(configListCachePrefix)
 
-	list, count, err := xredis.GetListOrDefault[po.MiniConfig](ctx, cacheListKey, cacheCountKey, func() ([]*po.MiniConfig, int64, error) {
-		// 如果缓存中未找到，则从数据库中获取
-		list, count, err := repo.List(params.Page, params.PageSize, "config_name != ?", "swiper")
-		if err != nil {
-			return nil, 0, err
-		}
-		return list, count, nil
-	})
+	list, count, err := xredis.GetListOrDefault[po.MiniConfig](
+		ctx, cacheListKey, cacheCountKey, func() ([]*po.MiniConfig, int64, error) {
+			// 如果缓存中未找到，则从数据库中获取
+			list, count, err := repo.List(params.Page, params.PageSize, "config_name != ?", "swiper")
+			if err != nil {
+				return nil, 0, err
+			}
+			return list, count, nil
+		})
 	if err != nil {
 		ctx.Logger().Errorf("ListAroundCache 错误: %v", err)
 		return nil, 0, err

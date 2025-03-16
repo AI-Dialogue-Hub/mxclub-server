@@ -1,13 +1,13 @@
 package service
 
 import (
-	"github.com/fengyuan-liang/GoKit/collection/stream"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/domain/common/entity/enum"
 	"mxclub/domain/common/po"
 	"mxclub/domain/common/repo"
 	"mxclub/pkg/api"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -57,15 +57,13 @@ func (svc MiniConfigService) List(ctx jet.Ctx, params *api.PageParams) ([]*vo.Mi
 	if err != nil {
 		return nil, 0, err
 	}
-	collect := stream.Of[*po.MiniConfig, *vo.MiniConfigVO](list).
-		Map(func(ele *po.MiniConfig) *vo.MiniConfigVO {
-			return &vo.MiniConfigVO{
-				ID:          ele.ID,
-				ConfigName:  ele.ConfigName,
-				DisPlayName: enum.MiniConfigEnum(ele.ConfigName).DisPlayName(),
-				Content:     ele.Content,
-			}
-		}).
-		CollectToSlice()
+	collect := utils.Map[*po.MiniConfig, *vo.MiniConfigVO](list, func(ele *po.MiniConfig) *vo.MiniConfigVO {
+		return &vo.MiniConfigVO{
+			ID:          ele.ID,
+			ConfigName:  ele.ConfigName,
+			DisPlayName: enum.MiniConfigEnum(ele.ConfigName).DisPlayName(),
+			Content:     ele.Content,
+		}
+	})
 	return collect, count, nil
 }

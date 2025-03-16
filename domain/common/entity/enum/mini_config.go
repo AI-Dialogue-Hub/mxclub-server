@@ -16,6 +16,7 @@ var (
 	WithdrawRangeMax    MiniConfigEnum = "WithdrawRangeMax"       // 滚动卖点
 	SalesThreshold      MiniConfigEnum = "sales_threshold"        // 出销量热门标阈值
 	PayOrderWarningInfo MiniConfigEnum = "pay_order_warning_info" // 订单页面warning信息
+	OrderReward         MiniConfigEnum = "order_reward"           // 打赏金额
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -31,7 +32,8 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	WithdrawRangeMin:    "最小提现阈值",
 	WithdrawRangeMax:    "最大提现阈值",
 	SalesThreshold:      "出销量热门标阈值",
-	PayOrderWarningInfo: "出销量热门标阈值",
+	PayOrderWarningInfo: "订单页面warning信息",
+	OrderReward:         "打赏金额(直接输入数字不要带单位)",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
