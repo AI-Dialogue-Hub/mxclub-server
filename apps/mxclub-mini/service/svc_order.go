@@ -47,6 +47,7 @@ type OrderService struct {
 	evaluationRepo   repo.IEvaluationRepo
 	transferRepo     repo.ITransferRepo
 	productSalesRepo productRepo.IProductSalesRepo
+	rewardRecordRepo repo.IRewardRecordRepo
 }
 
 var orderService *OrderService
@@ -61,7 +62,8 @@ func NewOrderService(
 	deductionRepo repo.IDeductionRepo,
 	evaluationRepo repo.IEvaluationRepo,
 	transferRepo repo.ITransferRepo,
-	productSalesRepo productRepo.IProductSalesRepo) *OrderService {
+	productSalesRepo productRepo.IProductSalesRepo,
+	rewardRecordRepo repo.IRewardRecordRepo) *OrderService {
 	orderService = &OrderService{
 		orderRepo:        repo,
 		withdrawalRepo:   withdrawalRepo,
@@ -73,6 +75,7 @@ func NewOrderService(
 		evaluationRepo:   evaluationRepo,
 		transferRepo:     transferRepo,
 		productSalesRepo: productSalesRepo,
+		rewardRecordRepo: rewardRecordRepo,
 	}
 	return orderService
 }
@@ -527,25 +530,31 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		withdrawnAmount         float64
 		orderWithdrawAbleAmount float64
 		totalDeduct             float64
+		rewardAmount            float64 // 打赏的钱
 		wg                      = new(sync.WaitGroup)
 	)
 
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
+		defer utils.RecoverAndLogError(ctx)
 		defer wg.Done()
 		// 提现成功的钱
 		approveWithdrawnAmount, _ = svc.withdrawalRepo.ApproveWithdrawnAmount(ctx, userById.MemberNumber)
 		// 四舍五入
 		approveWithdrawnAmount = utils.RoundToTwoDecimalPlaces(approveWithdrawnAmount)
 	}()
+
 	go func() {
+		defer utils.RecoverAndLogError(ctx)
 		defer wg.Done()
 		// 用户发起提现的钱，包括未提现和提现成功的
 		withdrawnAmount, _ = svc.withdrawalRepo.WithdrawnAmountNotReject(ctx, userById.MemberNumber)
 		withdrawnAmount = utils.RoundToTwoDecimalPlaces(withdrawnAmount)
 	}()
+
 	go func() {
+		defer utils.RecoverAndLogError(ctx)
 		defer wg.Done()
 		// 订单中能提现的钱
 		orderWithdrawAbleAmount, _ = svc.orderRepo.OrderWithdrawAbleAmount(ctx, userById.MemberNumber)
@@ -553,16 +562,27 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	}()
 
 	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		defer wg.Done()
+		rewardAmount, _ = svc.rewardRecordRepo.AllRewardAmountByDasherId(ctx, userById.ID)
+		rewardAmount = utils.RoundToTwoDecimalPlaces(rewardAmount)
+	}()
+
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
 		defer wg.Done()
 		// 罚款的钱
 		totalDeduct, _ = svc.deductionRepo.TotalDeduct(ctx, userId)
+		totalDeduct = utils.RoundToTwoDecimalPlaces(totalDeduct)
 	}()
 
 	wg.Wait()
 
 	ctx.Logger().Infof(
-		"dashId:%v, approveWithdrawnAmount:%v, withdrawnAmount:%v, orderWithdrawAbleAmount:%v,totalDeduct:%v",
-		userById.MemberNumber, approveWithdrawnAmount, withdrawnAmount, orderWithdrawAbleAmount, totalDeduct,
+		"dashId:%v, approveWithdrawnAmount:%v, "+
+			"withdrawnAmount:%v, orderWithdrawAbleAmount:%v,totalDeduct:%v, rewardAmount:%v",
+		userById.MemberNumber, approveWithdrawnAmount,
+		withdrawnAmount, orderWithdrawAbleAmount, totalDeduct, rewardAmount,
 	)
 
 	if approveWithdrawnAmount > orderWithdrawAbleAmount {
@@ -574,9 +594,12 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	}
 	minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
 
+	// 能提现的钱
+	withdrawAbleAmount := orderWithdrawAbleAmount + rewardAmount - withdrawnAmount - totalDeduct
+
 	return &vo.WithDrawVO{
 		HistoryWithDrawAmount: utils.RoundToTwoDecimalPlaces(approveWithdrawnAmount),
-		WithdrawAbleAmount:    utils.RoundToTwoDecimalPlaces(orderWithdrawAbleAmount - withdrawnAmount - totalDeduct),
+		WithdrawAbleAmount:    utils.RoundToTwoDecimalPlaces(withdrawAbleAmount),
 		WithdrawRangeMax:      float64(maxRangeNum),
 		WithdrawRangeMin:      float64(minRangeNum),
 	}, nil

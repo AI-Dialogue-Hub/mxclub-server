@@ -11,6 +11,7 @@ type WxPayConfig struct {
 	PayName                    string `yaml:"pay_name"`              // 是哪个小程序在使用
 	CallBackURL                string `yaml:"call_back_url"`         // 支付回调接口
 	RefundsCallBackURL         string `yaml:"refunds_call_back_url"` // 退款回调接口
+	RewardCallBackURL          string `yaml:"reward_call_back_url"`  // 打赏支付支付回调接口
 }
 
 func (c *WxPayConfig) IsBaoZaoClub() bool {

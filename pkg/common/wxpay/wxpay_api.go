@@ -20,13 +20,33 @@ import (
 )
 
 func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
-	outTradeNo := prePayRequestDTO.OutTradeNo
 	var desc string
 	if wxPayConfig.IsBaoZaoClub() {
 		desc = "暴躁电竞-代打订单"
 	} else {
 		desc = "明星电竞-代打订单"
 	}
+	return prepayWithDesc(ctx, prePayRequestDTO, desc, wxPayConfig.CallBackURL)
+}
+
+// PrepayWithReward 打赏使用
+func PrepayWithReward(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
+	var desc string
+	if wxPayConfig.IsBaoZaoClub() {
+		desc = "暴躁电竞-打赏订单"
+	} else {
+		desc = "明星电竞-打赏订单"
+	}
+	return prepayWithDesc(ctx, prePayRequestDTO, desc, wxPayConfig.RewardCallBackURL)
+}
+
+func prepayWithDesc(
+	ctx jet.Ctx,
+	prePayRequestDTO *prepayRequestDTO,
+	desc string,
+	callbackURL string) (prepayDTO *PrePayDTO, err error) {
+
+	outTradeNo := prePayRequestDTO.OutTradeNo
 	request := jsapi.PrepayRequest{
 		Appid:         core.String(wxPayConfig.AppId),
 		Mchid:         core.String(wxPayConfig.MchID),
@@ -34,7 +54,7 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 		OutTradeNo:    core.String(outTradeNo),
 		TimeExpire:    core.Time(time.Now().Add(time.Minute * 15)),
 		Attach:        core.String("自定义数据说明"),
-		NotifyUrl:     core.String(wxPayConfig.CallBackURL),
+		NotifyUrl:     core.String(callbackURL),
 		GoodsTag:      core.String("MX"),
 		SupportFapiao: core.Bool(false),
 		Amount: &jsapi.Amount{

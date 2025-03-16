@@ -97,8 +97,10 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 		}
 	}
 
+	callbackInfo, err := s.wxpayCallbackRepo.FindByTraceNo(*transaction.OutTradeNo)
+
 	// 幂等保护
-	if callbackInfo, err := s.wxpayCallbackRepo.FindByTraceNo(*transaction.OutTradeNo); err == nil && callbackInfo != nil && callbackInfo.ID > 0 {
+	if err == nil && callbackInfo != nil && callbackInfo.ID > 0 {
 		ctx.Logger().Errorf("duplicate callback, %v", utils.ObjToJsonStr(*transaction))
 		return
 	}
