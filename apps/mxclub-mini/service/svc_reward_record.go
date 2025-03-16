@@ -77,7 +77,8 @@ func (svc RewardRecordService) AddByRewardStatus(
 	err = svc.rewardRecordRepo.InsertOne(rewardPO)
 
 	if err != nil {
-		logger.Errorf("[AddByRewardStatus] add record failed, record info:%v", utils.ObjToJsonStr(rewardPO))
+		logger.Errorf("[AddByRewardStatus] add record failed, err:%v record info:%v",
+			err, utils.ObjToJsonStr(rewardPO))
 		return nil, fmt.Errorf("打赏失败, 请联系客服")
 	}
 

@@ -41,7 +41,7 @@ func (ctl RewardController) PostV1RewardPrepay(ctx jet.Ctx, req *req.RewardPrepa
 
 // ======= 回调 =========
 
-func (ctl RewardController) GetV1RewardWxpayNotify(
+func (ctl RewardController) GetRewardWxpayNotify(
 	ctx jet.Ctx,
 	params *maps.LinkedHashMap[string, any]) (*api.Response, error) {
 
@@ -50,7 +50,7 @@ func (ctl RewardController) GetV1RewardWxpayNotify(
 	return xjet.WrapperResult(ctx, "ok", nil)
 }
 
-func (ctl RewardController) PostV1RewardWxpayNotify(
+func (ctl RewardController) PostRewardWxpayNotify(
 	ctx jet.Ctx,
 	params *maps.LinkedHashMap[string, any]) (*api.Response, error) {
 

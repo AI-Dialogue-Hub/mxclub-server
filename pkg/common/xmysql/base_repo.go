@@ -192,6 +192,7 @@ func (r *BaseRepo[T]) ListNoCountByQuery(query *MysqlQuery) ([]*T, error) {
 	var err error
 	err = r.db.Model(r.ModelPO).WithContext(r.Ctx).
 		Where(query.Query, query.Args...).
+		Where("deleted_at IS NULL").
 		Offset(query.Offset).
 		Order(query.Sort).
 		Limit(query.Limit).
