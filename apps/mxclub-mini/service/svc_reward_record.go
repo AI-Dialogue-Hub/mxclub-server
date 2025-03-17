@@ -24,11 +24,13 @@ func init() {
 func NewRewardRecordService(
 	rewardRecordRepo repo.IRewardRecordRepo,
 	userRepo userRepo.IUserRepo,
-	wxpayCallbackRepo repo.IWxPayCallbackRepo) *RewardRecordService {
+	wxpayCallbackRepo repo.IWxPayCallbackRepo,
+	messageService *MessageService) *RewardRecordService {
 	return &RewardRecordService{
 		rewardRecordRepo:  rewardRecordRepo,
 		userRepo:          userRepo,
 		wxpayCallbackRepo: wxpayCallbackRepo,
+		messageService:    messageService,
 	}
 }
 
@@ -36,6 +38,7 @@ type RewardRecordService struct {
 	rewardRecordRepo  repo.IRewardRecordRepo
 	userRepo          userRepo.IUserRepo
 	wxpayCallbackRepo repo.IWxPayCallbackRepo
+	messageService    *MessageService
 }
 
 // ============================================================================
@@ -122,7 +125,9 @@ func (svc RewardRecordService) WxpayNofity(ctx jet.Ctx, params *maps.LinkedHashM
 		}
 	}
 
-	callbackInfo, err := svc.wxpayCallbackRepo.FindByTraceNo(*transaction.OutTradeNo)
+	var outTradeNo = *transaction.OutTradeNo
+
+	callbackInfo, err := svc.wxpayCallbackRepo.FindByTraceNo(outTradeNo)
 
 	// 幂等保护
 	if err == nil && callbackInfo != nil && callbackInfo.ID > 0 {
@@ -130,9 +135,28 @@ func (svc RewardRecordService) WxpayNofity(ctx jet.Ctx, params *maps.LinkedHashM
 		return
 	}
 
-	// 修改订单状态为支付成功
-	_ = svc.PaySuccessOrder(ctx, *transaction.OutTradeNo)
+	// 2. 修改订单状态为支付成功
+	_ = svc.PaySuccessOrder(ctx, outTradeNo)
+	// 提示打手已经打赏了
+	rewardPO, err := svc.rewardRecordRepo.FindByOutTradeNo(ctx, outTradeNo)
 
+	if err == nil {
+		// 2.1 给打手发消息
+		_ = svc.messageService.PushSystemMessage(ctx, rewardPO.DasherNumber,
+			fmt.Sprintf("打手您好，您的订单:%v 里老板为您进行打赏，打赏金额为:%v元",
+				rewardPO.OrderID, utils.RoundToTwoDecimalPlaces(rewardPO.RewardAmount)),
+		)
+		// 2.2 给老板发消息
+		_ = svc.messageService.PushSystemMessage(ctx, rewardPO.PurchaserID,
+			fmt.Sprintf("老板您好，您的订单:%v，打赏打手%v(%v)已成功，打赏金额为:%v元",
+				rewardPO.OrderID, rewardPO.DasherID,
+				rewardPO.DasherName, utils.RoundToTwoDecimalPlaces(rewardPO.RewardAmount)),
+		)
+	} else {
+		ctx.Logger().Errorf("FindByOutTradeNo error, outTradeNo:%v", outTradeNo)
+	}
+
+	// 3. 保存回调数据
 	objToMap := utils.ObjToMap(*transaction)
 	err = svc.wxpayCallbackRepo.InsertOne(&po.WxPayCallback{
 		OutTradeNo: *transaction.OutTradeNo,

@@ -76,6 +76,7 @@ func TestRoundToDecimalPlaces(t *testing.T) {
 		{250.39999999999998, 2, 250.4},
 		{5275.13, 2, 5275.13},
 		{3.1415926535, 2, 3.14},
+		{0.12, 2, 0.12},
 	}
 
 	for _, test := range tests {

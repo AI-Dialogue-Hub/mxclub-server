@@ -8,7 +8,7 @@ import (
 type RewardVO struct {
 	ID           uint             `gorm:"primaryKey;autoIncrement:true" json:"id"`           // 自增主键
 	PurchaserID  uint             `gorm:"not null" json:"purchaser_id"`                      // 购买人的ID
-	OrderID      int              `gorm:"uniqueIndex:idx_order_id;not null" json:"order_id"` // 打赏订单Id
+	OrderID      string           `gorm:"uniqueIndex:idx_order_id;not null" json:"order_id"` // 打赏订单Id
 	DasherID     int              `gorm:"not null" json:"dasher_id"`                         // 打手的ID
 	DasherNumber uint             `gorm:"not null" json:"dasher_number"`                     // 打手db id
 	DasherName   string           `gorm:"size:50;not null" json:"dasher_name"`               // 打手name

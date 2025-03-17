@@ -16,6 +16,7 @@ func init() {
 type IRewardRecordRepo interface {
 	xmysql.IBaseRepo[po.RewardRecord]
 	FindByOrderIdAndDasherNumber(ctx jet.Ctx, orderId string, dasherDBId uint) (*po.RewardRecord, error)
+	FindByOutTradeNo(ctx jet.Ctx, outTradeNo string) (*po.RewardRecord, error)
 	ExistByOrderIdAndDasherNumber(ctx jet.Ctx, orderId string, dasherDBId uint) bool
 	UpdateRewardStatus(ctx jet.Ctx, outTradeNo string, status enum.OrderStatus) error
 	// AllRewardAmountByDasherId 查询所有打赏的钱，使用db id进行定位
@@ -37,6 +38,7 @@ type RewardRepoImpl struct {
 // ====================================================================
 
 const (
+	// 通过用户db id查询所有打赏记录
 	sqlAllRewardAmountByDasherId = `SELECT IFNULL(SUM(reward_amount), 0) AS rewardAmount 
                                        FROM reward_records 
                                        WHERE dasher_number = ? AND deleted_at IS NULL`
@@ -78,4 +80,8 @@ func (repo RewardRepoImpl) AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber u
 		return 0, err
 	}
 	return rewardAmount, nil
+}
+
+func (repo RewardRepoImpl) FindByOutTradeNo(ctx jet.Ctx, outTradeNo string) (*po.RewardRecord, error) {
+	return repo.FindOne("out_trade_no = ?", outTradeNo)
 }
