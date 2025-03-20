@@ -30,6 +30,10 @@ var (
 	ErrUnauthorized = errors.New("unauthorized")
 )
 
+func Post(url string, requestBody any) (*map[string]any, error) {
+	return PostJsonByReqFunc[map[string]any](url, requestBody, nil)
+}
+
 func PostJson[T any](url string, requestBody any) (*T, error) {
 	return PostJsonByReqFunc[T](url, requestBody, nil)
 }

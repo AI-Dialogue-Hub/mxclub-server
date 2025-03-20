@@ -48,6 +48,7 @@ type OrderService struct {
 	transferRepo     repo.ITransferRepo
 	productSalesRepo productRepo.IProductSalesRepo
 	rewardRecordRepo repo.IRewardRecordRepo
+	wxNotifyService  *WxNotifyService
 }
 
 var orderService *OrderService
@@ -63,7 +64,8 @@ func NewOrderService(
 	evaluationRepo repo.IEvaluationRepo,
 	transferRepo repo.ITransferRepo,
 	productSalesRepo productRepo.IProductSalesRepo,
-	rewardRecordRepo repo.IRewardRecordRepo) *OrderService {
+	rewardRecordRepo repo.IRewardRecordRepo,
+	wxNotifyService *WxNotifyService) *OrderService {
 	orderService = &OrderService{
 		orderRepo:        repo,
 		withdrawalRepo:   withdrawalRepo,
@@ -76,6 +78,7 @@ func NewOrderService(
 		transferRepo:     transferRepo,
 		productSalesRepo: productSalesRepo,
 		rewardRecordRepo: rewardRecordRepo,
+		wxNotifyService:  wxNotifyService,
 	}
 	return orderService
 }
@@ -129,6 +132,8 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 						dasherPO.ID, uint(orderTradeNo), orderPO.GameRegion, orderPO.RoleId, "",
 						utils.RoundToTwoDecimalPlaces(orderPO.FinalPrice)),
 				)
+				// 微信消息通知
+				_ = svc.wxNotifyService.SendMessage(ctx, dasherPO.ID, "您有新的指定订单，请赶快前往小程序查看!")
 			}()
 		}
 	} else {
