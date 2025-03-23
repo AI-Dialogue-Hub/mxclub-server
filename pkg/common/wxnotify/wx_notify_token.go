@@ -51,7 +51,7 @@ func (svc *notifyTokenService) FetchToken() (string, error) {
 	}
 	type TokenResp struct {
 		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
+		ExpiresIn   int    `json:"expires_in"` // 单位秒 一般是7200s
 	}
 	// 2. token过期 重新请求
 	tokenResponse, err := utils.Get[TokenResp](svc.fetchTokenURI)

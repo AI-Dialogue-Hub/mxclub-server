@@ -12,6 +12,7 @@ import (
 )
 
 // ClearAllDasherInfo 清空所有打手信息，重新派单到大厅
+// @param id 订单db Id
 func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
 	ctx.Logger().Infof("ClearAllDasherInfo id:%v", id)
 	// 只有进行中的订单才可以转单

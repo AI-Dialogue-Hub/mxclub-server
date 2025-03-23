@@ -26,3 +26,16 @@ type WxNotifyMessageSendDTO struct {
 	Lang        string               `json:"lang"`
 	Data        map[string]DataValue `json:"data"` // 模板内容
 }
+
+type WxNotifySubscribeResponse struct {
+	ErrCode int    `json:"errcode"`
+	ErrMsg  string `json:"errmsg"`
+}
+
+func (w *WxNotifySubscribeResponse) IsSuccess() bool {
+	return w != nil && w.ErrCode == 0
+}
+
+func (w *WxNotifySubscribeResponse) IsNotSub() bool {
+	return w != nil && w.ErrCode == 43101
+}

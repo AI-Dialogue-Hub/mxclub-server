@@ -47,10 +47,15 @@ const (
 )
 
 const (
-	TEMPLATE_COMMON = "5j8tGGE2F70S-G4gquPikNLk-DIpwTVz5Ophp2nbR5E"
+	TEMPLATE_ID_COMMON = "5j8tGGE2F70S-G4gquPikNLk-DIpwTVz5Ophp2nbR5E"
 )
 
 func (s WxNotifyService) SendMessage(ctx jet.Ctx, userId uint, message string) error {
+	// 0. 检查订阅状态
+	subStatus := s.FindSubStatus(ctx, TEMPLATE_ID_COMMON)
+	if !subStatus {
+		return errors.New("用户未订阅")
+	}
 	// 1. 查找对应用户的openId
 	userPO, err := s.userRepo.FindByIdAroundCache(ctx, userId)
 	if err != nil || userPO == nil || userPO.ID <= 0 {
@@ -66,7 +71,7 @@ func (s WxNotifyService) SendMessage(ctx jet.Ctx, userId uint, message string) e
 	openId := userPO.WxOpenId
 	messageSendDTO := &dto.WxNotifyMessageSendDTO{
 		Touser:     openId,
-		TemplateID: TEMPLATE_COMMON,
+		TemplateID: TEMPLATE_ID_COMMON,
 		Page:       "mp.weixin.qq.com",
 		Lang:       "zh_CN",
 		Miniprogram: &dto.MiniProgram{
@@ -86,9 +91,16 @@ func (s WxNotifyService) SendMessage(ctx jet.Ctx, userId uint, message string) e
 		return errors.New("token 获取失败")
 	}
 	// 2. 发送消息
-	response, err := utils.Post(fmt.Sprintf(MESSAGE_URI, token), messageSendDTO)
+	response, err := utils.PostJson[dto.WxNotifySubscribeResponse](fmt.Sprintf(MESSAGE_URI, token), messageSendDTO)
 	ctx.Logger().Infof("response,%v", utils.ObjToJsonStr(response))
 	ctx.Logger().Infof("err, %v", err)
+	if !response.IsSuccess() {
+		ctx.Logger().Errorf("wx_sub_message_error,%v", err)
+		// 如果code == 43101 说明用户没有订阅 删除db里的订阅记录
+		if response.IsNotSub() {
+
+		}
+	}
 	return nil
 }
 
@@ -108,5 +120,10 @@ func (s WxNotifyService) AddSubNotifyRecord(ctx jet.Ctx, templateId string) erro
 		ctx.Logger().Errorf("AddSubNotifyRecord ERROR, %v", err)
 		return errors.New("添加订阅状态失败")
 	}
+	return nil
+}
+
+func (s WxNotifyService) Unsubscribe(ctx jet.Ctx, templateId string) error {
+
 	return nil
 }

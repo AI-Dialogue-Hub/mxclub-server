@@ -590,7 +590,7 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 		withdrawnAmount, orderWithdrawAbleAmount, totalDeduct, rewardAmount,
 	)
 
-	if approveWithdrawnAmount > orderWithdrawAbleAmount {
+	if approveWithdrawnAmount > orderWithdrawAbleAmount+rewardAmount {
 		ctx.Logger().Errorf(
 			"[HistoryWithDrawAmount]ERROR, approveWithdrawnAmount: %v gt orderWithdrawAbleAmount:%v",
 			approveWithdrawnAmount, orderWithdrawAbleAmount,
@@ -600,11 +600,12 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
 
 	// 能提现的钱
-	withdrawAbleAmount := orderWithdrawAbleAmount + rewardAmount - withdrawnAmount - totalDeduct
+	withdrawAbleAmount := utils.RoundToTwoDecimalPlaces(
+		orderWithdrawAbleAmount + rewardAmount - withdrawnAmount - totalDeduct)
 
 	return &vo.WithDrawVO{
 		HistoryWithDrawAmount: utils.RoundToTwoDecimalPlaces(approveWithdrawnAmount),
-		WithdrawAbleAmount:    utils.RoundToTwoDecimalPlaces(withdrawAbleAmount),
+		WithdrawAbleAmount:    withdrawAbleAmount,
 		WithdrawRangeMax:      float64(maxRangeNum),
 		WithdrawRangeMin:      float64(minRangeNum),
 	}, nil
@@ -657,13 +658,23 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 		ctx.Logger().Errorf("withDraw Amount:%v less more minAmount:%v", drawReq.Amount, minAmount)
 		return errors.New(fmt.Sprintf("提现金额不能小于最小限制:%v", minAmount))
 	}
-
+	// 2. 检查余额是否充足
+	withDrawVO, err := svc.HistoryWithDrawAmount(ctx)
+	if err != nil {
+		return err
+	}
+	if withDrawVO != nil && withDrawVO.WithdrawAbleAmount < drawReq.Amount {
+		ctx.Logger().Errorf(
+			"withdrawAbleAmount Amount:%v less more withdrawAmount:%v",
+			drawReq.Amount, withDrawVO.WithdrawAbleAmount)
+		return errors.New("账户余额不足")
+	}
 	err = svc.withdrawalRepo.Withdrawn(ctx, userById.MemberNumber, userId, userById.Name, drawReq.Amount)
 	if err != nil {
 		ctx.Logger().Errorf("[HistoryWithDrawAmount]ERROR, err:%v", err.Error())
 		return errors.New("提现失败，请联系管理员")
 	}
-	// 2. 发消息，已提交提现申请
+	// 3. 发消息，已提交提现申请
 	message := fmt.Sprintf("您提现申请已发起，管理员会在3个工作日内处理，"+
 		"您也可以联系管理员进行审批，提现金额为：%v元，请带图联系董事长现结，勿催", drawReq.Amount)
 	_ = svc.messageService.PushSystemMessage(ctx, userId, message)
