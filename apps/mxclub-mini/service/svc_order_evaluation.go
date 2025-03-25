@@ -116,6 +116,7 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 		Amount:          applyPenalty.PenaltyAmount,
 		Reason:          applyPenaltyMessage,
 		Status:          enum.Deduct_PENDING,
+		OrderNo:         uint(orderNo),
 	})
 
 	_ = svc.messageService.PushSystemMessage(ctx, dasherPO.ID, applyPenaltyMessage)

@@ -98,7 +98,7 @@ func (s WxNotifyService) SendMessage(ctx jet.Ctx, userId uint, message string) e
 		ctx.Logger().Errorf("wx_sub_message_error,%v", err)
 		// 如果code == 43101 说明用户没有订阅 删除db里的订阅记录
 		if response.IsNotSub() {
-
+			_ = s.Unsubscribe(ctx, TEMPLATE_ID_COMMON)
 		}
 	}
 	return nil
@@ -124,6 +124,10 @@ func (s WxNotifyService) AddSubNotifyRecord(ctx jet.Ctx, templateId string) erro
 }
 
 func (s WxNotifyService) Unsubscribe(ctx jet.Ctx, templateId string) error {
-
+	err := s.subNotifyRepo.RawDelete(ctx, middleware.MustGetUserId(ctx), templateId)
+	if err != nil {
+		ctx.Logger().Errorf("Unsubscribe ERROR, %v", err)
+		return errors.New("订阅状态删除失败")
+	}
 	return nil
 }

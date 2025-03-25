@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"gorm.io/gorm"
 	"mxclub/domain/notify/po"
@@ -16,6 +17,8 @@ type ISubNotifyRepo interface {
 	xmysql.IBaseRepo[po.SubNotifyRecord]
 	AddSubNotifyRecord(ctx jet.Ctx, userId uint, templateId string) error
 	ExistsSubNotifyRecord(ctx jet.Ctx, userId uint, templateId string) bool
+	// RawDelete 物理删除
+	RawDelete(ctx jet.Ctx, userId uint, templateId string) error
 }
 
 func NewSubNotifyRepo(db *gorm.DB) ISubNotifyRepo {
@@ -44,4 +47,22 @@ func (repo SubNotifyRepo) ExistsSubNotifyRecord(ctx jet.Ctx, userId uint, templa
 		return false
 	}
 	return count == 1
+}
+
+func (repo SubNotifyRepo) RawDelete(ctx jet.Ctx, userId uint, templateId string) error {
+	// 使用 Unscoped 实现物理删除
+	result := repo.DB().
+		Where("user_id = ? AND template_id = ?", userId, templateId).
+		Delete(repo.ModelPO).
+		Unscoped()
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// 检查是否成功删除了记录
+	if result.RowsAffected == 0 {
+		return errors.New("record not found")
+	}
+
+	return nil
 }

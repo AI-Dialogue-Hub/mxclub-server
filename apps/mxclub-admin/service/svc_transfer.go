@@ -160,14 +160,14 @@ func (svc OrderService) TransferTo(ctx jet.Ctx, transferReq *req.TransferReq) er
 	executorTo := transferReq.ExecutorTo
 	if executorTo <= 0 {
 		// 直接转单到大厅
-		return svc.ClearAllDasherInfo(ctx, uint(transferReq.OrderId))
+		return svc.ClearAllDasherInfo(ctx, uint(transferReq.OrderDBId))
 	}
 	if err := svc.checkDasherStatus(ctx, transferReq.ExecutorTo); err != nil {
 		ctx.Logger().Errorf("TransferTo ERROR, err => %v", err)
 		return err
 	}
 	// 只有进行中的订单才可以转单
-	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, uint(transferReq.OrderId))
+	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, uint(transferReq.OrderDBId))
 	if err != nil || orderPO == nil || orderPO.ID <= 0 {
 		return errors.New("订单查询失败")
 	}
@@ -180,7 +180,7 @@ func (svc OrderService) TransferTo(ctx jet.Ctx, transferReq *req.TransferReq) er
 		return errors.New("指定打手不存在")
 	}
 	updateWrapper := xmysql.NewMysqlUpdate()
-	updateWrapper.SetFilter("order_id = ?", transferReq.OrderId)
+	updateWrapper.SetFilter("id = ?", transferReq.OrderDBId)
 	updateWrapper.Set("executor_id", userPO.MemberNumber)
 	updateWrapper.Set("executor_name", userPO.Name)
 	if err = svc.orderRepo.UpdateByWrapper(updateWrapper); err != nil {
