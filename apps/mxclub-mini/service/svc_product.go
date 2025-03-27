@@ -12,6 +12,7 @@ import (
 	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
+	"slices"
 	"sort"
 )
 
@@ -113,6 +114,15 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 			if value, ok := id2ProductMap.Get(uint64(ele.ID)); ok {
 				ele.SalesVolume = int(value.SalesVolume)
 			}
+		})
+	}
+	if !config.GetConfig().WxPayConfig.IsBaoZaoClub() {
+		// 销量高的放在前面
+		slices.SortFunc(productVOS, func(a, b *vo.ProductVO) int {
+			if a == nil || b == nil {
+				return 0
+			}
+			return b.SalesVolume - a.SalesVolume
 		})
 	}
 	return productVOS, nil
