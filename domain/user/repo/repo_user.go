@@ -42,6 +42,7 @@ type IUserRepo interface {
 	CheckAssistantStatus(ctx jet.Ctx, memberNumber int) bool
 	UpdateAssistantStatus(ctx jet.Ctx, userId uint, status enum.MemberStatus) error
 	UpdateUserPhone(ctx jet.Ctx, id uint, phone string) error
+	UpdateUserGameId(ctx jet.Ctx, id uint, gameId string) error
 	RemoveDasher(ctx jet.Ctx, id uint) error
 	FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 }
@@ -206,6 +207,14 @@ func (repo UserRepo) UpdateUserPhone(ctx jet.Ctx, userId uint, phone string) err
 	return repo.UpdateUser(ctx, map[string]any{
 		"id":    userId,
 		"phone": phone,
+	})
+}
+
+func (repo UserRepo) UpdateUserGameId(ctx jet.Ctx, userId uint, gameId string) error {
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
+	return repo.UpdateUser(ctx, map[string]any{
+		"id":      userId,
+		"game_id": gameId,
 	})
 }
 

@@ -64,6 +64,9 @@ func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) 
 	// 设置用户手机号
 	productVO.Phone = userPO.Phone
 
+	// 设置用户游戏Id
+	productVO.GameId = userPO.GameId
+
 	// 订单金额大于100才设置折扣
 	if productVO.Price > 100 {
 		// 查找用户会员优惠金额

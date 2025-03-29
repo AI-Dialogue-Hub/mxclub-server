@@ -19,6 +19,7 @@ type OrderVO struct {
 	Phone              string           `json:"phone"`
 	GameRegion         string           `json:"game_region"`
 	RoleId             string           `json:"role_id"`
+	GameId             string           `json:"game_id"`
 	SpecifyExecutor    bool             `json:"specify_executor"`
 	ExecutorID         int              `json:"executor_id"`
 	Executor2Id        int              `json:"executor2_id"`
@@ -55,6 +56,7 @@ type ProductVO struct {
 	DetailImages     xmysql.StringArray `json:"detail_images"`
 	Thumbnail        string             `json:"thumbnail"`
 	Phone            string             `json:"phone"`
+	GameId           string             `json:"gameId"`
 	SalesVolume      int                `json:"sales_volume"`
 }
 

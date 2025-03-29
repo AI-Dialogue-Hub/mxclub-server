@@ -92,6 +92,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	return nil
 }
 
+// PaySuccessOrder 下单成功
 func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	defer utils.RecoverAndLogError(ctx)
 	if orderNo <= 0 {
@@ -133,7 +134,7 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 						utils.RoundToTwoDecimalPlaces(orderPO.FinalPrice)),
 				)
 				// 微信消息通知
-				_ = svc.wxNotifyService.SendMessage(ctx, dasherPO.ID, "您有新的指定订单，请赶快前往小程序查看!")
+				//_ = svc.wxNotifyService.SendMessage(ctx, dasherPO.ID, "您有新的指定订单，请赶快前往小程序查看!")
 			}()
 		}
 	} else {
@@ -158,9 +159,14 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 		logger.Errorf("has duplicates order, %+v", order)
 		return nil, err
 	}
-
+	// 更新电话 和 游戏Id
 	if req.Phone != "" {
-		go func() { _ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone) }()
+		go func() {
+			_ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone)
+			if id, extractErr := po.ExtractID(req.RoleId); extractErr != nil {
+				_ = svc.userService.userRepo.UpdateUserGameId(ctx, userId, id)
+			}
+		}()
 	}
 	var (
 		orderTradeNo = utils.SafeParseUint64(req.OrderTradeNo)
@@ -241,6 +247,14 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 	if req.MemberNumber >= 0 {
 		// 获取老板等级
 		svc.doBuildUserGrade(ctx, orderVOS)
+	}
+	// 将gameId和roleId分开
+	id2OrderPOMap := utils.SliceToSingleMap(list, func(ele *po.Order) uint { return ele.ID })
+	for _, orderVO := range orderVOS {
+		if orderPO, ok := id2OrderPOMap.Get(orderVO.ID); ok {
+			orderVO.RoleId = orderPO.FetchRoleId()
+			orderVO.GameId = orderPO.FetchGameId()
+		}
 	}
 	return api.WrapPageResult(&req.PageParams, orderVOS, 0), err
 }
@@ -415,7 +429,16 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return nil, errors.New("订单查询失败，请联系客服")
 	}
-	return utils.CopySlice[*po.Order, *vo.OrderVO](orders), nil
+	orderVOS := utils.CopySlice[*po.Order, *vo.OrderVO](orders)
+	// 将gameId和roleId分开
+	id2OrderPOMap := utils.SliceToSingleMap(orders, func(ele *po.Order) uint { return ele.ID })
+	for _, orderVO := range orderVOS {
+		if orderPO, ok := id2OrderPOMap.Get(orderVO.ID); ok {
+			orderVO.RoleId = orderPO.FetchRoleId()
+			orderVO.GameId = orderPO.FetchGameId()
+		}
+	}
+	return orderVOS, nil
 }
 
 func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {

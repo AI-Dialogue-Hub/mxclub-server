@@ -1,9 +1,11 @@
 package po
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/pkg/common/xmysql"
+	"regexp"
 	"time"
 )
 
@@ -18,7 +20,7 @@ type Order struct {
 	ProductID          uint               `gorm:"column:product_id"`
 	Phone              string             `gorm:"column:phone"`
 	GameRegion         string             `gorm:"column:game_region"`
-	RoleId             string             `gorm:"column:role_id"`
+	RoleId             string             `gorm:"column:role_id"` // 这里可能包含两部分 like => Id:9913193068,角色:六哥会打呀
 	SpecifyExecutor    bool               `gorm:"column:specify_executor"`
 	ExecutorID         int                `gorm:"column:executor_id"`
 	ExecutorName       string             `gorm:"column:executor_name"`
@@ -46,6 +48,53 @@ type Order struct {
 }
 
 // TableName sets the table name for the Order model.
-func (Order) TableName() string {
+func (*Order) TableName() string {
 	return "orders"
+}
+
+func (o *Order) FetchGameId() string {
+	if o == nil || o.RoleId == "" {
+		return ""
+	}
+	id, err := ExtractID(o.RoleId)
+	if err != nil {
+		return ""
+	}
+	return id
+}
+
+func (o *Order) FetchRoleId() string {
+	id, err := ExtractRole(o.RoleId)
+	if err != nil {
+		return o.RoleId
+	}
+	return id
+}
+
+var (
+	// 定义正则表达式
+	gameIdRegex = regexp.MustCompile(`Id:(\d+)`)
+
+	// 定义正则表达式
+	roleRegex = regexp.MustCompile(`角色:([\p{Han}]+)`)
+)
+
+// ExtractID 提取 Id: 后的数字部分, Id:9913193068,角色:六哥会打呀 => 9913193068
+func ExtractID(input string) (string, error) {
+	// 匹配结果
+	match := gameIdRegex.FindStringSubmatch(input)
+	if len(match) > 1 {
+		return match[1], nil // 返回捕获组中的数字
+	}
+	return "", fmt.Errorf("未找到 ID")
+}
+
+// ExtractRole 提取 角色: 后的中文部分, Id:9913193068,角色:六哥会打呀 => 六哥会打呀
+func ExtractRole(input string) (string, error) {
+	// 匹配结果
+	match := roleRegex.FindStringSubmatch(input)
+	if len(match) > 1 {
+		return match[1], nil // 返回捕获组中的中文
+	}
+	return "", fmt.Errorf("未找到角色名称")
 }
