@@ -256,6 +256,24 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 			orderVO.GameId = orderPO.FetchGameId()
 		}
 	}
+
+	// 用户可以打赏的状态
+	orderIds := utils.Map(orderVOS, func(in *vo.OrderVO) string {
+		// 先全部置于可以打赏的状态
+		in.CanReward = true
+		return utils.ParseString(in.OrderId)
+	})
+	orderId2RewardsMap, err := svc.rewardRecordRepo.FindByOrderIds(ctx, orderIds)
+	if err == nil && orderId2RewardsMap != nil && len(orderId2RewardsMap) > 0 {
+		for _, orderVO := range orderVOS {
+			records, ok := orderId2RewardsMap[utils.ParseString(orderVO.OrderId)]
+			if ok && records != nil && len(records) > 0 {
+				orderVO.CanReward = false
+			} else {
+				orderVO.CanReward = true
+			}
+		}
+	}
 	return api.WrapPageResult(&req.PageParams, orderVOS, 0), err
 }
 

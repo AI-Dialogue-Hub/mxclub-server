@@ -16,6 +16,8 @@ func init() {
 type IRewardRecordRepo interface {
 	xmysql.IBaseRepo[po.RewardRecord]
 	FindByOrderIdAndDasherNumber(ctx jet.Ctx, orderId string, dasherDBId uint) (*po.RewardRecord, error)
+	FindByOrderIds(ctx jet.Ctx, orderIds []string) (map[string][]*po.RewardRecord, error)
+	// FindByOutTradeNo 打赏订单给到微信的唯一Id
 	FindByOutTradeNo(ctx jet.Ctx, outTradeNo string) (*po.RewardRecord, error)
 	ExistByOrderIdAndDasherNumber(ctx jet.Ctx, orderId string, dasherDBId uint) bool
 	UpdateRewardStatus(ctx jet.Ctx, outTradeNo string, status enum.OrderStatus) error
@@ -49,6 +51,29 @@ func (repo RewardRepoImpl) FindByOrderIdAndDasherNumber(
 	orderId string,
 	dasherDBId uint) (*po.RewardRecord, error) {
 	return repo.FindOne("order_id = ? and dasher_number = ?", orderId, dasherDBId)
+}
+
+func (repo RewardRepoImpl) FindByOrderIds(ctx jet.Ctx, orderIds []string) (map[string][]*po.RewardRecord, error) {
+	query := xmysql.NewMysqlQuery()
+	query.SetPage(1, 100000)
+	query.SetFilter("order_id in (?)", orderIds)
+	rewardRecords, err := repo.ListNoCountByQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	var m = make(map[string][]*po.RewardRecord)
+	for _, record := range rewardRecords {
+		if _, ok := m[record.OrderID]; ok {
+			records := m[record.OrderID]
+			records = append(records, record)
+			m[record.OrderID] = records
+		} else {
+			records := make([]*po.RewardRecord, 0)
+			records = append(records, record)
+			m[record.OrderID] = records
+		}
+	}
+	return m, nil
 }
 
 func (repo RewardRepoImpl) ExistByOrderIdAndDasherNumber(

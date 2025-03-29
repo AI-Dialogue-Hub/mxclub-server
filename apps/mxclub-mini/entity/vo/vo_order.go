@@ -41,6 +41,7 @@ type OrderVO struct {
 	CutRate            float64          `json:"cut_rate"`      // 抽成比例
 	UserGrade          string           `json:"user_grade"`    // 老板等级
 	IsEvaluation       bool             `json:"is_evaluation"` // 是否完成评价
+	CanReward          bool             `json:"can_reward"`    // 是否可以打赏
 }
 
 type ProductVO struct {
