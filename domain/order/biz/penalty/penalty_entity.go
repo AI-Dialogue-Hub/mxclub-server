@@ -19,9 +19,10 @@ var (
 
 // PenaltyReq 定义PenaltyReq和PenaltyResp类型
 type PenaltyReq struct {
-	OrdersId uint       // 订单No
-	Rating   int        // 评星
-	GrabTime *time.Time // 抢单时间
+	OrdersId      uint       // 订单No
+	OrderRawPrice float64    // 订单原价
+	Rating        int        // 评星
+	GrabTime      *time.Time // 抢单时间
 }
 
 type PenaltyResp struct {

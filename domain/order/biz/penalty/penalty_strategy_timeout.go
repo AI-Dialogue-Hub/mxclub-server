@@ -37,8 +37,8 @@ func (p *TimeoutPenalty) ApplyPenalty(req *PenaltyReq) (*PenaltyResp, error) {
 			return &PenaltyResp{
 				DeductType:    DeductRuleTimeout,
 				PenaltyAmount: penalty,
-				Reason: fmt.Sprintf("订单:[%v]接单后，%v分钟还没组队完成开始订单，罚款：%v元",
-					req.OrdersId, duration.Minutes(), penalty),
+				Reason: fmt.Sprintf("订单:[%v], 订单原价为: %v, 接单后，%v分钟还没组队完成开始订单，罚款：%v元",
+					req.OrdersId, req.OrderRawPrice, duration.Minutes(), penalty),
 				Message: fmt.Sprintf(
 					"尊敬的打手您好，您的订单: %v, "+
 						"由于接单后没有及时组队并开始订单，组队时间为：%v，罚款：%v元, "+

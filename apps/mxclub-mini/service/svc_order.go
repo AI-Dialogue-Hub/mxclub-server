@@ -499,7 +499,7 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 	}
 	applyPenalty, err := penaltyStrategy.ApplyPenalty(
 		&penalty.PenaltyReq{
-			OrdersId: uint(orderPO.OrderId), GrabTime: orderPO.GrabAt,
+			OrdersId: uint(orderPO.OrderId), OrderRawPrice: orderPO.OriginalPrice, GrabTime: orderPO.GrabAt,
 		},
 	)
 
