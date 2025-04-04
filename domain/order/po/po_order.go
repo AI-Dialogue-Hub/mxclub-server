@@ -76,7 +76,7 @@ var (
 	gameIdRegex = regexp.MustCompile(`Id:(\d+)`)
 
 	// 定义正则表达式
-	roleRegex = regexp.MustCompile(`角色:([\p{Han}]+)`)
+	roleRegex = regexp.MustCompile(`角色:(\p{Han}+|\w+)`)
 )
 
 // ExtractID 提取 Id: 后的数字部分, Id:9913193068,角色:六哥会打呀 => 9913193068
