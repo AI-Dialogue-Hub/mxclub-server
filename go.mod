@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/fengyuan-liang/GoKit v0.1.4
-	github.com/fengyuan-liang/jet-web-fasthttp v0.1.4
+	github.com/fengyuan-liang/jet-web-fasthttp v0.1.5
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/go-redsync/redsync/v4 v4.13.0
 	github.com/jinzhu/copier v0.4.0

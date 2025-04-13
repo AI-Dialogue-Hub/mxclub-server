@@ -2,9 +2,11 @@ package config
 
 import (
 	"flag"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"gorm.io/gorm"
 	"log"
 	"mxclub/pkg/common/wxpay"
+	"mxclub/pkg/common/xlogger"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/common/xupload"
@@ -31,6 +33,8 @@ func init() {
 	}
 	// config
 	jet.Provide(func() *Config { return config })
+	// init log
+	initLogger(config.LoggerConfig)
 	// mysql
 	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
 		panic(err)
@@ -48,6 +52,7 @@ func init() {
 
 type Config struct {
 	Server       *Server               `yaml:"server" validate:"required"`
+	LoggerConfig *xlogger.LoggerConfig `yaml:"logger_config" validate:"required"`
 	WxConfig     *WxConfig             `yaml:"wx_config" validate:"required"`
 	WxPayConfig  *wxpay.WxPayConfig    `yaml:"wx_pay_config" validate:"required"`
 	File         File                  `yaml:"file" validate:"required"`
@@ -108,4 +113,11 @@ func IsOpenApi(url string) bool {
 	}
 
 	return false
+}
+
+func initLogger(loggerConfig *xlogger.LoggerConfig) {
+	if loggerConfig == nil {
+		panic("LoggerConfig is invalid")
+	}
+	xlog.SetGlobalOutput(xlogger.NewLogger(loggerConfig))
 }

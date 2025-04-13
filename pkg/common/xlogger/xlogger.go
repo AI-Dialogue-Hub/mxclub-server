@@ -10,11 +10,5 @@ func NewLogger(loggerConfig *LoggerConfig) *lumberjack.Logger {
 		MaxAge:     loggerConfig.MaxAge,     // 保留的旧日志文件的最大天数
 		Compress:   loggerConfig.Compress,   // 是否压缩旧日志文件
 	}
-	defer func(logger *lumberjack.Logger) {
-		err := logger.Close()
-		if err != nil {
-
-		}
-	}(logger)
 	return logger
 }
