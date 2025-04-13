@@ -18,16 +18,20 @@ func init() {
 	jet.Provide(NewExcelService)
 }
 
-func NewExcelService(orderRepo repo.IOrderRepo, callbackRepo repo.IWxPayCallbackRepo) *ExcelService {
+func NewExcelService(orderRepo repo.IOrderRepo,
+	callbackRepo repo.IWxPayCallbackRepo,
+	rewardRepo repo.IRewardRecordRepo) *ExcelService {
 	return &ExcelService{
 		orderRepo:    orderRepo,
 		callbackRepo: callbackRepo,
+		rewardRepo:   rewardRepo,
 	}
 }
 
 type ExcelService struct {
 	orderRepo    repo.IOrderRepo
 	callbackRepo repo.IWxPayCallbackRepo
+	rewardRepo   repo.IRewardRecordRepo
 }
 
 type exportExcelDTO struct {
@@ -77,6 +81,21 @@ func (svc ExcelService) ExportExcel(ctx jet.Ctx, startDate, endDate string) (err
 	}
 
 	orderIdList := utils.Map(orderPOList, func(in *po.Order) uint64 { return in.OrderId })
+
+	if !config.GetConfig().WxPayConfig.IsBaoZaoClub() {
+		// 2. 打赏订单
+		rewardRecords, err := svc.rewardRepo.ListNoCountDuration(ctx, startDate, endDate, enum.SUCCESS)
+		if err != nil {
+			ctx.Logger().Errorf(err.Error())
+		} else {
+			outTradeNoList := utils.Map[*po.RewardRecord, uint64](rewardRecords, func(in *po.RewardRecord) uint64 {
+				return utils.ParseUint64(in.OutTradeNo)
+			})
+			ctx.Logger().Infof("find outTradeNoList => %v", outTradeNoList)
+			orderIdList = append(orderIdList, outTradeNoList...)
+		}
+	}
+
 	callbackWrapper := new(xmysql.MysqlQuery)
 	callbackWrapper.SetFilter("out_trade_no in ?", orderIdList)
 	callbackWrapper.SetLimit(10000)

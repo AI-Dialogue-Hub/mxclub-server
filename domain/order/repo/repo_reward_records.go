@@ -23,6 +23,7 @@ type IRewardRecordRepo interface {
 	UpdateRewardStatus(ctx jet.Ctx, outTradeNo string, status enum.OrderStatus) error
 	// AllRewardAmountByDasherId 查询所有打赏的钱，使用db id进行定位
 	AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber uint) (float64, error)
+	ListNoCountDuration(ctx jet.Ctx, startDateStr, endDateStr string, status enum.OrderStatus) ([]*po.RewardRecord, error)
 }
 
 func NewRewardRecordRepo(db *gorm.DB) IRewardRecordRepo {
@@ -109,4 +110,19 @@ func (repo RewardRepoImpl) AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber u
 
 func (repo RewardRepoImpl) FindByOutTradeNo(ctx jet.Ctx, outTradeNo string) (*po.RewardRecord, error) {
 	return repo.FindOne("out_trade_no = ?", outTradeNo)
+}
+
+func (repo RewardRepoImpl) ListNoCountDuration(ctx jet.Ctx, startDateStr, endDateStr string, status enum.OrderStatus) ([]*po.RewardRecord, error) {
+	var (
+		wrapper = xmysql.NewMysqlQuery()
+		logger  = ctx.Logger()
+	)
+	wrapper.SetFilter("created_at >= ? and created_at <= ? and status = ?", startDateStr, endDateStr, status)
+	wrapper.SetLimit(10000)
+	rewardRecords, err := repo.ListNoCountByQuery(wrapper)
+	if err != nil || rewardRecords == nil || len(rewardRecords) == 0 {
+		logger.Errorf("cannot find any order, duration is: %v %v", startDateStr, endDateStr)
+		return nil, err
+	}
+	return rewardRecords, nil
 }
