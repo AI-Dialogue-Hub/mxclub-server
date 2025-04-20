@@ -31,7 +31,7 @@ func init() {
 		log.Fatalf("config error:%v", err.Error())
 	}
 	// log
-	//initLogger(config.LoggerConfig)
+	initLogger(config.LoggerConfig)
 	// mysql
 	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
 		panic(err)

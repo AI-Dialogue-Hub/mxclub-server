@@ -10,15 +10,14 @@ import (
 type GormLogAdapter struct{}
 
 func NewGormLogAdapter() *GormLogAdapter {
+	// init log
+	gormDefaultLogger = xlog.NewWith("GormLogger")
+	gormDefaultLogger.SetOutputLevel(xlog.Ldebug)
+	gormDefaultLogger.SetCalldPath(6)
 	return new(GormLogAdapter)
 }
 
-var gormDefaultLogger = func() *xlog.Logger {
-	logger := xlog.NewWith("GormLogger")
-	logger.SetOutputLevel(xlog.Ldebug)
-	logger.SetCalldPath(6)
-	return logger
-}()
+var gormDefaultLogger *xlog.Logger
 
 func (l *GormLogAdapter) Error(ctx context.Context, s string, i ...interface{}) {
 	getLogger(ctx).Infof(s, i...)

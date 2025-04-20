@@ -34,7 +34,7 @@ func init() {
 	// config
 	jet.Provide(func() *Config { return config })
 	// init log
-	//initLogger(config.LoggerConfig)
+	initLogger(config.LoggerConfig)
 	// mysql
 	if db, err := xmysql.ConnectDB(config.Mysql); err != nil {
 		panic(err)
