@@ -101,6 +101,7 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	}
 	err := svc.orderRepo.UpdateOrderStatus(ctx, orderNo, enum.PROCESSING)
 	if err != nil {
+		ctx.Logger().Errorf("UpdateOrderStatus failed, err: %v", err)
 		return errors.New("更新失败")
 	}
 	orderPO, _ := svc.orderRepo.FindByOrderOrOrdersId(ctx, uint(orderNo))

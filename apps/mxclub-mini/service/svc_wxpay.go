@@ -105,8 +105,14 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 		return
 	}
 
+	var orderId = utils.SafeParseUint64(*transaction.OutTradeNo)
+
 	// 修改订单状态为支付成功
-	_ = s.orderService.PaySuccessOrder(ctx, utils.SafeParseUint64(*transaction.OutTradeNo))
+	err = s.orderService.PaySuccessOrder(ctx, orderId)
+
+	if err != nil {
+		ctx.Logger().Errorf("post order status error, orderId is %v", orderId)
+	}
 
 	objToMap := utils.ObjToMap(*transaction)
 	err = s.wxpayCallbackRepo.InsertOne(&po.WxPayCallback{

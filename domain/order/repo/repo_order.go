@@ -245,7 +245,7 @@ func (repo OrderRepo) QueryOrderWithDelayTime(
 }
 
 func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateMap := map[string]any{
 		"order_status": status,
 	}
