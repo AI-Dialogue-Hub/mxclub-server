@@ -95,8 +95,11 @@ func (svc OrderService) SyncDeductionInfo() {
 }
 
 func (svc OrderService) SyncPrePayOrder() {
-	now := time.Now()
-	err := svc.orderRepo.Remove("created_at <= ? and order_status = ?", now.Add(-time.Second*60*5), enum.PrePay)
+	var (
+		now      = time.Now()
+		duration = -time.Second * 60 * 8 // 八分钟还没支付就移除掉
+	)
+	err := svc.orderRepo.Remove("created_at <= ? and order_status = ?", now.Add(duration), enum.PrePay)
 	if err != nil {
 		xlog.Errorf("SyncPrePayOrder ERROR:%v", err)
 	}
