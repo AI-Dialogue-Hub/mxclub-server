@@ -167,7 +167,7 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 		return errors.New("退款失败")
 	}
 	// 3. 修改订单状态
-	err = svc.orderRepo.UpdateOrderStatus(ctx, utils.SafeParseUint64(params.OutTradeNo), enum.Refunds)
+	err = svc.orderRepo.UpdateOrderStatusIncludingDeleted(ctx, utils.SafeParseUint64(params.OutTradeNo), enum.Refunds)
 	if err != nil {
 		logger.Errorf("[OrderService#Refunds]err:%v", err)
 		return errors.New("退款失败")

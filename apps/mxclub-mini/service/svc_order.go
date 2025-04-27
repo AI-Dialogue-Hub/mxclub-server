@@ -99,7 +99,7 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 		ctx.Logger().Errorf("invalid orderNo: %v", orderNo)
 		return errors.New("invalid orderNo")
 	}
-	err := svc.orderRepo.UpdateOrderStatus(ctx, orderNo, enum.PROCESSING)
+	err := svc.orderRepo.UpdateOrderStatusIncludingDeleted(ctx, orderNo, enum.PROCESSING)
 	if err != nil {
 		ctx.Logger().Errorf("UpdateOrderStatus failed, err: %v", err)
 		return errors.New("更新失败")

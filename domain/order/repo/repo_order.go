@@ -40,6 +40,7 @@ type IOrderRepo interface {
 	QueryOrderWithDelayTime(ctx jet.Ctx, status enum.OrderStatus, thresholdTime time.Time) ([]*po.Order, error)
 	// UpdateOrderStatus 这里的orderId为订单流水号
 	UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
+	UpdateOrderStatusIncludingDeleted(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error
 	RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	AddAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error
 	// GrabOrder 抢单
@@ -250,6 +251,21 @@ func (repo OrderRepo) UpdateOrderStatus(ctx jet.Ctx, orderId uint64, status enum
 		"order_status": status,
 	}
 	return repo.Update(updateMap, "order_id = ?", orderId)
+}
+
+func (repo OrderRepo) UpdateOrderStatusIncludingDeleted(ctx jet.Ctx, orderId uint64, status enum.OrderStatus) error {
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
+
+	updateMap := map[string]any{
+		"order_status": status,
+		"deleted_at":   nil, // 恢复软删除
+	}
+
+	return repo.DB().Unscoped().
+		Model(repo.ModelPO).
+		Where("order_id = ?", orderId).
+		Updates(updateMap).
+		Error
 }
 
 func (repo OrderRepo) RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error {
