@@ -26,6 +26,7 @@ func init() {
 		event.RegisterEvent("DeductService", event.EventRemoveDasher, u.RemoveDeductRecord)
 		event.RegisterEvent("WithdrawalService", event.EventRemoveDasher, u.RemoveWithdrawalRecord)
 		event.RegisterEvent("EvaluationService", event.EventRemoveDasher, u.RemoveEvaluation)
+		event.RegisterEvent("RewardService", event.EventRemoveDasher, u.RemoveRewardRecord)
 	})
 }
 
@@ -38,6 +39,7 @@ type OrderService struct {
 	messageService    *MessageService
 	transferRepo      repo.ITransferRepo
 	evaluationRepo    repo.IEvaluationRepo
+	rewardRepo        repo.IRewardRecordRepo
 }
 
 func NewOrderService(repo repo.IOrderRepo,
@@ -47,7 +49,8 @@ func NewOrderService(repo repo.IOrderRepo,
 	messageService *MessageService,
 	userRepo userRepo.IUserRepo,
 	transferRepo repo.ITransferRepo,
-	evaluationRepo repo.IEvaluationRepo) *OrderService {
+	evaluationRepo repo.IEvaluationRepo,
+	rewardRepo repo.IRewardRecordRepo) *OrderService {
 	return &OrderService{orderRepo: repo,
 		withdrawRepo:      withdrawRepo,
 		deductionRepo:     deductionRepo,
@@ -56,6 +59,7 @@ func NewOrderService(repo repo.IOrderRepo,
 		userRepo:          userRepo,
 		transferRepo:      transferRepo,
 		evaluationRepo:    evaluationRepo,
+		rewardRepo:        rewardRepo,
 	}
 }
 
@@ -220,4 +224,14 @@ func (svc OrderService) RemoveEvaluation(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)
+}
+
+// RemoveRewardRecord 清理打手打赏信息
+func (svc OrderService) RemoveRewardRecord(ctx jet.Ctx) error {
+	userId := ctx.MustGet("userId").(uint)
+	if err := svc.rewardRepo.ClearAllRewardByDasherId(ctx, userId); err != nil {
+		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
+		return err
+	}
+	return nil
 }

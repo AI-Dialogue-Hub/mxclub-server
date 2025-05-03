@@ -24,6 +24,8 @@ type IRewardRecordRepo interface {
 	// AllRewardAmountByDasherId 查询所有打赏的钱，使用db id进行定位
 	AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber uint) (float64, error)
 	ListNoCountDuration(ctx jet.Ctx, startDateStr, endDateStr string, status enum.OrderStatus) ([]*po.RewardRecord, error)
+	// ClearAllRewardByDasherId 清理打手所有打赏信息
+	ClearAllRewardByDasherId(ctx jet.Ctx, dasherId uint) error
 }
 
 func NewRewardRecordRepo(db *gorm.DB) IRewardRecordRepo {
@@ -125,4 +127,8 @@ func (repo RewardRepoImpl) ListNoCountDuration(ctx jet.Ctx, startDateStr, endDat
 		return nil, err
 	}
 	return rewardRecords, nil
+}
+
+func (repo RewardRepoImpl) ClearAllRewardByDasherId(ctx jet.Ctx, dasherId uint) error {
+	return repo.Remove("dasher_number = ?", dasherId)
 }

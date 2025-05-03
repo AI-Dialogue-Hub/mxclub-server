@@ -8,6 +8,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/event"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
@@ -19,6 +20,9 @@ import (
 
 func init() {
 	jet.Provide(NewRewardRecordService)
+	jet.Invoke(func(svc *RewardRecordService) {
+		event.RegisterEvent("RewardService", event.EventRemoveDasher, svc.RemoveRewardRecord)
+	})
 }
 
 func NewRewardRecordService(
@@ -191,4 +195,14 @@ func (svc RewardRecordService) List(ctx jet.Ctx, listReq *req.RewardListReq) ([]
 	}
 	rewardVOS := utils.CopySlice[*po.RewardRecord, *vo.RewardVO](rewardRecords)
 	return rewardVOS, nil
+}
+
+// RemoveRewardRecord 清理打手打赏信息
+func (svc RewardRecordService) RemoveRewardRecord(ctx jet.Ctx) error {
+	userId := ctx.MustGet("userId").(uint)
+	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, userId); err != nil {
+		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
+		return err
+	}
+	return nil
 }
