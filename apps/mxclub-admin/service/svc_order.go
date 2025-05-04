@@ -164,6 +164,7 @@ func (svc *OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpd
 	update.SetFilter("id = ?", updateReq.Id)
 	update.Set("withdrawal_status", updateReq.WithdrawalStatus)
 	update.Set("withdrawal_method", updateReq.WithdrawalInfo)
+	update.Set("application_time", time.Now())
 	return svc.withdrawRepo.UpdateByWrapper(update)
 }
 
@@ -224,12 +225,14 @@ func doLogRefundsOperatorLog(ctx jet.Ctx, orderId string, svc *OrderService) {
 		ctx.Logger().Errorf("[doLogRefundsOperatorLog] FetchUserInfoByCtx ERROR")
 		return
 	}
+	operatorLogDTO := dto.NewOrderRefundsOperatorLogDTO(
+		orderId,
+		fmt.Sprintf("管理员:%v(%v), 退款订单, 时间:%v", userInfo.Name, userInfo.ID, time.Now().Format(time.DateTime)),
+	)
+	ctx.Logger().Infof("doLogRefundsOperatorLog: %v", utils.ObjToJsonStr(operatorLogDTO))
 	svc.operatorLogService.DoLog(
 		ctx,
-		dto.NewOrderRefundsOperatorLogDTO(
-			orderId,
-			fmt.Sprintf("管理员:%v(%v), 退款订单, 时间:%v", userInfo.Name, userInfo.ID, time.Now().Format(time.DateTime)),
-		),
+		operatorLogDTO,
 	)
 }
 

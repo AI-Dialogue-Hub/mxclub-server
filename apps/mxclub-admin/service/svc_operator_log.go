@@ -33,6 +33,7 @@ func (svc OperatorLogService) DoLog(ctx jet.Ctx, operatorDTO *dto.OperatorLogDTO
 	}
 	operatorPO := &po.OperatorLogPO{
 		Type:     operatorDTO.Type,
+		BizId:    operatorDTO.BizId,
 		Remarks:  operatorDTO.Remarks,
 		UserId:   userInfo.ID,
 		UserName: userInfo.Name,
