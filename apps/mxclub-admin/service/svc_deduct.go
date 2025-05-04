@@ -12,7 +12,7 @@ import (
 	"mxclub/pkg/utils"
 )
 
-func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, int64, error) {
+func (svc *OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, int64, error) {
 	d := &dto.DeductionDTO{
 		PageParams: listReq.PageParams,
 		Ge:         listReq.Ge,
@@ -44,7 +44,7 @@ func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq
 	return vos, total, nil
 }
 
-func (svc OrderService) AddDeduction(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
+func (svc *OrderService) AddDeduction(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
 	deductPO := utils.MustCopy[po.Deduction](addReq)
 	err := svc.deductionRepo.InsertOne(deductPO)
 	if err != nil {
@@ -54,7 +54,7 @@ func (svc OrderService) AddDeduction(ctx jet.Ctx, addReq *req.DeductionAddReq) e
 	return nil
 }
 
-func (svc OrderService) UpdateDeduction(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) error {
+func (svc *OrderService) UpdateDeduction(ctx jet.Ctx, updateReq *req.DeductionUpdateReq) error {
 	updateMap := map[string]any{
 		"amount": updateReq.Amount,
 		"reason": updateReq.Reason,
@@ -68,7 +68,7 @@ func (svc OrderService) UpdateDeduction(ctx jet.Ctx, updateReq *req.DeductionUpd
 	return nil
 }
 
-func (svc OrderService) Delete(ctx jet.Ctx, id uint) error {
+func (svc *OrderService) Delete(ctx jet.Ctx, id uint) error {
 	err := svc.deductionRepo.RemoveByID(id)
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]Delete ERROR:%v", err.Error())

@@ -14,6 +14,7 @@ func init() {
 
 type IOperatorRepo interface {
 	xmysql.IBaseRepo[po.OperatorLogPO]
+	FindByBizId(bizId string) (*po.OperatorLogPO, error)
 }
 
 func NewOperatorLogRepo(db *gorm.DB) IOperatorRepo {
@@ -26,4 +27,8 @@ func NewOperatorLogRepo(db *gorm.DB) IOperatorRepo {
 
 type OperatorLogRepo struct {
 	xmysql.BaseRepo[po.OperatorLogPO]
+}
+
+func (repo OperatorLogRepo) FindByBizId(bizId string) (*po.OperatorLogPO, error) {
+	return repo.FindOne("biz_id = ?", bizId)
 }

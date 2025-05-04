@@ -12,7 +12,7 @@ import (
 	"mxclub/pkg/constant"
 )
 
-func (svc OrderService) Transfer(ctx jet.Ctx, req *req.TransferReq) error {
+func (svc *OrderService) Transfer(ctx jet.Ctx, req *req.TransferReq) error {
 	executorTo := req.ExecutorTo
 	if !req.IsValid {
 		executorTo = -1
@@ -60,7 +60,7 @@ func checkTransferStatus(ctx jet.Ctx, orderId uint64, executorId int) error {
 	return nil
 }
 
-func (svc OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
 	userId := middleware.MustGetUserId(ctx)
 	userPO, _ := svc.userService.FindUserById(ctx, userId)
 	return svc.transferRepo.RemoveByDasherId(ctx, userPO.MemberNumber)

@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func (svc OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, error) {
+func (svc *OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, error) {
 	d := &dto.DeductionDTO{
 		PageParams: listReq.PageParams,
 		Ge:         listReq.Ge,
@@ -45,7 +45,7 @@ var (
 // SyncDeductionInfo 同步处罚情况
 // 1. 如果处罚记录超过五天，将处罚状态标记为正式处罚
 // 2. 如果处罚没满五天，在第三天的时候，再次提醒用户一次，找客服解除处罚
-func (svc OrderService) SyncDeductionInfo() {
+func (svc *OrderService) SyncDeductionInfo() {
 	defer utils.RecoverByPrefix(syncDeductionInfoLogger, "syncDeductionInfo")
 	// 1. 处罚记录超过五天的
 	deductions, err := svc.deductionRepo.FindDeDuctListBeyondDuration(deductionDDL)
@@ -94,7 +94,7 @@ func (svc OrderService) SyncDeductionInfo() {
 	})
 }
 
-func (svc OrderService) SyncPrePayOrder() {
+func (svc *OrderService) SyncPrePayOrder() {
 	var (
 		now      = time.Now()
 		duration = -time.Minute * 8 // 八分钟还没支付就移除掉
@@ -105,6 +105,6 @@ func (svc OrderService) SyncPrePayOrder() {
 	}
 }
 
-func (svc OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
 	return svc.deductionRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
 }

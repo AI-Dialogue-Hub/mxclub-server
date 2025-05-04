@@ -40,6 +40,8 @@ func ParseString(args interface{}) string {
 		return Int32ToStr(args.(int32))
 	case reflect.Int64:
 		return Int64ToStr(args.(int64))
+	case reflect.Uint64:
+		return strconv.FormatUint(args.(uint64), 10)
 	case reflect.Uint:
 		return strconv.FormatUint(uint64(args.(uint)), 10)
 	default:

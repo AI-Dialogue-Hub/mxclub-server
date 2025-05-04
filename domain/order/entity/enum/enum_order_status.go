@@ -1,7 +1,5 @@
 package enum
 
-import "github.com/fengyuan-liang/GoKit/collection/maps"
-
 type OrderStatus int
 
 const (
@@ -37,14 +35,6 @@ var OrderStatusStringMap = map[string]OrderStatus{
 	"PrePay":         PrePay,
 }
 
-var OrderStatusParseMap = func() maps.IMap[OrderStatus, string] {
-	linkedHashMap := maps.NewLinkedHashMap[OrderStatus, string]()
-	for k, v := range OrderStatusStringMap {
-		linkedHashMap.Put(v, k)
-	}
-	return linkedHashMap
-}()
-
 func (order OrderStatus) Valid() bool {
 	if _, ok := OrderStatusMap[order]; ok {
 		return true
@@ -57,5 +47,5 @@ func ParseOrderStatusByString(orderStr string) OrderStatus {
 }
 
 func (order OrderStatus) String() string {
-	return OrderStatusParseMap.MustGet(order)
+	return OrderStatusMap[order]
 }

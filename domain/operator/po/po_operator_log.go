@@ -9,6 +9,7 @@ type OperatorLogPO struct {
 	ID uint `gorm:"primaryKey"`
 
 	Type     enum.OperatorEnum `gorm:"column:type"`
+	BizId    string            `gorm:"column:biz_id"`
 	Remarks  string
 	UserId   uint   `gorm:"column:user_id"`
 	UserName string `gorm:"column:user_name"`

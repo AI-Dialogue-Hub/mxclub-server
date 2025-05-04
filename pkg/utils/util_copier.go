@@ -38,6 +38,9 @@ func MustCopyByCtx[T any](ctx jet.Ctx, in any) (t *T) {
 	return
 }
 
+// MustCopy 泛型T不用传递指针
+//
+// ex: utils.MustCopy[dto.OperatorLogDTO](operatorLogPO)
 func MustCopy[T any](in any) (t *T) {
 	var err error
 	if t, err = Copy[T](in); err != nil {

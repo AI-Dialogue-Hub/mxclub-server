@@ -85,7 +85,7 @@ func NewOrderService(
 
 // ===============================================================
 
-func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
+func (svc *OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 	if _, err := svc.AddByOrderStatus(ctx, req, enum.PrePay); err != nil {
 		return errors.New("订单已经添加成功")
 	}
@@ -93,7 +93,7 @@ func (svc OrderService) Add(ctx jet.Ctx, req *req.OrderReq) error {
 }
 
 // PaySuccessOrder 下单成功
-func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
+func (svc *OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	defer utils.RecoverAndLogError(ctx)
 	if orderNo <= 0 {
 		ctx.Logger().Errorf("invalid orderNo: %v", orderNo)
@@ -145,7 +145,7 @@ func (svc OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	return nil
 }
 
-func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status enum.OrderStatus) (*po.Order, error) {
+func (svc *OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status enum.OrderStatus) (*po.Order, error) {
 	var (
 		userId = middleware.MustGetUserId(ctx)
 		logger = ctx.Logger()
@@ -220,7 +220,7 @@ func (svc OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status 
 	return order, nil
 }
 
-func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {
+func (svc *OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResult, error) {
 	userId := middleware.MustGetUserId(ctx)
 	// 特殊编号用户
 	var executorName string
@@ -278,7 +278,7 @@ func (svc OrderService) List(ctx jet.Ctx, req *req.OrderListReq) (*api.PageResul
 	return api.WrapPageResult(&req.PageParams, orderVOS, 0), err
 }
 
-func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
+func (svc *OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 	// 1. 获取所有用户id
 	userIdList := utils.Map[*vo.OrderVO, uint](vos, func(in *vo.OrderVO) uint { return in.PurchaseId })
 	if len(userIdList) == 0 {
@@ -295,7 +295,7 @@ func (svc OrderService) doBuildUserGrade(ctx jet.Ctx, vos []*vo.OrderVO) {
 	})
 }
 
-func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.PreferentialVO, err error) {
+func (svc *OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.PreferentialVO, err error) {
 	userId := middleware.MustGetUserId(ctx)
 	userById, err := svc.userService.FindUserById(ctx, userId)
 	if err != nil {
@@ -343,7 +343,7 @@ func (svc OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.Pr
 	}, nil
 }
 
-func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error {
+func (svc *OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error {
 	orderPO, _ := svc.orderRepo.FindByID(finishReq.OrderId)
 	executorNum := 1
 	if orderPO.Executor2Id != -1 {
@@ -391,7 +391,7 @@ func (svc OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error
 	return nil
 }
 
-func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, executorID int, executorPrice float64) {
+func (svc *OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, executorID int, executorPrice float64) {
 	dashPO, _ := svc.userService.FindUserByDashId(ctx, executorID)
 	message := fmt.Sprintf(
 		"尊敬的打手:%v(%v)您好，您的订单:%v，订单号：%v 已完成，结算金额：%v",
@@ -405,7 +405,7 @@ func (svc OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order, 
 }
 
 // getCutRate 返回小数抽成比例
-func (svc OrderService) getCutRate(ctx jet.Ctx) (cutRate float64) {
+func (svc *OrderService) getCutRate(ctx jet.Ctx) (cutRate float64) {
 	defer utils.RecoverAndLogError(ctx)
 	defer traceUtil.TraceElapsedByName(time.Now(), "getCutRate")
 	// 默认抽成20%
@@ -425,7 +425,7 @@ func (svc OrderService) getCutRate(ctx jet.Ctx) (cutRate float64) {
 	return
 }
 
-func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {
+func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {
 	var (
 		orders []*po.Order
 		err    error
@@ -460,7 +460,7 @@ func (svc OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, erro
 	return orderVOS, nil
 }
 
-func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
+func (svc *OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
 	// 需要确保订单不会被打两次
 	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, req.OrderId)
@@ -484,7 +484,7 @@ func (svc OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	return nil
 }
 
-func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, executorId int) {
+func (svc *OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, executorId int) {
 	defer utils.RecoverWithPrefix(ctx, "handleLowTimeOutDeduction")
 	// 查询接单时间
 	orderPO, err := svc.orderRepo.FindByID(ordersId)
@@ -542,11 +542,11 @@ func (svc OrderService) handleLowTimeOutDeduction(ctx jet.Ctx, ordersId uint, ex
 	}
 }
 
-func (svc OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId int, image string) error {
+func (svc *OrderService) startOrder(ctx jet.Ctx, orderId uint, executorId int, image string) error {
 	return svc.orderRepo.UpdateOrderByDasher(ctx, orderId, executorId, enum.RUNNING, image)
 }
 
-func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExecutorReq) (err error) {
+func (svc *OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExecutorReq) (err error) {
 	if orderReq.ExecutorName == "" && orderReq.ExecutorId == -1 {
 		err = svc.orderRepo.RemoveAssistant(ctx, utils.MustCopy[orderDTO.OrderExecutorDTO](orderReq))
 	} else {
@@ -561,7 +561,7 @@ func (svc OrderService) AddOrRemoveExecutor(ctx jet.Ctx, orderReq *req.OrderExec
 
 // ==================== 提现相关  ====================
 
-func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, error) {
+func (svc *OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, error) {
 	userId := middleware.MustGetUserId(ctx)
 	userById, err := svc.userService.FindUserById(ctx, userId)
 	if err != nil {
@@ -653,7 +653,7 @@ func (svc OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, erro
 	}, nil
 }
 
-func (svc OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
+func (svc *OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
 	utils.RecoverAndLogError(ctx)
 
 	// 获取抽成比例
@@ -684,7 +684,7 @@ func (svc OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
 	return minRangeNum, maxRangeNum
 }
 
-func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
+func (svc *OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	userById, _ := svc.userService.FindUserById(ctx, userId)
 	// 0. 查找当天是否有未完成的提现记录 如果有则限制此次提现
@@ -724,7 +724,7 @@ func (svc OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 }
 
 // GrabOrder 抢单逻辑
-func (svc OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error {
+func (svc *OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("%s GrabOrder", ctx.Logger().ReqId))
 	// 1. 抢单
 	var dasherName string
@@ -759,7 +759,7 @@ func formatDate(date *time.Time) string {
 	return date.Format("2006-01-02")
 }
 
-func (svc OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) ([]*vo.WithDrawListVO, error) {
+func (svc *OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) ([]*vo.WithDrawListVO, error) {
 	query := utils.MustCopy[orderDTO.WithdrawListDTO](drawReq)
 	query.UserId = middleware.MustGetUserId(ctx)
 	withdrawalRecords, err := svc.withdrawalRepo.ListWithdraw(ctx, query)
@@ -774,12 +774,12 @@ func (svc OrderService) WithDrawList(ctx jet.Ctx, drawReq *req.WithDrawListReq) 
 	return vos, nil
 }
 
-func (svc OrderService) RemoveByID(id int64) error {
+func (svc *OrderService) RemoveByID(id int64) error {
 	return svc.orderRepo.RemoveByID(id)
 }
 
 // ClearAllDasherInfo 清空所有打手信息，重新派单到大厅
-func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
+func (svc *OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
 	err := svc.orderRepo.ClearOrderDasherInfo(ctx, id)
 	if err != nil {
 		ctx.Logger().Errorf("[ClearAllDasherInfo]err:%v", err)
@@ -794,7 +794,7 @@ var (
 )
 
 // SyncTimeOutOrder 将超时的订单重新发往大厅
-func (svc OrderService) SyncTimeOutOrder() {
+func (svc *OrderService) SyncTimeOutOrder() {
 	// 1. 找到所有打手抢单成功但超时未开始的订单
 	orders, err := svc.orderRepo.FindTimeOutOrders(constant.Duration_10_minute)
 	if err != nil || orders == nil || len(orders) <= 0 {
@@ -846,7 +846,7 @@ func (svc OrderService) SyncTimeOutOrder() {
 	})
 }
 
-func (svc OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userId := middleware.MustGetUserId(ctx)
 	userPO, _ := svc.userService.FindUserById(ctx, userId)
 	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)

@@ -71,7 +71,7 @@ func NewOrderService(repo repo.IOrderRepo,
 
 // =============================================================
 
-func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.PageResult, error) {
+func (svc *OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.PageResult, error) {
 	status := enum.ParseOrderStatusByString(orderReq.OrderStatus)
 	var (
 		orderId    = -1
@@ -87,13 +87,10 @@ func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.Page
 	list, count, err := svc.orderRepo.ListAroundCache(
 		ctx, orderReq.PageParams, orderReq.Ge, orderReq.Le, status, orderId, executorId)
 	if err != nil {
-		ctx.Logger().Errorf("[orderService]List ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[OrderService]List ERROR:%v", err.Error())
 		return nil, errors.New("获取失败")
 	}
 	orderVOS := utils.CopySlice[*po.Order, *vo.OrderVO](list)
-	utils.ForEach(orderVOS, func(vo *vo.OrderVO) {
-		vo.OrderStatusStr = vo.OrderStatus.String()
-	})
 	// 2. 评论数据
 	orderIdList := utils.Map[*vo.OrderVO, uint64](orderVOS, func(in *vo.OrderVO) uint64 { return in.OrderId })
 	orderId2EvaluationMap, err := svc.evaluationRepo.FindByOrderList(ctx, orderIdList)
@@ -113,10 +110,26 @@ func (svc OrderService) List(ctx jet.Ctx, orderReq *req.OrderListReq) (*api.Page
 			}
 		}
 	}
+	// 3. 订单状态
+	for _, orderVO := range orderVOS {
+		// 3.1 如果状态是已退单，需要拼接退单人信息
+		if orderVO.OrderStatus == enum.Refunds {
+			refundOrderLog, err := svc.operatorLogService.FindRefundOrderLog(ctx, utils.ParseString(orderVO.OrderId))
+			if err != nil || refundOrderLog == nil {
+				ctx.Logger().Errorf("[OrderService#List] FindRefundOrderLog ERROR, %v", err)
+				// 用默认的兜底
+				orderVO.OrderStatusStr = orderVO.OrderStatus.String()
+				continue
+			}
+			orderVO.OrderStatusStr = fmt.Sprintf("%s(%s)", orderVO.OrderStatus.String(), refundOrderLog.Remarks)
+		} else {
+			orderVO.OrderStatusStr = orderVO.OrderStatus.String()
+		}
+	}
 	return api.WrapPageResult(orderReq.PageParams, orderVOS, count), nil
 }
 
-func (svc OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) (*api.PageResult, error) {
+func (svc *OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) (*api.PageResult, error) {
 	query := xmysql.NewMysqlQuery()
 	query.SetPage(params.Page, params.PageSize)
 	if params.WithdrawalStatus != "" && params.WithdrawalStatus != "ALL" {
@@ -127,13 +140,13 @@ func (svc OrderService) ListWithdraw(ctx jet.Ctx, params *req.WitchDrawListReq) 
 	}
 	records, count, err := svc.withdrawRepo.ListByWrapper(ctx, query)
 	if err != nil {
-		ctx.Logger().Errorf("[orderService]ListWithdraw ERROR:%v", err.Error())
+		ctx.Logger().Errorf("[*OrderService]ListWithdraw ERROR:%v", err.Error())
 		return nil, errors.New("获取失败")
 	}
 	return api.WrapPageResult(params.PageParams, utils.CopySlice[*po.WithdrawalRecord, *vo.WithdrawVO](records), count), nil
 }
 
-func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpdateReq) error {
+func (svc *OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpdateReq) error {
 	dasherPO, err := svc.userRepo.FindByMemberNumber(ctx, updateReq.DasherId)
 	if err != nil {
 		return errors.New("打手id错误")
@@ -154,12 +167,12 @@ func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpda
 	return svc.withdrawRepo.UpdateByWrapper(update)
 }
 
-func (svc OrderService) RemoveByID(ctx jet.Ctx, id int64) error {
+func (svc *OrderService) RemoveByID(ctx jet.Ctx, id int64) error {
 	doLogRemoveOperator(ctx, id, svc)
 	return svc.orderRepo.RemoveByID(id)
 }
 
-func doLogRemoveOperator(ctx jet.Ctx, id int64, svc OrderService) {
+func doLogRemoveOperator(ctx jet.Ctx, id int64, svc *OrderService) {
 	defer utils.RecoverAndLogError(ctx)
 	userInfo, err := middleware.FetchUserInfoByCtx(ctx.FastHttpCtx())
 	if err != nil || userInfo == nil {
@@ -175,7 +188,7 @@ func doLogRemoveOperator(ctx jet.Ctx, id int64, svc OrderService) {
 	)
 }
 
-func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error {
+func (svc *OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error {
 	// 0. 日志记录
 	doLogRefundsOperatorLog(ctx, params.OutTradeNo, svc)
 	logger := ctx.Logger()
@@ -198,13 +211,13 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 	// 3. 修改订单状态
 	err = svc.orderRepo.UpdateOrderStatusIncludingDeleted(ctx, utils.SafeParseUint64(params.OutTradeNo), enum.Refunds)
 	if err != nil {
-		logger.Errorf("[OrderService#Refunds]err:%v", err)
+		logger.Errorf("[*OrderService#Refunds]err:%v", err)
 		return errors.New("退款失败")
 	}
 	return nil
 }
 
-func doLogRefundsOperatorLog(ctx jet.Ctx, orderId string, svc OrderService) {
+func doLogRefundsOperatorLog(ctx jet.Ctx, orderId string, svc *OrderService) {
 	defer utils.RecoverAndLogError(ctx)
 	userInfo, err := middleware.FetchUserInfoByCtx(ctx.FastHttpCtx())
 	if err != nil || userInfo == nil {
@@ -220,7 +233,7 @@ func doLogRefundsOperatorLog(ctx jet.Ctx, orderId string, svc OrderService) {
 	)
 }
 
-func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
+func (svc *OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
 	updateMap := utils.ObjToMap(orderVO)
 	delete(updateMap, "id")
 	delete(updateMap, "order_status_str")
@@ -234,41 +247,41 @@ func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {
 	return nil
 }
 
-func (svc OrderService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int) bool {
+func (svc *OrderService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int) bool {
 	orderPO, err := svc.orderRepo.FindByDasherId(ctx, memberNumber)
 	return err != nil && orderPO != nil && orderPO.ID > 0
 }
 
 // ==============  清除打手记录   =====================
 
-func (svc OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }
 
-func (svc OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	return svc.transferRepo.RemoveByDasherId(ctx, userPO.MemberNumber)
 }
 
-func (svc OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
 	return svc.deductionRepo.RemoveDasher(ctx, ctx.MustGet("userId").(uint))
 }
 
-func (svc OrderService) RemoveWithdrawalRecord(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveWithdrawalRecord(ctx jet.Ctx) error {
 	return svc.withdrawRepo.RemoveWithdrawalRecord(ctx, ctx.MustGet("userId").(uint))
 }
 
-func (svc OrderService) RemoveEvaluation(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveEvaluation(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)
 }
 
 // RemoveRewardRecord 清理打手打赏信息
-func (svc OrderService) RemoveRewardRecord(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveRewardRecord(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	if err := svc.rewardRepo.ClearAllRewardByDasherId(ctx, userId); err != nil {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)

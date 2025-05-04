@@ -13,7 +13,7 @@ import (
 	"mxclub/pkg/utils"
 )
 
-func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.EvaluationReq) error {
+func (svc *OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.EvaluationReq) error {
 
 	// 防抖
 	if err := xredis.DebounceForOneDay(
@@ -73,7 +73,7 @@ func (svc OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluation
 	return nil
 }
 
-func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.OrderEvaluation) {
+func (svc *OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.OrderEvaluation) {
 	defer utils.RecoverWithPrefix(ctx, "handleLowRatingDeduction")
 
 	var (
@@ -137,7 +137,7 @@ func (svc OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Ord
 	}
 }
 
-func (svc OrderService) RemoveEvaluation(ctx jet.Ctx) error {
+func (svc *OrderService) RemoveEvaluation(ctx jet.Ctx) error {
 	userId := middleware.MustGetUserId(ctx)
 	userPO, _ := svc.userService.FindUserById(ctx, userId)
 	return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)

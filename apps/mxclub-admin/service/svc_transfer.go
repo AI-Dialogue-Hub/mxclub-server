@@ -13,7 +13,7 @@ import (
 
 // ClearAllDasherInfo 清空所有打手信息，重新派单到大厅
 // @param id 订单db Id
-func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
+func (svc *OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
 	ctx.Logger().Infof("ClearAllDasherInfo id:%v", id)
 	// 只有进行中的订单才可以转单
 	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, id)
@@ -32,7 +32,7 @@ func (svc OrderService) ClearAllDasherInfo(ctx jet.Ctx, id uint) error {
 	return nil
 }
 
-func (svc OrderService) ListTransferInfo(ctx jet.Ctx, params *req.TransferListReq) ([]*vo.TransferVO, int64, error) {
+func (svc *OrderService) ListTransferInfo(ctx jet.Ctx, params *req.TransferListReq) ([]*vo.TransferVO, int64, error) {
 	query := new(xmysql.MysqlQuery)
 	query.SetPage(params.Page, params.PageSize)
 	query.SetSort("id desc")
@@ -72,7 +72,7 @@ func (svc OrderService) ListTransferInfo(ctx jet.Ctx, params *req.TransferListRe
 	return vos, count, nil
 }
 
-func (svc OrderService) RemoveTransfer(ctx jet.Ctx, id int64) error {
+func (svc *OrderService) RemoveTransfer(ctx jet.Ctx, id int64) error {
 	err := svc.transferRepo.RemoveByID(id)
 	if err != nil {
 		ctx.Logger().Errorf("RemoveByID ERROR:%v", err)
@@ -81,7 +81,7 @@ func (svc OrderService) RemoveTransfer(ctx jet.Ctx, id int64) error {
 	return nil
 }
 
-func (svc OrderService) UpdateTransfer(ctx jet.Ctx, transferVO *vo.TransferVO) error {
+func (svc *OrderService) UpdateTransfer(ctx jet.Ctx, transferVO *vo.TransferVO) error {
 	oldInfo, _ := svc.transferRepo.FindByID(transferVO.ID)
 	if oldInfo.Status != enum.Transfer_PENDING {
 		return errors.New("只能修改待处理的申请")
@@ -146,7 +146,7 @@ func (svc OrderService) UpdateTransfer(ctx jet.Ctx, transferVO *vo.TransferVO) e
 	return nil
 }
 
-func (svc OrderService) checkDasherStatus(ctx jet.Ctx, executorTo int) error {
+func (svc *OrderService) checkDasherStatus(ctx jet.Ctx, executorTo int) error {
 	if online := svc.userRepo.CheckAssistantStatus(ctx, executorTo); !online {
 		return errors.New(fmt.Sprintf("指定打手不在线，打手Id为:%v", executorTo))
 	}
@@ -156,7 +156,7 @@ func (svc OrderService) checkDasherStatus(ctx jet.Ctx, executorTo int) error {
 	return nil
 }
 
-func (svc OrderService) TransferTo(ctx jet.Ctx, transferReq *req.TransferReq) error {
+func (svc *OrderService) TransferTo(ctx jet.Ctx, transferReq *req.TransferReq) error {
 	executorTo := transferReq.ExecutorTo
 	if executorTo <= 0 {
 		// 直接转单到大厅
