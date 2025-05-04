@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	jsoniter "github.com/json-iterator/go"
 	"strings"
@@ -149,12 +148,12 @@ func ObjToJsonStr(obj interface{}) (str string) {
 	str = ""
 	var err error
 	if obj == nil {
-		_ = fmt.Errorf("obj is nil")
+		xlog.Errorf("ObjToJsonStr ERROR, obj is nil")
 		return
 	}
 	str, err = Marshal(obj)
 	if err != nil {
-		_ = fmt.Errorf(err.Error())
+		xlog.Errorf("ObjToJsonStr:%v", err)
 		return
 	}
 	return

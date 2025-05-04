@@ -10,6 +10,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/valyala/fasthttp"
 	"mxclub/apps/mxclub-admin/config"
+	"mxclub/domain/user/po"
 	"strings"
 )
 
@@ -53,16 +54,11 @@ func handleOperator(ctx *fasthttp.RequestCtx) (err error) {
 			xlog.Error("Failed to marshal request parameters")
 		}
 
-		// 获取用户信息
-		rawUserInfo := ctx.UserValue("tokenInfo")
-		if rawUserInfo == nil {
-			xlog.Error("[OperatorMiddleware#handleOperator] userInfo is invalid")
-			return errors.New("未登录")
-		}
+		userPO, err := FetchUserInfoByCtx(ctx)
 
-		// 类型断言获取用户详细信息
-		userInfo := rawUserInfo.(*AuthToken)
-		userPO := userInfo.UserPO
+		if err != nil {
+			return err
+		}
 
 		// 记录用户操作了哪个接口以及请求参数
 		xlog.Infof("[OperatorMiddleware#handleOperator] User %s (%d) accessed %s with method %s\nRequest Params:\n%s",
@@ -72,4 +68,18 @@ func handleOperator(ctx *fasthttp.RequestCtx) (err error) {
 			string(prettyParams))
 	}
 	return nil
+}
+
+func FetchUserInfoByCtx(ctx *fasthttp.RequestCtx) (*po.User, error) {
+	// 获取用户信息
+	rawUserInfo := ctx.UserValue("tokenInfo")
+	if rawUserInfo == nil {
+		xlog.Error("[OperatorMiddleware#handleOperator] userInfo is invalid")
+		return nil, errors.New("未登录")
+	}
+
+	// 类型断言获取用户详细信息
+	userInfo := rawUserInfo.(*AuthToken)
+	userPO := userInfo.UserPO
+	return userPO, nil
 }

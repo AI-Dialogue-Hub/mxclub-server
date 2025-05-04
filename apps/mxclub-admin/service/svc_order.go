@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"mxclub/apps/mxclub-admin/entity/dto"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/apps/mxclub-admin/middleware"
 	"mxclub/domain/event"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
@@ -16,6 +18,7 @@ import (
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
+	"time"
 )
 
 func init() {
@@ -31,15 +34,16 @@ func init() {
 }
 
 type OrderService struct {
-	orderRepo         repo.IOrderRepo
-	wxPayCallbackRepo repo.IWxPayCallbackRepo
-	withdrawRepo      repo.IWithdrawalRepo
-	deductionRepo     repo.IDeductionRepo
-	userRepo          userRepo.IUserRepo
-	messageService    *MessageService
-	transferRepo      repo.ITransferRepo
-	evaluationRepo    repo.IEvaluationRepo
-	rewardRepo        repo.IRewardRecordRepo
+	orderRepo          repo.IOrderRepo
+	wxPayCallbackRepo  repo.IWxPayCallbackRepo
+	withdrawRepo       repo.IWithdrawalRepo
+	deductionRepo      repo.IDeductionRepo
+	userRepo           userRepo.IUserRepo
+	messageService     *MessageService
+	transferRepo       repo.ITransferRepo
+	evaluationRepo     repo.IEvaluationRepo
+	rewardRepo         repo.IRewardRecordRepo
+	operatorLogService *OperatorLogService
 }
 
 func NewOrderService(repo repo.IOrderRepo,
@@ -50,16 +54,18 @@ func NewOrderService(repo repo.IOrderRepo,
 	userRepo userRepo.IUserRepo,
 	transferRepo repo.ITransferRepo,
 	evaluationRepo repo.IEvaluationRepo,
-	rewardRepo repo.IRewardRecordRepo) *OrderService {
+	rewardRepo repo.IRewardRecordRepo,
+	operatorLogService *OperatorLogService) *OrderService {
 	return &OrderService{orderRepo: repo,
-		withdrawRepo:      withdrawRepo,
-		deductionRepo:     deductionRepo,
-		wxPayCallbackRepo: wxPayCallbackRepo,
-		messageService:    messageService,
-		userRepo:          userRepo,
-		transferRepo:      transferRepo,
-		evaluationRepo:    evaluationRepo,
-		rewardRepo:        rewardRepo,
+		withdrawRepo:       withdrawRepo,
+		deductionRepo:      deductionRepo,
+		wxPayCallbackRepo:  wxPayCallbackRepo,
+		messageService:     messageService,
+		userRepo:           userRepo,
+		transferRepo:       transferRepo,
+		evaluationRepo:     evaluationRepo,
+		rewardRepo:         rewardRepo,
+		operatorLogService: operatorLogService,
 	}
 }
 
@@ -148,11 +154,30 @@ func (svc OrderService) UpdateWithdraw(ctx jet.Ctx, updateReq *req.WitchDrawUpda
 	return svc.withdrawRepo.UpdateByWrapper(update)
 }
 
-func (svc OrderService) RemoveByID(id int64) error {
+func (svc OrderService) RemoveByID(ctx jet.Ctx, id int64) error {
+	doLogRemoveOperator(ctx, id, svc)
 	return svc.orderRepo.RemoveByID(id)
 }
 
+func doLogRemoveOperator(ctx jet.Ctx, id int64, svc OrderService) {
+	defer utils.RecoverAndLogError(ctx)
+	userInfo, err := middleware.FetchUserInfoByCtx(ctx.FastHttpCtx())
+	if err != nil || userInfo == nil {
+		ctx.Logger().Errorf("[doLogRemoveOperator] FetchUserInfoByCtx ERROR")
+		return
+	}
+	svc.operatorLogService.DoLog(
+		ctx,
+		dto.NewOrderRemoveOperatorLogDTO(
+			utils.ParseString(id),
+			fmt.Sprintf("管理员:%v, 删除订单, 时间:%v", userInfo.Name, time.Now().Format(time.DateTime)),
+		),
+	)
+}
+
 func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error {
+	// 0. 日志记录
+	doLogRefundsOperatorLog(ctx, params.OutTradeNo, svc)
 	logger := ctx.Logger()
 	// 1. 查询回调的参数
 	wxPayCallbackInfo, err := svc.wxPayCallbackRepo.FindByTraceNo(params.OutTradeNo)
@@ -177,6 +202,22 @@ func (svc OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) error 
 		return errors.New("退款失败")
 	}
 	return nil
+}
+
+func doLogRefundsOperatorLog(ctx jet.Ctx, orderId string, svc OrderService) {
+	defer utils.RecoverAndLogError(ctx)
+	userInfo, err := middleware.FetchUserInfoByCtx(ctx.FastHttpCtx())
+	if err != nil || userInfo == nil {
+		ctx.Logger().Errorf("[doLogRefundsOperatorLog] FetchUserInfoByCtx ERROR")
+		return
+	}
+	svc.operatorLogService.DoLog(
+		ctx,
+		dto.NewOrderRefundsOperatorLogDTO(
+			orderId,
+			fmt.Sprintf("管理员:%v(%v), 退款订单, 时间:%v", userInfo.Name, userInfo.ID, time.Now().Format(time.DateTime)),
+		),
+	)
 }
 
 func (svc OrderService) UpdateOrder(ctx jet.Ctx, orderVO *vo.OrderVO) error {

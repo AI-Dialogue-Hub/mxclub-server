@@ -796,7 +796,7 @@ var (
 // SyncTimeOutOrder 将超时的订单重新发往大厅
 func (svc OrderService) SyncTimeOutOrder() {
 	// 1. 找到所有打手抢单成功但超时未开始的订单
-	orders, err := svc.orderRepo.FindTimeOutOrders(constant.Duration_20_minute)
+	orders, err := svc.orderRepo.FindTimeOutOrders(constant.Duration_10_minute)
 	if err != nil || orders == nil || len(orders) <= 0 {
 		syncTimeOutLogger.Errorf("[SyncTimeOutOrder] ERROR: %v, orders is %+v", err, orders)
 		return

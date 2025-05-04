@@ -35,7 +35,7 @@ func (ctl OrderController) PostV1OrderList(ctx jet.Ctx, req *req.OrderListReq) (
 
 func (ctl OrderController) DeleteV1Order0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
 	orderId, _ := param.GetInt64(0)
-	err := ctl.orderService.RemoveByID(orderId)
+	err := ctl.orderService.RemoveByID(ctx, orderId)
 	return xjet.WrapperResult(ctx, "ok", err)
 }
 
