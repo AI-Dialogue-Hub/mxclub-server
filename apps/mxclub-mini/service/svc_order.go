@@ -811,7 +811,11 @@ func (svc *OrderService) SyncTimeOutOrder() {
 		_ = svc.ClearAllDasherInfo(dCtx, order.ID)
 		syncTimeOutLogger.Infof("[SyncTimeOutOrder] clear orderInfo, order is: %+v", order)
 		// 给打手发送消息
-		userPO, _ := svc.userService.FindUserByDashId(dCtx, order.ExecutorID)
+		userPO, err := svc.userService.FindUserByDashId(dCtx, order.ExecutorID)
+		if err != nil || userPO == nil || userPO.ID <= 0 {
+			syncTimeOutLogger.Errorf("[SyncTimeOutOrder] FindUserByDashId ERROR, %v, userPO:%v", err, userPO)
+			return
+		}
 		_ = svc.messageService.PushSystemMessage(
 			dCtx,
 			userPO.ID,
