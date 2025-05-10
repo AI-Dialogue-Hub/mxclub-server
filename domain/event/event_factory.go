@@ -23,6 +23,7 @@ func RegisterEvent(registerName string, eventCode int, eventHandler func(ctx jet
 		bos = append(bos, &EventBO{RegisterName: registerName, EventCode: eventCode, EventCallBack: eventHandler})
 		eventFactory.Put(eventCode, bos)
 	}
+	logger.Infof("[event#RegisterEvent] eventFactory now is => %v", eventFactory.Values())
 }
 
 func PublishEvent(eventCode int, ctx jet.Ctx) {
