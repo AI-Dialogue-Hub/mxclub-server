@@ -2,11 +2,9 @@ package controller
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/apps/mxclub-mini/service"
-	"mxclub/domain/event"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
@@ -14,15 +12,6 @@ import (
 
 func init() {
 	jet.Provide(NewOrderController)
-	jet.Invoke(func(u *service.OrderService) {
-		xlog.Info("RegisterEvent =====>>>> start")
-		event.RegisterEvent("OrderService", event.EventRemoveDasher, u.RemoveAssistantEvent)
-		event.RegisterEvent("TransferService", event.EventRemoveDasher, u.RemoveTransferRecord)
-		event.RegisterEvent("DeductService", event.EventRemoveDasher, u.RemoveDeductRecord)
-		event.RegisterEvent("WithdrawalService", event.EventRemoveDasher, u.RemoveWithdrawalRecord)
-		event.RegisterEvent("EvaluationService", event.EventRemoveDasher, u.RemoveEvaluation)
-		xlog.Info("RegisterEvent =====>>>> end")
-	})
 }
 
 type OrderController struct {

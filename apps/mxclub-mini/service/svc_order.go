@@ -11,6 +11,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/event"
 	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
 	productRepo "mxclub/domain/product/repo"
@@ -34,6 +35,16 @@ import (
 
 func init() {
 	jet.Provide(NewOrderService)
+	utils.SetTimeOut(time.Second*2, func() {
+		logger := xlog.NewWith("RegisterEvent")
+		logger.Info("RegisterEvent =====>>>> start")
+		event.RegisterEvent("OrderService", event.EventRemoveDasher, orderService.RemoveAssistantEvent)
+		event.RegisterEvent("TransferService", event.EventRemoveDasher, orderService.RemoveTransferRecord)
+		event.RegisterEvent("DeductService", event.EventRemoveDasher, orderService.RemoveDeductRecord)
+		event.RegisterEvent("WithdrawalService", event.EventRemoveDasher, orderService.RemoveWithdrawalRecord)
+		event.RegisterEvent("EvaluationService", event.EventRemoveDasher, orderService.RemoveEvaluation)
+		logger.Info("RegisterEvent =====>>>> end")
+	})
 }
 
 type OrderService struct {

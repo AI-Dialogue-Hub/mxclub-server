@@ -9,7 +9,7 @@ import (
 
 var (
 	// key eventCode value event array
-	eventFactory = maps.NewLinkedHashMap[int, []*EventBO]()
+	eventFactory = maps.NewConcurrentLinkedHashMap[int, []*EventBO]()
 	logger       = xlog.NewWith("event_logger")
 )
 
@@ -34,14 +34,17 @@ func PublishEvent(eventCode int, ctx jet.Ctx) {
 		return
 	}
 	for _, event := range events {
-		ctx.Logger().Infof(
-			"[event#PublishEvent] do event callback, register_name:%v, code:%v",
-			event.RegisterName, event.EventCode)
-		if err := event.EventCallBack(ctx); err != nil {
-			ctx.Logger().Errorf("[event#PublishEvent] ERROR: %v", err)
-		}
-		ctx.Logger().Infof(
-			"[event#PublishEvent] handle success, register_name:%v, code:%v",
-			event.RegisterName, event.EventCode)
+		go func(finalEvent *EventBO) {
+			defer utils.RecoverByPrefix(logger, "[event#PublishEvent]")
+			ctx.Logger().Infof(
+				"[event#PublishEvent] do event callback, register_name:%v, code:%v",
+				finalEvent.RegisterName, finalEvent.EventCode)
+			if err := finalEvent.EventCallBack(ctx); err != nil {
+				ctx.Logger().Errorf("[event#PublishEvent] ERROR: %v", err)
+			}
+			ctx.Logger().Infof(
+				"[event#PublishEvent] handle success, register_name:%v, code:%v",
+				finalEvent.RegisterName, finalEvent.EventCode)
+		}(event)
 	}
 }
