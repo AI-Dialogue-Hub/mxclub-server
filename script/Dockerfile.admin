@@ -25,4 +25,4 @@ COPY --from=builder /app/publish .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "./mxclub-admin -f /config/mxclub-server-admin.yml >> /logs/mini/mxclub-admin.log 2>&1"]
+CMD ["sh", "-c", "./mxclub-admin -f /config/mxclub-server-admin.yml >> /logs/admin/mxclub-admin.log 2>&1"]
