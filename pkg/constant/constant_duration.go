@@ -14,5 +14,6 @@ const (
 
 	Duration_minute    = time.Duration(1) * time.Minute
 	Duration_10_minute = Duration_minute * 10
+	Duration_12_minute = Duration_minute * 12
 	Duration_20_minute = Duration_minute * 20
 )

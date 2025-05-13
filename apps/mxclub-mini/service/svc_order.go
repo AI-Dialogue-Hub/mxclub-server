@@ -473,7 +473,7 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 
 func (svc *OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 	ctx.Logger().Infof("订单开始:%v", utils.ObjToJsonStr(req))
-	// 需要确保订单不会被打两次
+	// 0. 需要确保订单不会被打两次
 	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, req.OrderId)
 	if err != nil {
 		ctx.Logger().Errorf(
@@ -486,7 +486,16 @@ func (svc *OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {
 			"[OrderService#Start]req:%v, invalid order:%v", utils.ObjToJsonStr(req), utils.ObjToJsonStr(orderPO))
 		return errors.New("该订单状态异常，请联系管理员")
 	}
+	// 1. 确保订单还在当前打手手上
+	if orderPO.ExecutorID != req.ExecutorId {
+		ctx.Logger().Errorf(
+			"[OrderService#Start]current dasher is not first executor, req:%v, order:%v",
+			utils.ObjToJsonStr(req), utils.ObjToJsonStr(orderPO))
+		return errors.New("您不是该订单的车头，请检查订单状态")
+	}
+
 	err = svc.startOrder(ctx, req.OrderId, req.ExecutorId, req.StartImages)
+
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return errors.New("订单开始失败，请联系客服")
@@ -862,6 +871,10 @@ func (svc *OrderService) SyncTimeOutOrder() {
 }
 
 func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
+	// 0. 注销前，打印账户余额信息
+	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx); err != nil {
+		ctx.Logger().Infof("[RemoveAssistantEvent] dasher account info => %v", utils.ObjToJsonStr(historyWithDrawAmount))
+	}
 	userId := middleware.MustGetUserId(ctx)
 	userPO, _ := svc.userService.FindUserById(ctx, userId)
 	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
