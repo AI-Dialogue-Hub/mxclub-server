@@ -141,6 +141,10 @@ func (svc UserService) ExistsExecutor(ctx jet.Ctx, memberNumber int) bool {
 }
 
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
+	// 编号要小于2k
+	if req.MemberNumber >= 2000 {
+		return errors.New("打手编号需要小于2000")
+	}
 	if svc.userRepo.ExistsAssistant(ctx, req.Phone, req.MemberNumber) {
 		return errors.New("电话或id已被使用")
 	}
