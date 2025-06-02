@@ -707,12 +707,11 @@ func (svc *OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
 func (svc *OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	userId := middleware.MustGetUserId(ctx)
 	userById, _ := svc.userService.FindUserById(ctx, userId)
-	// 0. 查找当天是否有未完成的提现记录 如果有则限制此次提现
-	start, end := utils.GetTodayStartAndEndTimes()
-	records, err := svc.withdrawalRepo.FindWithdrawnWithDuration(ctx, userById.MemberNumber, "initiated", start, end)
+	// 0. 查找是否有未完成的提现记录 如果有则限制此次提现
+	records, err := svc.withdrawalRepo.FindWithdrawnByStatus(ctx, userById.MemberNumber, enum.Initiated())
 	if records != nil && len(records) > 0 {
 		ctx.Logger().Errorf("[WithDraw] has durable withdraw records => %v", utils.ObjToJsonStr(records))
-		return errors.New("您当天还有其他提现记录未完结，请结束后再进行提现")
+		return errors.New("您还有其他提现记录未完结，请结束后再进行提现")
 	}
 	// 1. 检查提现金额
 	minAmount, _ := svc.fetchWithDrawRange(ctx)

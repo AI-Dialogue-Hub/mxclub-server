@@ -2,7 +2,7 @@ package enum
 
 type WithdrawalStatus string
 
-func Initiated() string {
+func Initiated() WithdrawalStatus {
 	return "initiated"
 }
 
