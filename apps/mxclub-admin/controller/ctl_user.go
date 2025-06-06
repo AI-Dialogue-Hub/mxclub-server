@@ -92,6 +92,7 @@ func (ctl UserController) PostV1UserUpdate(ctx jet.Ctx, userReq *req.UserReq) (*
 
 func (ctl UserController) DeleteV1UserDasher0(ctx jet.Ctx, param *api.PathParam) (*api.Response, error) {
 	userId, _ := param.GetInt64(0)
+	ctx.Logger().Infof("DeleteV1UserDasher0, param:%v", utils.ObjToJsonStr(userId))
 	return xjet.WrapperResult(ctx, "Ok", ctl.userService.RemoveAssistant(ctx, uint(userId)))
 }
 

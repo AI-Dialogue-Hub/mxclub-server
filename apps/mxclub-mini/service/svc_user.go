@@ -339,7 +339,7 @@ func (svc UserService) RemoveAssistant(ctx jet.Ctx) error {
 	event.PublishEvent(event.EventRemoveDasher, ctx)
 	userId := middleware.MustGetUserId(ctx)
 	userPO, _ := svc.FindUserById(ctx, userId)
-	ctx.Logger().Infof("remove dasher, dasherId:%v, dasherName: %v", userId, utils.ObjToJsonStr(userPO))
+	ctx.Logger().Infof("remove dasher, dasherId:%v, dasherName: %v", userPO.WxName, utils.ObjToJsonStr(userPO))
 	return nil
 }
 

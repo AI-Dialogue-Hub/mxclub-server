@@ -5,6 +5,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"mxclub/pkg/utils"
+	"sync"
 )
 
 var (
@@ -33,9 +34,13 @@ func PublishEvent(eventCode int, ctx jet.Ctx) {
 		ctx.Logger().Errorf("[event#PublishEvent] cannot find eventCode: %v", eventCode)
 		return
 	}
+	wg := new(sync.WaitGroup)
 	for _, event := range events {
+		ctx.Logger().Infof("do PublishEvent, event:%v", utils.ObjToJsonStr(event))
+		wg.Add(1)
 		go func(finalEvent *EventBO) {
 			defer utils.RecoverByPrefix(logger, "[event#PublishEvent]")
+			defer wg.Done()
 			ctx.Logger().Infof(
 				"[event#PublishEvent] do event callback, register_name:%v, code:%v",
 				finalEvent.RegisterName, finalEvent.EventCode)
@@ -47,4 +52,5 @@ func PublishEvent(eventCode int, ctx jet.Ctx) {
 				finalEvent.RegisterName, finalEvent.EventCode)
 		}(event)
 	}
+	wg.Wait()
 }
