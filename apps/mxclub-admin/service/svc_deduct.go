@@ -65,6 +65,15 @@ func (svc *OrderService) UpdateDeduction(ctx jet.Ctx, updateReq *req.DeductionUp
 		ctx.Logger().Errorf("[orderService]UpdateDeduction ERROR:%v", err.Error())
 		return errors.New("修改失败")
 	}
+	// 如果是评星，要删除评星记录
+	if updateReq.Status == "已拒绝" || updateReq.Status == enum.Deduct_REJECT.DisPlayName() {
+		if deductionPO, _ := svc.deductionRepo.FindByID(updateReq.ID); deductionPO != nil && deductionPO.ID > 0 {
+			orderNo := deductionPO.OrderNo
+			dasherId := deductionPO.DasherId
+			// TODO@lfy 这里其实没有区分罚款的类型
+			_ = svc.evaluationRepo.RemoveByOrderIdAndDasherId(ctx, orderNo, dasherId)
+		}
+	}
 	return nil
 }
 

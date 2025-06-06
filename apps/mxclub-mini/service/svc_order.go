@@ -871,7 +871,7 @@ func (svc *OrderService) SyncTimeOutOrder() {
 
 func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	// 0. 注销前，打印账户余额信息
-	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx); err != nil {
+	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx); err == nil {
 		ctx.Logger().Infof("[RemoveAssistantEvent] dasher account info => %v", utils.ObjToJsonStr(historyWithDrawAmount))
 	}
 	userId := middleware.MustGetUserId(ctx)

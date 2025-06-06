@@ -17,6 +17,8 @@ type IEvaluationRepo interface {
 	FindStaring(ctx jet.Ctx, dasherId int) (float64, error)
 	RemoveEvaluation(ctx jet.Ctx, dasherId int) error
 	FindByOrderList(ctx jet.Ctx, orderList []uint64) (map[uint64][]*po.OrderEvaluation, error)
+	FindByOrderId(ctx jet.Ctx, orderId any, dasherId any) (*po.OrderEvaluation, error)
+	RemoveByOrderIdAndDasherId(ctx jet.Ctx, orderId any, dasherId any) error
 }
 
 func NewEvaluationRepo(db *gorm.DB) IEvaluationRepo {
@@ -88,4 +90,17 @@ func (repo EvaluationRepo) FindByOrderList(ctx jet.Ctx, orderList []uint64) (map
 		}
 	}
 	return orderId2EvaluationPOMap, nil
+}
+
+func (repo EvaluationRepo) FindByOrderId(ctx jet.Ctx, orderId any, dasherId any) (*po.OrderEvaluation, error) {
+	return repo.FindOne("order_id = ? and executor_id = ?", orderId, dasherId)
+}
+func (repo EvaluationRepo) RemoveByOrderIdAndDasherId(ctx jet.Ctx, orderId any, dasherId any) error {
+	err := repo.Remove("order_id = ? and executor_id = ?", orderId, dasherId)
+	if err != nil {
+		ctx.Logger().Errorf("[EvaluationRepo#RemoveByOrderIdAndDasherId]ERROR,%v", err)
+		return err
+	}
+	ctx.Logger().Infof("[EvaluationRepo#RemoveByOrderIdAndDasherId]remove success, orderId:%v, dasherId:%v", orderId, dasherId)
+	return nil
 }

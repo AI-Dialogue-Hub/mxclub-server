@@ -351,6 +351,8 @@ func (svc UserService) RemoveAssistantEvent(ctx jet.Ctx) error {
 		ctx.Logger().Errorf("[RemoveAssistant]ERROR:%v", err)
 		return errors.New("注销打手失败")
 	}
+	// 2. 给用户发送注销消息
+	_ = svc.messageService.PushSystemMessage(ctx, userId, "您的打手身份已注销")
 	return nil
 }
 
