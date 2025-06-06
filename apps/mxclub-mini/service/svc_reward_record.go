@@ -201,7 +201,8 @@ func (svc RewardRecordService) List(ctx jet.Ctx, listReq *req.RewardListReq) ([]
 func (svc RewardRecordService) RemoveRewardRecord(ctx jet.Ctx) error {
 	defer utils.RecoverAndLogError(ctx)
 	userId := middleware.MustGetUserId(ctx)
-	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, userId); err != nil {
+	userPO, _ := svc.userRepo.FindByID(userId)
+	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, userPO.MemberNumber); err != nil {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
 		return err
 	}

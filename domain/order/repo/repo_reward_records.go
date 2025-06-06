@@ -25,7 +25,7 @@ type IRewardRecordRepo interface {
 	AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber uint) (float64, error)
 	ListNoCountDuration(ctx jet.Ctx, startDateStr, endDateStr string, status enum.OrderStatus) ([]*po.RewardRecord, error)
 	// ClearAllRewardByDasherId 清理打手所有打赏信息
-	ClearAllRewardByDasherId(ctx jet.Ctx, dasherId uint) error
+	ClearAllRewardByDasherId(ctx jet.Ctx, dasherId any) error
 }
 
 func NewRewardRecordRepo(db *gorm.DB) IRewardRecordRepo {
@@ -129,6 +129,6 @@ func (repo RewardRepoImpl) ListNoCountDuration(ctx jet.Ctx, startDateStr, endDat
 	return rewardRecords, nil
 }
 
-func (repo RewardRepoImpl) ClearAllRewardByDasherId(ctx jet.Ctx, dasherId uint) error {
+func (repo RewardRepoImpl) ClearAllRewardByDasherId(ctx jet.Ctx, dasherId any) error {
 	return repo.Remove("dasher_number = ?", dasherId)
 }
