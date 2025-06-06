@@ -5,7 +5,7 @@ import "time"
 func SetTimeOut(delayTime time.Duration, fn func()) <-chan struct{} {
 	done := make(chan struct{})
 	go func() {
-		RecoverByPrefixNoCtx("SetTimeOut")
+		defer RecoverByPrefixNoCtx("SetTimeOut")
 		select {
 		case <-time.After(delayTime):
 			fn()
