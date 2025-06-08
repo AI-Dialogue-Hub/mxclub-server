@@ -6,5 +6,7 @@ import (
 )
 
 func (svc *OrderService) RemoveWithdrawalRecord(ctx jet.Ctx) error {
-	return svc.withdrawalRepo.RemoveWithdrawalRecord(ctx, middleware.MustGetUserId(ctx))
+	userId := middleware.MustGetUserId(ctx)
+	ctx.Logger().Infof("[OrderService#RemoveWithdrawalRecord] userId:%v", userId)
+	return svc.withdrawalRepo.RemoveWithdrawalRecord(ctx, userId)
 }

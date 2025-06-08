@@ -215,7 +215,7 @@ func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {
 }
 
 func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", d.Id)
 	update.Set("detail_images", xmysql.StringArray(d.Images))
@@ -269,7 +269,7 @@ func (repo OrderRepo) UpdateOrderStatusIncludingDeleted(ctx jet.Ctx, orderId uin
 }
 
 func (repo OrderRepo) RemoveAssistant(ctx jet.Ctx, executorDTO *dto.OrderExecutorDTO) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	updateWrap := xmysql.NewMysqlUpdate()
 	updateWrap.SetFilter("order_id = ?", executorDTO.OrderId)
 	executorType := executorDTO.ExecutorType
@@ -396,7 +396,7 @@ func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, erro
 }
 
 func (repo OrderRepo) ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error {
-	_ = xredis.DelMatchingKeys(ctx, cachePrefix)
+	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 	update := xmysql.NewMysqlUpdate()
 	update.SetFilter("id = ?", ordersId)
 	update.Set("executor_id", -1)
