@@ -286,7 +286,8 @@ func (svc *OrderService) RemoveEvaluation(ctx jet.Ctx) error {
 // RemoveRewardRecord 清理打手打赏信息
 func (svc *OrderService) RemoveRewardRecord(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
-	if err := svc.rewardRepo.ClearAllRewardByDasherId(ctx, userId); err != nil {
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
+	if err := svc.rewardRepo.ClearAllRewardByDasherId(ctx, userPO.MemberNumber); err != nil {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
 		return err
 	}

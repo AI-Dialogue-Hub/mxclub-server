@@ -34,19 +34,22 @@ type UserService struct {
 	evaluationRepo orderRepo.IEvaluationRepo
 	apRepo         repo.IAssistantApplicationRepo
 	messageService *MessageService
+	withdrawRepo   orderRepo.IWithdrawalRepo
 }
 
 func NewUserService(repo repo.IUserRepo,
 	apRepo repo.IAssistantApplicationRepo,
 	messageService *MessageService,
 	orderRepo orderRepo.IOrderRepo,
-	evaluationRepo orderRepo.IEvaluationRepo) *UserService {
+	evaluationRepo orderRepo.IEvaluationRepo,
+	withdrawRepo orderRepo.IWithdrawalRepo) *UserService {
 	return &UserService{
 		userRepo:       repo,
 		apRepo:         apRepo,
 		messageService: messageService,
 		orderRepo:      orderRepo,
 		evaluationRepo: evaluationRepo,
+		withdrawRepo:   withdrawRepo,
 	}
 }
 
@@ -150,7 +153,10 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	}
 	// 获取当前用户ID
 	userID := middleware.MustGetUserId(ctx)
-
+	// 检查打手Id对应账号之前是否干净
+	if err := svc.checkDasherIdStatus(ctx, req); err != nil {
+		return err
+	}
 	// 创建打手申请记录
 	err := svc.apRepo.CreateAssistantApplication(ctx, userID, req.Phone, req.MemberNumber, req.Name)
 	if err != nil {
@@ -160,7 +166,25 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	// 发送申请消息
 	err = svc.messageService.PushSystemMessage(ctx, userID, "您成为打手的申请已提交，请联系管理员审核")
 	if err != nil {
-		ctx.Logger().Errorf("[ToBeAssistant]消息发送失败:%v", err.Error())
+		ctx.Logger().Errorf("[ToBeAssistant] push message failed:%v", err)
+	}
+	return nil
+}
+
+func (svc UserService) checkDasherIdStatus(ctx jet.Ctx, req req.AssistantReq) error {
+	// 前置检查，查询这个打手Id之前是否已经清理干净
+	orderList, err := svc.orderRepo.FindByDasherIdAndStatus(ctx, int(req.MemberNumber), orderEnum.SUCCESS)
+	if err == nil && len(orderList) > 0 {
+		ctx.Logger().Errorf("[UserService#ToBeAssistant] order has illegal dasherId:%v, orderInfo:%v",
+			req.MemberNumber, utils.ObjToJsonStr(orderList))
+		return fmt.Errorf("该打手账号:%v, 状态异常, 请联系管理员", req.MemberNumber)
+	}
+	// 提现记录是否干净
+	withdrawalRecords, err := svc.withdrawRepo.FindWithdrawnByStatus(ctx, int(req.MemberNumber), orderEnum.Completed())
+	if err == nil && len(withdrawalRecords) > 0 {
+		ctx.Logger().Errorf("[UserService#ToBeAssistant] withdrawn has illegal dasherId:%v, orderInfo:%v",
+			req.MemberNumber, utils.ObjToJsonStr(withdrawalRecords))
+		return fmt.Errorf("该打手账号:%v, 提现状态异常, 请联系管理员", req.MemberNumber)
 	}
 	return nil
 }

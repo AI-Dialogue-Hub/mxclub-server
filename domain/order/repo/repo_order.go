@@ -56,7 +56,10 @@ type IOrderRepo interface {
 	UpdateOrderGrabTime(ctx jet.Ctx, ordersId uint) error
 	DoneEvaluation(id uint) error
 	RemoveByTradeNo(orderNo string) error
+	// FindByDasherId 检查是否有在进行中的订单
 	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
+	// FindByDasherIdAndStatus 查找指定打手状态下的订单
+	FindByDasherIdAndStatus(ctx jet.Ctx, dasherId int, status enum.OrderStatus) ([]*po.Order, error)
 	ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error
 	ClearOrderCache(ctx jet.Ctx)
 	// FindTimeOutOrders timeout 单位秒
@@ -393,6 +396,21 @@ func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, erro
 		dasherId, dasherId, dasherId,
 	)
 	return repo.FindByWrapper(query)
+}
+
+func (repo OrderRepo) FindByDasherIdAndStatus(ctx jet.Ctx, dasherId int, status enum.OrderStatus) ([]*po.Order, error) {
+	query := xmysql.NewMysqlQuery()
+	// 这里有可能是三个打手中的任意一个
+	query.SetFilter(
+		"order_status = ? and (executor_id = ? or executor2_id = ? or executor3_id = ?)",
+		int(status), dasherId, dasherId, dasherId,
+	)
+	orders, err := repo.ListNoCountByQuery(query)
+	if err != nil {
+		ctx.Logger().Errorf("[OrderRepo#FindByDasherIdAndStatus]ERROR, %v", err)
+		return nil, err
+	}
+	return orders, nil
 }
 
 func (repo OrderRepo) ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error {

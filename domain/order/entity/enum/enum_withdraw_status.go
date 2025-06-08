@@ -6,7 +6,7 @@ func Initiated() WithdrawalStatus {
 	return "initiated"
 }
 
-func Completed() string {
+func Completed() WithdrawalStatus {
 	return "completed"
 }
 
