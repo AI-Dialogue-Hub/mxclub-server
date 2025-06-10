@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/entity/enum"
@@ -61,7 +62,12 @@ func checkTransferStatus(ctx jet.Ctx, orderId uint64, executorId int) error {
 }
 
 func (svc *OrderService) RemoveTransferRecord(ctx jet.Ctx) error {
-	userId := middleware.MustGetUserId(ctx)
-	userPO, _ := svc.userService.FindUserById(ctx, userId)
-	return svc.transferRepo.RemoveByDasherId(ctx, userPO.MemberNumber)
+	if value, exists := ctx.Get(constantMini.LOGOUT_DASHER_ID); exists {
+		dasherId := value.(int)
+		return svc.transferRepo.RemoveByDasherId(ctx, dasherId)
+	} else {
+		userId := middleware.MustGetUserId(ctx)
+		userPO, _ := svc.userService.FindUserById(ctx, userId)
+		return svc.transferRepo.RemoveByDasherId(ctx, userPO.MemberNumber)
+	}
 }

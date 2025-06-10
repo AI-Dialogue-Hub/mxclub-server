@@ -29,6 +29,7 @@ type IWithdrawalRepo interface {
 	// @return 打手id -> 可以提现的钱
 	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, error)
 	RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error
+	RemoveWithdrawalRecordByDasherId(ctx jet.Ctx, dasherId int) error
 	// FindWithdrawnWithDuration 查找指定日期的提现记录
 	FindWithdrawnWithDuration(
 		ctx jet.Ctx, dasherId int, status enum.WithdrawalStatus, start, end time.Time) ([]*po.WithdrawalRecord, error)
@@ -154,6 +155,14 @@ func (repo WithdrawalRepo) ListWithdraw(ctx jet.Ctx, d *dto.WithdrawListDTO) ([]
 
 func (repo WithdrawalRepo) RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error {
 	return repo.Remove("dasher_user_id = ?", userId)
+}
+
+func (repo WithdrawalRepo) RemoveWithdrawalRecordByDasherId(ctx jet.Ctx, dasherId int) error {
+	if err := repo.Remove("dasher_id = ?", dasherId); err != nil {
+		ctx.Logger().Errorf("[WithdrawalRepo#RemoveWithdrawalRecordByDasherId] err:%v", err)
+		return err
+	}
+	return nil
 }
 
 func (repo WithdrawalRepo) FindWithdrawnWithDuration(

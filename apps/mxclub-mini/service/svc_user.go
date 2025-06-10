@@ -6,6 +6,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/config"
 	"mxclub/apps/mxclub-mini/entity/bo"
+	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
@@ -144,6 +145,7 @@ func (svc UserService) ExistsExecutor(ctx jet.Ctx, memberNumber int) bool {
 }
 
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
+	defer utils.TraceElapsed(ctx, fmt.Sprintf("[%s]ToBeAssistant", ctx.Logger().ReqId))()
 	// 编号要小于2k
 	if req.MemberNumber >= 2000 {
 		return errors.New("打手编号需要小于2000")
@@ -155,7 +157,14 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	userID := middleware.MustGetUserId(ctx)
 	// 检查打手Id对应账号之前是否干净
 	if err := svc.checkDasherIdStatus(ctx, req); err != nil {
-		return err
+		ctx.Logger().Errorf("[UserService#ToBeAssistant] checkDasherIdStatus ERROR:%v", err)
+		// 清理之前账号信息
+		_ = svc.doClearDasherInfo(ctx, req)
+		// 再重新检查一次
+		if err = svc.checkDasherIdStatus(ctx, req); err != nil {
+			ctx.Logger().Errorf("[UserService#ToBeAssistant] checkDasherIdStatus double fuck ERROR:%v", err)
+			return err
+		}
 	}
 	// 创建打手申请记录
 	err := svc.apRepo.CreateAssistantApplication(ctx, userID, req.Phone, req.MemberNumber, req.Name)
@@ -171,20 +180,28 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	return nil
 }
 
+// doClearDasherInfo 清理之前未清理干净打手的信息
+func (svc UserService) doClearDasherInfo(ctx jet.Ctx, req req.AssistantReq) error {
+	ctx.Put(constantMini.LOGOUT_DASHER_ID, int(req.MemberNumber))
+	event.PublishEvent(event.EventRemoveDasher, ctx)
+	ctx.Logger().Infof("[UserService#doClearDasherInfo] dasherId:%v", req.MemberNumber)
+	return nil
+}
+
 func (svc UserService) checkDasherIdStatus(ctx jet.Ctx, req req.AssistantReq) error {
 	// 前置检查，查询这个打手Id之前是否已经清理干净
 	orderList, err := svc.orderRepo.FindByDasherIdAndStatus(ctx, int(req.MemberNumber), orderEnum.SUCCESS)
 	if err == nil && len(orderList) > 0 {
 		ctx.Logger().Errorf("[UserService#ToBeAssistant] order has illegal dasherId:%v, orderInfo:%v",
 			req.MemberNumber, utils.ObjToJsonStr(orderList))
-		return fmt.Errorf("该打手账号:%v, 状态异常, 请联系管理员", req.MemberNumber)
+		return fmt.Errorf("该打手账号:%v, 状态异常, 请一分钟后重新注册", req.MemberNumber)
 	}
 	// 提现记录是否干净
 	withdrawalRecords, err := svc.withdrawRepo.FindWithdrawnByStatus(ctx, int(req.MemberNumber), orderEnum.Completed())
 	if err == nil && len(withdrawalRecords) > 0 {
 		ctx.Logger().Errorf("[UserService#ToBeAssistant] withdrawn has illegal dasherId:%v, orderInfo:%v",
 			req.MemberNumber, utils.ObjToJsonStr(withdrawalRecords))
-		return fmt.Errorf("该打手账号:%v, 提现状态异常, 请联系管理员", req.MemberNumber)
+		return fmt.Errorf("该打手账号:%v, 提现状态异常, 请一分钟后重新注册", req.MemberNumber)
 	}
 	return nil
 }

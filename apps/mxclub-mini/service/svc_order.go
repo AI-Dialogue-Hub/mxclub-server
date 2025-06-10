@@ -7,6 +7,7 @@ import (
 	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"math"
+	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
@@ -35,16 +36,21 @@ import (
 
 func init() {
 	jet.Provide(NewOrderService)
-	utils.SetTimeOut(time.Second*2, func() {
-		logger := xlog.NewWith("RegisterEvent")
-		logger.Info("RegisterEvent =====>>>> start")
-		event.RegisterEvent("OrderService", event.EventRemoveDasher, orderService.RemoveAssistantEvent)
-		event.RegisterEvent("TransferService", event.EventRemoveDasher, orderService.RemoveTransferRecord)
-		event.RegisterEvent("DeductService", event.EventRemoveDasher, orderService.RemoveDeductRecord)
-		event.RegisterEvent("WithdrawalService", event.EventRemoveDasher, orderService.RemoveWithdrawalRecord)
-		event.RegisterEvent("EvaluationService", event.EventRemoveDasher, orderService.RemoveEvaluation)
-		logger.Info("RegisterEvent =====>>>> end")
-	})
+}
+
+// setUp 初始化注册handle
+//
+// @see MessageService
+// @see RewardService
+func setUp(svc *OrderService) {
+	logger := xlog.NewWith("RegisterEvent")
+	logger.Info("RegisterEvent =====>>>> start")
+	event.RegisterEvent("OrderService", event.EventRemoveDasher, svc.RemoveAssistantEvent)
+	event.RegisterEvent("TransferService", event.EventRemoveDasher, svc.RemoveTransferRecord)
+	event.RegisterEvent("DeductService", event.EventRemoveDasher, svc.RemoveDeductRecord)
+	event.RegisterEvent("WithdrawalService", event.EventRemoveDasher, svc.RemoveWithdrawalRecord)
+	event.RegisterEvent("EvaluationService", event.EventRemoveDasher, svc.RemoveEvaluation)
+	logger.Info("RegisterEvent =====>>>> end")
 }
 
 type OrderService struct {
@@ -91,6 +97,8 @@ func NewOrderService(
 		rewardRecordRepo: rewardRecordRepo,
 		wxNotifyService:  wxNotifyService,
 	}
+	// 初始化
+	setUp(orderService)
 	return orderService
 }
 
@@ -870,12 +878,16 @@ func (svc *OrderService) SyncTimeOutOrder() {
 }
 
 func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
-	userId := middleware.MustGetUserId(ctx)
-	userPO, _ := svc.userService.FindUserById(ctx, userId)
-	// 0. 注销前，打印账户余额信息
-	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx); err == nil {
-		ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
-			userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+	if value, exists := ctx.Get(constantMini.LOGOUT_DASHER_ID); exists {
+		return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, value.(int))
+	} else {
+		userId := middleware.MustGetUserId(ctx)
+		userPO, _ := svc.userService.FindUserById(ctx, userId)
+		// 0. 注销前，打印账户余额信息
+		if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx); err == nil {
+			ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
+				userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+		}
+		return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 	}
-	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/order/biz/penalty"
@@ -138,7 +139,12 @@ func (svc *OrderService) handleLowRatingDeduction(ctx jet.Ctx, evaluation *po.Or
 }
 
 func (svc *OrderService) RemoveEvaluation(ctx jet.Ctx) error {
-	userId := middleware.MustGetUserId(ctx)
-	userPO, _ := svc.userService.FindUserById(ctx, userId)
-	return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)
+	if value, exists := ctx.Get(constantMini.LOGOUT_DASHER_ID); exists {
+		dasherId := value.(int)
+		return svc.evaluationRepo.RemoveEvaluation(ctx, dasherId)
+	} else {
+		userId := middleware.MustGetUserId(ctx)
+		userPO, _ := svc.userService.FindUserById(ctx, userId)
+		return svc.evaluationRepo.RemoveEvaluation(ctx, userPO.MemberNumber)
+	}
 }

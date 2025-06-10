@@ -32,6 +32,7 @@ type IDeductionRepo interface {
 	UpdateStatusByIds(ids []uint, status enum.DeductStatus) error
 	FindByOrderNo(orderNo uint) (*po.Deduction, error)
 	RemoveDasher(ctx jet.Ctx, userId uint) error
+	RemoveByDasherId(ctx jet.Ctx, dasherId int) error
 }
 
 func NewDeductionRepo(db *gorm.DB) IDeductionRepo {
@@ -112,4 +113,12 @@ func (repo DeductionRepo) FindByOrderNo(orderNo uint) (*po.Deduction, error) {
 
 func (repo DeductionRepo) RemoveDasher(ctx jet.Ctx, userId uint) error {
 	return repo.Remove("user_id = ?", userId)
+}
+
+func (repo DeductionRepo) RemoveByDasherId(ctx jet.Ctx, dasherId int) error {
+	if err := repo.Remove("dasher_id = ?", dasherId); err != nil {
+		ctx.Logger().Errorf("[DeductionRepo#RemoveByDasherId] err:%v", err)
+		return err
+	}
+	return nil
 }

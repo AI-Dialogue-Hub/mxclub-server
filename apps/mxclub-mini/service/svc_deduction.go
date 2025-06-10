@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
@@ -106,5 +107,10 @@ func (svc *OrderService) SyncPrePayOrder() {
 }
 
 func (svc *OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
-	return svc.deductionRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
+	if value, exists := ctx.Get(constantMini.LOGOUT_DASHER_ID); exists {
+		dasherId := value.(int)
+		return svc.deductionRepo.RemoveByDasherId(ctx, dasherId)
+	} else {
+		return svc.deductionRepo.RemoveDasher(ctx, middleware.MustGetUserId(ctx))
+	}
 }

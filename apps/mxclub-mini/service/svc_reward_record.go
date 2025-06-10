@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fengyuan-liang/GoKit/collection/maps"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
@@ -200,12 +201,19 @@ func (svc RewardRecordService) List(ctx jet.Ctx, listReq *req.RewardListReq) ([]
 // RemoveRewardRecord 清理打手打赏信息
 func (svc RewardRecordService) RemoveRewardRecord(ctx jet.Ctx) error {
 	defer utils.RecoverAndLogError(ctx)
-	userId := middleware.MustGetUserId(ctx)
-	userPO, _ := svc.userRepo.FindByID(userId)
-	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, userPO.MemberNumber); err != nil {
+	var dasherId int
+	// 注销之前有问题打手的
+	if value, exists := ctx.Get(constant.LOGOUT_DASHER_ID); exists {
+		dasherId = value.(int)
+	} else {
+		userId := middleware.MustGetUserId(ctx)
+		userPO, _ := svc.userRepo.FindByID(userId)
+		dasherId = userPO.MemberNumber
+	}
+	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, dasherId); err != nil {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
 		return err
 	}
-	ctx.Logger().Infof("[RewardRecordService#RemoveRewardRecord]SUCCESS, userId:%v", userId)
+	ctx.Logger().Infof("[RewardRecordService#RemoveRewardRecord]SUCCESS, userId:%v", dasherId)
 	return nil
 }

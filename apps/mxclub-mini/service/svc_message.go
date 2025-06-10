@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
@@ -91,6 +92,9 @@ func (svc MessageService) PushRemoveMessage(ctx jet.Ctx, ordersId uint, messageT
 }
 
 func (svc MessageService) RemoveAllMessage(ctx jet.Ctx) error {
+	if _, exists := ctx.Get(constant.LOGOUT_DASHER_ID); exists {
+		return nil
+	}
 	return svc.messageRepo.RemoveAllMessage(ctx, middleware.MustGetUserId(ctx))
 }
 
