@@ -9,6 +9,7 @@ import (
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
+	commonRepo "mxclub/domain/common/repo"
 	"mxclub/domain/event"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
@@ -44,6 +45,8 @@ type OrderService struct {
 	evaluationRepo     repo.IEvaluationRepo
 	rewardRepo         repo.IRewardRecordRepo
 	operatorLogService *OperatorLogService
+	rewardRecordRepo   repo.IRewardRecordRepo
+	commonRepo         commonRepo.IMiniConfigRepo
 }
 
 func NewOrderService(repo repo.IOrderRepo,
@@ -55,7 +58,9 @@ func NewOrderService(repo repo.IOrderRepo,
 	transferRepo repo.ITransferRepo,
 	evaluationRepo repo.IEvaluationRepo,
 	rewardRepo repo.IRewardRecordRepo,
-	operatorLogService *OperatorLogService) *OrderService {
+	operatorLogService *OperatorLogService,
+	rewardRecordRepo repo.IRewardRecordRepo,
+	commonRepo commonRepo.IMiniConfigRepo) *OrderService {
 	return &OrderService{orderRepo: repo,
 		withdrawRepo:       withdrawRepo,
 		deductionRepo:      deductionRepo,
@@ -66,6 +71,8 @@ func NewOrderService(repo repo.IOrderRepo,
 		evaluationRepo:     evaluationRepo,
 		rewardRepo:         rewardRepo,
 		operatorLogService: operatorLogService,
+		rewardRecordRepo:   rewardRecordRepo,
+		commonRepo:         commonRepo,
 	}
 }
 

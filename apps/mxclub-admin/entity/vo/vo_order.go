@@ -64,3 +64,10 @@ type WithdrawVO struct {
 	WithdrawalMethod string     `json:"withdrawal_method"`
 	CreatedAt        time.Time  `json:"created_at"`
 }
+
+type WithDrawVO struct {
+	HistoryWithDrawAmount float64 `json:"history_with_draw_amount"`
+	WithdrawAbleAmount    float64 `json:"withdraw_able_amount"`
+	WithdrawRangeMax      float64 `json:"withdraw_range_max"`
+	WithdrawRangeMin      float64 `json:"withdraw_range_min"`
+}

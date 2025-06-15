@@ -59,3 +59,8 @@ func (ctl OrderController) PostV1WithdrawUpdate(ctx jet.Ctx, req *req.WitchDrawU
 func (ctl OrderController) PostV1ExportTrade(ctx jet.Ctx, req *req.OrderTradeExportReq) {
 	ctl.excelService.ExportExcel(ctx, req.StartDate, req.EndDate)
 }
+
+func (ctl OrderController) PostV1OrderHistorywithdrawamount(ctx jet.Ctx, req *req.HistoryWithDrawAmountReq) (*api.Response, error) {
+	historyWithDrawAmount, err := ctl.orderService.HistoryWithDrawAmount(ctx, req)
+	return xjet.WrapperResult(ctx, historyWithDrawAmount, err)
+}
