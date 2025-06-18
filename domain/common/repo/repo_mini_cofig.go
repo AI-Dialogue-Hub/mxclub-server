@@ -18,6 +18,7 @@ func init() {
 type IMiniConfigRepo interface {
 	xmysql.IBaseRepo[po.MiniConfig]
 	FindConfigByName(ctx jet.Ctx, configName string) (*po.MiniConfig, error)
+	// FindConfigByNameOrDefault @cache
 	FindConfigByNameOrDefault(ctx jet.Ctx, configName string, defaultConfig *po.MiniConfig) *po.MiniConfig
 	FindSwiperConfig(ctx jet.Ctx) (*po.MiniConfig, error)
 	AddConfig(ctx jet.Ctx, configName string, content []map[string]any) error

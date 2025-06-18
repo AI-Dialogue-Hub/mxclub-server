@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	gorm.Model
-	Name         string            `gorm:"name"`
+	Name         string            `gorm:"name"` // 打手名字
 	WxNumber     string            `gorm:"wx_number"`
 	WxName       string            `gorm:"wx_name"`
 	WxOpenId     string            `gorm:"wx_open_id"`

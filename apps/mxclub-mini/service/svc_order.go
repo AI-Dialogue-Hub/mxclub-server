@@ -682,7 +682,7 @@ func (svc *OrderService) HistoryWithDrawAmount(ctx jet.Ctx) (*vo.WithDrawVO, err
 }
 
 func (svc *OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
-	utils.RecoverAndLogError(ctx)
+	defer utils.RecoverAndLogError(ctx)
 
 	// 获取抽成比例
 	minRange := svc.commonRepo.FindConfigByNameOrDefault(

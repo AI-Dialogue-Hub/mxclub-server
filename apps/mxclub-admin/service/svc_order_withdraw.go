@@ -1,16 +1,84 @@
 package service
 
 import (
+	"cmp"
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	commonEnum "mxclub/domain/common/entity/enum"
 	userEnum "mxclub/domain/user/entity/enum"
+	"mxclub/domain/user/po"
+	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
+	"slices"
 	"sync"
 )
 
+// AllDasherHistoryWithDrawAmount 导出所有打手的订单金额记录
+func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.HistoryWithDrawVO, error) {
+	defer utils.TraceElapsed(ctx, "AllDasherHistoryWithDrawAmount")()
+
+	// 0. 查询所有打手（限制最大数量）
+	const MaxDasherQueryLimit = 10000
+	allDasherList, count, err := svc.userRepo.ListAroundCacheByUserTypeAndDasherId(
+		ctx, &api.PageParams{Page: 1, PageSize: MaxDasherQueryLimit}, userEnum.RoleAssistant, -1)
+	if err != nil {
+		ctx.Logger().Errorf("[OrderService#AllDasherHistoryWithDrawAmount] find dasher failed, err:%v", err)
+		return nil, errors.New("打手查询失败")
+	}
+	ctx.Logger().Infof("find dasher count is %v", count)
+
+	var (
+		withDrawVOList = make([]*vo.HistoryWithDrawVO, 0)
+		mu             = new(sync.Mutex)
+		wg             = new(sync.WaitGroup)
+	)
+
+	// 1. 并发查询所有打手的历史提现记录
+	for _, dasher := range allDasherList {
+		wg.Add(1)
+		go func(finalDasher *po.User) {
+			defer utils.RecoverAndLogError(ctx)
+			defer wg.Done()
+
+			if finalDasher.MemberNumber < 0 {
+				ctx.Logger().Warnf("invalid MemberNumber: %d", finalDasher.MemberNumber)
+				return
+			}
+
+			drawAmount, err := svc.HistoryWithDrawAmount(ctx, &req.HistoryWithDrawAmountReq{UserId: finalDasher.ID})
+			if err != nil {
+				ctx.Logger().Errorf("HistoryWithDrawAmount failed for user %d: %v", finalDasher.ID, err)
+				return
+			}
+
+			mu.Lock()
+			withDrawVOList = append(withDrawVOList, &vo.HistoryWithDrawVO{
+				WithDrawVO: drawAmount,
+				DasherID:   uint(finalDasher.MemberNumber),
+				DasherName: finalDasher.Name,
+			})
+			mu.Unlock()
+		}(dasher)
+	}
+	wg.Wait()
+
+	ctx.Logger().Infof("withDrawVOList count is %v", len(withDrawVOList))
+
+	// 2. 过滤无效数据
+	filterWithDrawVOList := utils.Filter(withDrawVOList, func(in *vo.HistoryWithDrawVO) bool {
+		return in != nil && in.DasherID >= 0
+	})
+	ctx.Logger().Infof("filterWithDrawVOList count is %v", len(filterWithDrawVOList))
+
+	// 3. 按 DasherID 排序
+	slices.SortFunc(filterWithDrawVOList, func(a, b *vo.HistoryWithDrawVO) int {
+		return cmp.Compare(a.DasherID, b.DasherID)
+	})
+
+	return filterWithDrawVOList, nil
+}
 func (svc *OrderService) HistoryWithDrawAmount(ctx jet.Ctx, req *req.HistoryWithDrawAmountReq) (*vo.WithDrawVO, error) {
 	userId := req.UserId
 	userPO, err := svc.userRepo.FindByIdAroundCache(ctx, userId)
@@ -104,7 +172,7 @@ func (svc *OrderService) HistoryWithDrawAmount(ctx jet.Ctx, req *req.HistoryWith
 }
 
 func (svc *OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
-	utils.RecoverAndLogError(ctx)
+	defer utils.RecoverAndLogError(ctx)
 
 	// 获取抽成比例
 	minRange := svc.commonRepo.FindConfigByNameOrDefault(

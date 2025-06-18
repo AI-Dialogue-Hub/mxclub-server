@@ -64,3 +64,7 @@ func (ctl OrderController) PostV1OrderHistorywithdrawamount(ctx jet.Ctx, req *re
 	historyWithDrawAmount, err := ctl.orderService.HistoryWithDrawAmount(ctx, req)
 	return xjet.WrapperResult(ctx, historyWithDrawAmount, err)
 }
+
+func (ctl OrderController) PostV1OrderWithdrawamountAll(ctx jet.Ctx) {
+	ctl.orderService.ExportAllDasherWithDrawAmount(ctx)
+}

@@ -65,9 +65,16 @@ type WithdrawVO struct {
 	CreatedAt        time.Time  `json:"created_at"`
 }
 
+// WithDrawVO 历史提现的钱
 type WithDrawVO struct {
 	HistoryWithDrawAmount float64 `json:"history_with_draw_amount"`
 	WithdrawAbleAmount    float64 `json:"withdraw_able_amount"`
 	WithdrawRangeMax      float64 `json:"withdraw_range_max"`
 	WithdrawRangeMin      float64 `json:"withdraw_range_min"`
+}
+
+type HistoryWithDrawVO struct {
+	*WithDrawVO
+	DasherID   uint   `json:"dasher_id"`
+	DasherName string `json:"dasher_name"`
 }

@@ -32,7 +32,8 @@ type IUserRepo interface {
 	ListByUserType(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType) ([]*po.User, int64, error)
 	// ListAroundCacheByUserTypeAndDasherId
 	// @cache
-	ListAroundCacheByUserTypeAndDasherId(ctx jet.Ctx, params *api.PageParams, userType enum.RoleType, dasherId int) ([]*po.User, int64, error)
+	ListAroundCacheByUserTypeAndDasherId(ctx jet.Ctx,
+		params *api.PageParams, userType enum.RoleType, dasherId int) ([]*po.User, int64, error)
 	UpdateUser(ctx jet.Ctx, updateMap map[string]any) error
 	// UpdateUserIconAndNickName 如果为空会给默认的头像和昵称
 	UpdateUserIconAndNickName(ctx jet.Ctx, id uint, icon, nickName, userInfoJson string) error
