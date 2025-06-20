@@ -30,15 +30,14 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 	ctx.Logger().Infof("find dasher count is %v", count)
 
 	var (
-		withDrawVOList = make([]*vo.HistoryWithDrawVO, 0)
-		mu             = new(sync.Mutex)
+		withDrawVOList = make([]*vo.HistoryWithDrawVO, len(allDasherList))
 		wg             = new(sync.WaitGroup)
 	)
 
 	// 1. 并发查询所有打手的历史提现记录
-	for _, dasher := range allDasherList {
+	for index, dasher := range allDasherList {
 		wg.Add(1)
-		go func(finalDasher *po.User) {
+		go func(idx int, finalDasher *po.User) {
 			defer utils.RecoverAndLogError(ctx)
 			defer wg.Done()
 
@@ -53,14 +52,12 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 				return
 			}
 
-			mu.Lock()
-			withDrawVOList = append(withDrawVOList, &vo.HistoryWithDrawVO{
+			withDrawVOList[idx] = &vo.HistoryWithDrawVO{
 				WithDrawVO: drawAmount,
 				DasherID:   uint(finalDasher.MemberNumber),
 				DasherName: finalDasher.Name,
-			})
-			mu.Unlock()
-		}(dasher)
+			}
+		}(index, dasher)
 	}
 	wg.Wait()
 
@@ -79,6 +76,7 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 
 	return filterWithDrawVOList, nil
 }
+
 func (svc *OrderService) HistoryWithDrawAmount(ctx jet.Ctx, req *req.HistoryWithDrawAmountReq) (*vo.WithDrawVO, error) {
 	userId := req.UserId
 	userPO, err := svc.userRepo.FindByIdAroundCache(ctx, userId)
