@@ -146,8 +146,8 @@ func (svc UserService) ExistsExecutor(ctx jet.Ctx, memberNumber int) bool {
 
 func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	defer utils.TraceElapsed(ctx, fmt.Sprintf("[%s]ToBeAssistant", ctx.Logger().ReqId))()
-	// 编号要小于2k
-	if req.MemberNumber >= 2000 {
+	// 编号要小于2k 打手编号限制
+	if req.MemberNumber >= 4000 {
 		return errors.New("打手编号需要小于2000")
 	}
 	if svc.userRepo.ExistsAssistant(ctx, req.Phone, req.MemberNumber) {
