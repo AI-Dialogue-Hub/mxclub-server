@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"mxclub/pkg/common/wxpay"
+	"mxclub/pkg/common/wxwork"
 	"mxclub/pkg/common/xlogger"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
@@ -45,6 +46,9 @@ func init() {
 	wxpay.InitWxPay(config.WxPayConfig)
 	// oss or localStorage
 	xupload.SetUp(config.UploadConfig)
+	// init wxwork
+	wxworkService := wxwork.NewWxworkService(config.WxWorkConfig)
+	jet.Provide(func() *wxwork.WxworkService { return wxworkService })
 }
 
 type Config struct {
@@ -57,6 +61,8 @@ type Config struct {
 	UploadConfig *xupload.UploadConfig `yaml:"upload_config" validate:"required"`
 
 	LoggerConfig *xlogger.LoggerConfig `yaml:"logger_config" validate:"required"`
+
+	WxWorkConfig *wxwork.WxWorkConfig `yaml:"wx_work_config" validate:"required"`
 }
 
 type Server struct {
