@@ -1,0 +1,37 @@
+package controller
+
+import (
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-admin/entity/req"
+	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/apps/mxclub-admin/service"
+	"mxclub/pkg/api"
+	"mxclub/pkg/common/xjet"
+)
+
+func init() {
+	jet.Provide(NewLotteryController)
+}
+
+type LotteryController struct {
+	jet.BaseJetController
+	LotteryService *service.LotteryService
+}
+
+func NewLotteryController(app *service.LotteryService) jet.ControllerResult {
+	return jet.NewJetController(&LotteryController{LotteryService: app})
+}
+
+func (ctl *LotteryController) GetV1LotteryPrizeType(ctx jet.Ctx) (*api.R[*vo.LotteryTypeVO], error) {
+	return api.Ok(ctx.Logger().ReqId, ctl.LotteryService.FetchLotteryPrizeType()), nil
+}
+
+func (ctl *LotteryController) PostV1LotteryPrizeList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	listPrize, count, err := ctl.LotteryService.ListPrize(ctx, params)
+	pageResult := api.WrapPageResult(params, listPrize, count)
+	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
+func (ctl *LotteryController) PutV1LotteryPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.AddOrUpdatePrize(ctx, req))
+}

@@ -116,5 +116,8 @@ func initLogger(loggerConfig *xlogger.LoggerConfig) {
 	if loggerConfig == nil {
 		panic("LoggerConfig is invalid")
 	}
+	if loggerConfig.Local {
+		return
+	}
 	xlog.SetGlobalOutput(xlogger.NewLogger(loggerConfig))
 }

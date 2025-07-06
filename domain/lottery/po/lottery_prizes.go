@@ -8,8 +8,9 @@ import (
 
 // LotteryPrize 抽奖奖品表
 type LotteryPrize struct {
-	ID                 uint               `gorm:"primaryKey;autoIncrement" json:"id"`
-	ProductAttributeID uint               `gorm:"not null" json:"product_attribute_id"`
+	ID uint `gorm:"primaryKey;autoIncrement" json:"id"`
+	// 关联的商品属性ID, 当 prize_type=virtual时，会关联代打订单商品
+	ProductAttributeID uint64             `gorm:"not null" json:"product_attribute_id"`
 	PrizeLevel         string             `gorm:"size:50;not null" json:"prize_level"`
 	PrizeName          string             `gorm:"size:100;not null" json:"prize_name"`
 	PrizeType          enum.PrizeTypeEnum `gorm:"type:enum('physical','virtual','coupon','points','empty');not null" json:"prize_type"`
@@ -36,5 +37,5 @@ type LotteryPrize struct {
 }
 
 func (LotteryPrize) TableName() string {
-	return "lottery_prize"
+	return "lottery_prizes"
 }

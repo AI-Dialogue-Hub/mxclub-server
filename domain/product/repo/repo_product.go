@@ -10,6 +10,7 @@ import (
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
+	"mxclub/pkg/utils"
 )
 
 func init() {
@@ -22,6 +23,7 @@ type IProductRepo interface {
 	UpdateProduct(ctx jet.Ctx, updateMap map[string]any) error
 	DeleteById(ctx jet.Ctx, id int64) error
 	Add(ctx jet.Ctx, po *po.Product) error
+	FindByIds(ctx jet.Ctx, ids []uint64) (map[uint64]*po.Product, error)
 }
 
 func NewProductRepo(db *gorm.DB) IProductRepo {
@@ -92,4 +94,13 @@ func (repo ProductRepo) Add(ctx jet.Ctx, po *po.Product) error {
 		return errors.New("添加失败")
 	}
 	return nil
+}
+
+func (repo ProductRepo) FindByIds(ctx jet.Ctx, ids []uint64) (map[uint64]*po.Product, error) {
+	products, err := repo.Find("id in (?)", ids)
+	if err != nil {
+		ctx.Logger().Errorf("ProductRepo FindByIds error %v", err)
+		return nil, err
+	}
+	return utils.SliceToRawMap(products, func(ele *po.Product) uint64 { return ele.ID }), nil
 }

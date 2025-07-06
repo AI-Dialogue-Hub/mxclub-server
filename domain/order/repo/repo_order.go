@@ -35,6 +35,7 @@ type IOrderRepo interface {
 	FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error
 	// FindByOrderId orderId 订单流水号
 	FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error)
+	FindByOrderIds(ctx jet.Ctx, orderIds []uint64) (map[uint64]*po.Order, error)
 	FindByOrderOrOrdersId(ctx jet.Ctx, orderId uint) (*po.Order, error)
 	QueryOrderByStatus(ctx jet.Ctx, processing enum.OrderStatus) ([]*po.Order, error)
 	QueryOrderWithDelayTime(ctx jet.Ctx, status enum.OrderStatus, thresholdTime time.Time) ([]*po.Order, error)
@@ -367,6 +368,17 @@ func (repo OrderRepo) UpdateOrderDasher3(ctx jet.Ctx, ordersId uint, executor3Id
 
 func (repo OrderRepo) FindByOrderId(ctx jet.Ctx, orderId uint) (*po.Order, error) {
 	return repo.FindOne("order_id = ?", orderId)
+}
+
+func (repo OrderRepo) FindByOrderIds(ctx jet.Ctx, orderIds []uint64) (map[uint64]*po.Order, error) {
+	orders, err := repo.Find("order_id in (?)", orderIds)
+	if err != nil {
+		ctx.Logger().Errorf("[OrderRepo#FindByOrderIds] ERROR, %v", err)
+		return nil, err
+	}
+	return utils.SliceToRawMap(orders, func(ele *po.Order) uint64 {
+		return ele.OrderId
+	}), nil
 }
 
 func (repo OrderRepo) FindByOrderOrOrdersId(ctx jet.Ctx, orderId uint) (*po.Order, error) {

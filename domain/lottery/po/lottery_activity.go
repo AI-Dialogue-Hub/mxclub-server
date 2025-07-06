@@ -35,5 +35,5 @@ type LotteryActivity struct {
 }
 
 func (LotteryActivity) TableName() string {
-	return "lottery_activity"
+	return "lottery_activities"
 }
