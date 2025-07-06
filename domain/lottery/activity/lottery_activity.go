@@ -2,6 +2,7 @@ package activity
 
 import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"gorm.io/gorm"
 	"mxclub/domain/lottery/entity/dto"
 	"mxclub/domain/lottery/entity/enum"
 	"mxclub/domain/lottery/po"
@@ -69,7 +70,9 @@ func (activity *LotteryActivity) DelPrize(ctx jet.Ctx, lotteryPrizeId uint) erro
 	// 2. 删除跟活动的关联关系
 	if err := activity.relationRepo.DelByPrizeId(ctx, lotteryPrizeId); err != nil {
 		ctx.Logger().Errorf("[LotteryActivity#DelPrize] err:%v", err)
-		return err
+		if err != gorm.ErrRecordNotFound {
+			return nil
+		}
 	}
 	return nil
 }

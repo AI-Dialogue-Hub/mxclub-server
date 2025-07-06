@@ -32,6 +32,10 @@ func (ctl *LotteryController) PostV1LotteryPrizeList(ctx jet.Ctx, params *api.Pa
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 
-func (ctl *LotteryController) PutV1LotteryPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) (*api.Response, error) {
+func (ctl *LotteryController) PostV1LotteryPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.AddOrUpdatePrize(ctx, req))
+}
+
+func (ctl *LotteryController) PostV1LotteryPrizeDel(ctx jet.Ctx, req *req.LotteryPrizeReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.DelPrize(ctx, req))
 }
