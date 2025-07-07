@@ -16,6 +16,7 @@ type ILotteryActivityPrizeRelationRepo interface {
 	xmysql.IBaseRepo[po.ActivityPrizeRelation]
 	DelByPrizeId(ctx jet.Ctx, prizeId uint) error
 	DelByActivityId(ctx jet.Ctx, activityId uint) error
+	FindByActivityId(ctx jet.Ctx, activityId uint) ([]*po.ActivityPrizeRelation, error)
 }
 
 func NewLotteryActivityPrizeRelationRepo(db *gorm.DB) ILotteryActivityPrizeRelationRepo {
@@ -36,4 +37,12 @@ func (repo *LotteryActivityPrizeRelationRepo) DelByPrizeId(ctx jet.Ctx, prizeId 
 
 func (repo *LotteryActivityPrizeRelationRepo) DelByActivityId(ctx jet.Ctx, activityId uint) error {
 	return repo.Remove("activity_id = ?", activityId)
+}
+
+func (repo *LotteryActivityPrizeRelationRepo) FindByActivityId(ctx jet.Ctx, activityId uint) ([]*po.ActivityPrizeRelation, error) {
+	relations, err := repo.Find("activity_id = ?", activityId)
+	if err != nil {
+		return nil, err
+	}
+	return relations, nil
 }

@@ -1,9 +1,9 @@
 package service
 
 import (
-	"errors"
 	"github.com/fengyuan-liang/GoKit/collection/stream"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/pkg/errors"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/domain/lottery/activity"
@@ -156,4 +156,65 @@ func wrap2PO(req *req.LotteryPrizeReq) *po.LotteryPrize {
 		EndTime:               req.EndTime,
 	}
 	return wrappedPO
+}
+
+// =====================================================================
+
+func (svc *LotteryService) AddOrUpdateActivity(ctx jet.Ctx, req *req.LotteryActivityReq) error {
+	if err := svc.lotteryActivity.AddOrUpdateActivity(ctx, wrapActivity(req)); err != nil {
+		ctx.Logger().Errorf("AddOrUpdateActivity, err:%v", err)
+		return errors.New("添加失败")
+	}
+	return nil
+}
+
+func wrapActivity(req *req.LotteryActivityReq) *po.LotteryActivity {
+	return &po.LotteryActivity{
+		ID:                  req.ID,
+		ActivityPrice:       req.ActivityPrice,
+		ActivityTitle:       req.ActivityTitle,
+		ActivitySubtitle:    req.ActivitySubtitle,
+		ActivityDesc:        req.ActivityDesc,
+		EntryURL:            req.EntryURL,
+		EntryImage:          req.EntryImage,
+		BannerImage:         req.BannerImage,
+		BackgroundImage:     req.BackgroundImage,
+		ActivityRules:       req.ActivityRules,
+		PrizePoolID:         req.PrizePoolID,
+		StartTime:           req.StartTime,
+		EndTime:             req.EndTime,
+		ParticipateTimes:    req.ParticipateTimes,
+		ShareAddTimes:       req.ShareAddTimes,
+		TotalPrizeCount:     req.TotalPrizeCount,
+		RemainingPrizeCount: req.RemainingPrizeCount,
+		ActivityStatus:      req.ActivityStatus,
+		DisplayOrder:        req.DisplayOrder,
+		IsFeatured:          req.IsFeatured,
+		IsHot:               req.IsHot,
+	}
+}
+
+func (svc *LotteryService) ListActivity(ctx jet.Ctx, params *api.PageParams) ([]*vo.LotteryActivityVO, int64, error) {
+	list, count, err := svc.lotteryActivity.ListActivity(ctx, params)
+	if err != nil {
+		ctx.Logger().Errorf("ListActivity error: %v", err)
+		return nil, 0, errors.Wrap(err, "ListActivity 错误")
+	}
+	return utils.CopySlice[*po.LotteryActivity, *vo.LotteryActivityVO](list), count, nil
+}
+
+func (svc *LotteryService) UpdateActivityStatus(ctx jet.Ctx, req *req.LotteryActivityStatusReq) error {
+	if err := svc.lotteryActivityRepo.UpdateStatus(ctx, req.LotteryActivityId, req.LotteryActivityStatus); err != nil {
+		ctx.Logger().Errorf("UpdateActivityStatus error: %v", err)
+		return errors.New("更新失败")
+	}
+	return nil
+}
+
+func (svc *LotteryService) DelActivity(ctx jet.Ctx, req *req.LotteryActivityReq) error {
+	if err := svc.lotteryActivity.DelActivity(ctx, req.ID); err != nil {
+		ctx.Logger().Errorf("DelActivity error: %v", err)
+		return errors.New("删除失败")
+	}
+	return nil
 }

@@ -39,3 +39,23 @@ func (ctl *LotteryController) PostV1LotteryPrize(ctx jet.Ctx, req *req.LotteryPr
 func (ctl *LotteryController) PostV1LotteryPrizeDel(ctx jet.Ctx, req *req.LotteryPrizeReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.DelPrize(ctx, req))
 }
+
+// =============================  activity  =======================================
+
+func (ctl *LotteryController) PostV1LotteryActivity(ctx jet.Ctx, req *req.LotteryActivityReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.AddOrUpdateActivity(ctx, req))
+}
+
+func (ctl *LotteryController) PostV1LotteryActivityList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	listPrize, count, err := ctl.LotteryService.ListActivity(ctx, params)
+	pageResult := api.WrapPageResult(params, listPrize, count)
+	return xjet.WrapperResult(ctx, pageResult, err)
+}
+
+func (ctl *LotteryController) PostV1LotteryActivityStatus(ctx jet.Ctx, req *req.LotteryActivityStatusReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.UpdateActivityStatus(ctx, req))
+}
+
+func (ctl *LotteryController) PostV1LotteryActivityDel(ctx jet.Ctx, req *req.LotteryActivityReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.DelActivity(ctx, req))
+}

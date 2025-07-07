@@ -9,6 +9,7 @@ import (
 // LotteryActivity 抽奖活动表
 type LotteryActivity struct {
 	ID                  uint                    `gorm:"primaryKey;autoIncrement" json:"id"`
+	ActivityPrice       float64                 `gorm:"type:decimal(5,2);not null" json:"activity_price"`
 	ActivityTitle       string                  `gorm:"size:100;not null" json:"activity_title"`
 	ActivitySubtitle    string                  `gorm:"size:255" json:"activity_subtitle"`
 	ActivityDesc        string                  `gorm:"type:text" json:"activity_desc"`
@@ -26,7 +27,7 @@ type LotteryActivity struct {
 	RemainingPrizeCount *int                    `json:"remaining_prize_count"`
 	ActivityStatus      enum.ActivityStatusEnum `gorm:"type:enum('pending','ongoing','paused','ended');default:'pending'" json:"activity_status"`
 	DisplayOrder        int                     `gorm:"default:0" json:"display_order"`
-	IsFeatured          bool                    `gorm:"default:false" json:"is_featured"`
+	IsFeatured          bool                    `gorm:"default:false" json:"is_featured"` // 是否推荐活动
 	IsHot               bool                    `gorm:"default:false" json:"is_hot"`
 	CreatorID           *uint                   `json:"creator_id"`
 	CreatedAt           time.Time               `gorm:"type:timestamp;default:CURRENT_TIMESTAMP" json:"created_at"`

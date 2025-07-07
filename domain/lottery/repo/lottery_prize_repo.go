@@ -14,6 +14,7 @@ func init() {
 
 type ILotteryPrizeRepo interface {
 	xmysql.IBaseRepo[po.LotteryPrize]
+	RemoveByPrizeIds(ctx jet.Ctx, ids []uint) (delCount int64, err error)
 }
 
 func NewLotteryPrizeRepo(db *gorm.DB) ILotteryPrizeRepo {
@@ -26,4 +27,10 @@ func NewLotteryPrizeRepo(db *gorm.DB) ILotteryPrizeRepo {
 
 type LotteryPrizeRepo struct {
 	xmysql.BaseRepo[po.LotteryPrize]
+}
+
+func (repo *LotteryPrizeRepo) RemoveByPrizeIds(ctx jet.Ctx, ids []uint) (delCount int64, err error) {
+	tx := repo.DB().Where("id in (?)", ids).Delete(repo.ModelPO)
+	tx.Scan(&delCount)
+	return delCount, tx.Error
 }
