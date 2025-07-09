@@ -40,7 +40,7 @@ func (ctl *LotteryController) PostV1LotteryPrizeDel(ctx jet.Ctx, req *req.Lotter
 	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.DelPrize(ctx, req))
 }
 
-// =============================  activity  =======================================
+// =============================  ability  =======================================
 
 func (ctl *LotteryController) PostV1LotteryActivity(ctx jet.Ctx, req *req.LotteryActivityReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.AddOrUpdateActivity(ctx, req))

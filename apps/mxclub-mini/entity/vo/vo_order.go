@@ -59,6 +59,7 @@ type ProductVO struct {
 	Phone            string             `json:"phone"`
 	GameId           string             `json:"gameId"`
 	SalesVolume      int                `json:"sales_volume"`
+	LotteryActivity  bool               `json:"lottery_activity"`
 }
 
 type WithDrawVO struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
-	"mxclub/domain/lottery/activity"
+	"mxclub/domain/lottery/ability"
 	"mxclub/domain/lottery/entity/enum"
 	"mxclub/domain/lottery/po"
 	"mxclub/domain/lottery/repo"
@@ -24,14 +24,14 @@ type LotteryService struct {
 	lotteryActivityRepo repo.ILotteryActivityRepo
 	lotteryRepo         repo.ILotteryRepo
 	productRepo         productRepo.IProductRepo
-	lotteryActivity     activity.ILotteryActivity
+	lotteryActivity     ability.ILotteryAbility
 }
 
 func NewLotteryService(
 	lotteryPrizeRepo repo.ILotteryPrizeRepo,
 	lotteryActivityRepo repo.ILotteryActivityRepo,
 	lotteryRepo repo.ILotteryRepo,
-	lotteryActivity activity.ILotteryActivity,
+	lotteryActivity ability.ILotteryAbility,
 	productRepo productRepo.IProductRepo) *LotteryService {
 	return &LotteryService{
 		lotteryPrizeRepo:    lotteryPrizeRepo,

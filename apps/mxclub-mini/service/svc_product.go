@@ -6,10 +6,13 @@ import (
 	"mxclub/apps/mxclub-mini/config"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	"mxclub/domain/lottery/ability"
+	lotteryPO "mxclub/domain/lottery/po"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/product/po"
 	"mxclub/domain/product/repo"
 	userRepo "mxclub/domain/user/repo"
+	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
 	"slices"
@@ -24,16 +27,19 @@ type ProductService struct {
 	productRepo      repo.IProductRepo
 	userRepo         userRepo.IUserRepo
 	productSalesRepo repo.IProductSalesRepo
+	lotteryActivity  ability.ILotteryAbility
 }
 
 func NewProductService(
 	repo repo.IProductRepo,
 	userRepo userRepo.IUserRepo,
-	productSalesRepo repo.IProductSalesRepo) *ProductService {
+	productSalesRepo repo.IProductSalesRepo,
+	lotteryActivity ability.ILotteryAbility) *ProductService {
 	return &ProductService{
 		productRepo:      repo,
 		userRepo:         userRepo,
 		productSalesRepo: productSalesRepo,
+		lotteryActivity:  lotteryActivity,
 	}
 }
 
@@ -127,6 +133,30 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 			}
 			return b.SalesVolume - a.SalesVolume
 		})
+	}
+	// 抽奖活动
+	lotteryActivityPOList, count, err := svc.lotteryActivity.ListActivity(ctx, &api.PageParams{Page: 1, PageSize: 1000})
+	if count > 0 && lotteryActivityPOList != nil && len(lotteryActivityPOList) > 0 {
+		lotteryProduct := utils.Map(lotteryActivityPOList, func(lotteryActivity *lotteryPO.LotteryActivity) *vo.ProductVO {
+			return &vo.ProductVO{
+				ID:               lotteryActivity.ID,
+				Title:            lotteryActivity.ActivityTitle,
+				Price:            lotteryActivity.ActivityPrice,
+				DiscountRuleID:   0,
+				DiscountPrice:    0,
+				FinalPrice:       lotteryActivity.ActivityPrice,
+				Description:      lotteryActivity.ActivityDesc,
+				ShortDescription: lotteryActivity.ActivitySubtitle,
+				Images:           utils.ToSlice(lotteryActivity.EntryImage),
+				DetailImages:     utils.ToSlice(lotteryActivity.EntryImage),
+				Thumbnail:        lotteryActivity.EntryImage,
+				Phone:            "",
+				GameId:           "",
+				SalesVolume:      0,
+				LotteryActivity:  true,
+			}
+		})
+		productVOS = append(productVOS, lotteryProduct...)
 	}
 	return productVOS, nil
 }

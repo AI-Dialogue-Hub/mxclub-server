@@ -33,8 +33,8 @@ type LotteryActivityRepo struct {
 
 func (repo *LotteryActivityRepo) UpdateStatus(ctx jet.Ctx, id uint, status enum.ActivityStatusEnum) error {
 	if err := repo.UpdateById(map[string]interface{}{"activity_status": status}, id); err != nil {
-		ctx.Logger().Errorf("update activity status error: %v", err)
-		return errors.Wrap(err, "update activity status error")
+		ctx.Logger().Errorf("update ability status error: %v", err)
+		return errors.Wrap(err, "update ability status error")
 	}
 	return nil
 }
