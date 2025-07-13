@@ -8,9 +8,6 @@ import (
 type LotteryStrategyBeforeDrawDTO struct {
 	UserId                       uint
 	ActivityId                   uint
-	PrizeId                      uint
-	PrizeLevel                   enum.LotteryPrizeLevelEnum
-	ActivityPrizeSnapshot        string
 	IsIncreaseLotteryProbability bool // 是否提升抽奖概率
 }
 
@@ -23,39 +20,28 @@ type LotteryStrategyAfterDrawDTO struct {
 }
 
 type LotteryStrategyDrawDTO struct {
-	UserId                       uint
-	ActivityId                   uint
-	PrizeId                      uint
-	PrizeLevel                   enum.LotteryPrizeLevelEnum
-	ActivityPrizeSnapshot        string
-	IsIncreaseLotteryProbability bool // 是否提升抽奖概率
+	UserId     uint
+	ActivityId uint
 }
 
 func (l *LotteryStrategyDrawDTO) WrapBeforeDrawDTO() *LotteryStrategyBeforeDrawDTO {
 	return &LotteryStrategyBeforeDrawDTO{
-		UserId:                       l.UserId,
-		ActivityId:                   l.ActivityId,
-		PrizeId:                      l.PrizeId,
-		PrizeLevel:                   l.PrizeLevel,
-		ActivityPrizeSnapshot:        l.ActivityPrizeSnapshot,
-		IsIncreaseLotteryProbability: l.IsIncreaseLotteryProbability,
+		UserId:     l.UserId,
+		ActivityId: l.ActivityId,
 	}
 }
 
 func (l *LotteryStrategyDrawDTO) WrapAfterDrawDTO() *LotteryStrategyAfterDrawDTO {
 	return &LotteryStrategyAfterDrawDTO{
-		UserId:                l.UserId,
-		ActivityId:            l.ActivityId,
-		PrizeId:               l.PrizeId,
-		PrizeLevel:            l.PrizeLevel,
-		ActivityPrizeSnapshot: l.ActivityPrizeSnapshot,
+		UserId:     l.UserId,
+		ActivityId: l.ActivityId,
 	}
 }
 
 type LotteryStrategyDrawResultDTO struct {
-	UserId                       uint
-	ActivityId                   uint
 	PrizeId                      uint
+	PrizeIndex                   int              // 奖品在奖池中的位置，默认是优先级
 	LotteryPrize                 *po.LotteryPrize // 中奖的奖品
-	IsIncreaseLotteryProbability bool             // 是否提升抽奖概率
+	ActivityPrizeSnapshot        string
+	IsIncreaseLotteryProbability bool // 是否提升抽奖概率
 }

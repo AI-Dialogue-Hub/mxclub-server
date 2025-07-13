@@ -72,17 +72,20 @@ func (repo *LotteryRecordsRepo) ListRecords(
 	)
 	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		dataErr = repo.DB().Raw(dataSQL, params.Limit(), params.Offset()).Scan(&lotteryRecordsDTOS).Error
 		if dataErr != nil {
 			ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", dataErr)
 		}
 	}()
 	go func() {
+		defer wg.Done()
 		countErr = repo.DB().Raw(countSQL).Scan(&countResult).Error
 		if countErr != nil {
 			ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", countErr)
 		}
 	}()
+	wg.Wait()
 	if dataErr != nil {
 		ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", dataErr)
 		return nil, 0, errors.Wrap(dataErr, "LotteryRecordsRepo.ListAll")

@@ -50,7 +50,7 @@ type DeductionRepo struct {
 func (repo DeductionRepo) TotalDeduct(ctx jet.Ctx, userId uint) (float64, error) {
 	var result float64
 	sql := fmt.Sprintf(
-		"select COALESCE(sum(amount), 0) from %s where user_id = ? and status = ?",
+		"select COALESCE(sum(amount), 0) from %s where user_id = ? and status = ? and deleted_at IS NULL;",
 		repo.ModelPO.TableName(),
 	)
 	err := repo.DB().Raw(sql, userId, enum.Deduct_SUCCESS).Scan(&result).Error

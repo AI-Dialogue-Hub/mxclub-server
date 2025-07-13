@@ -56,3 +56,25 @@ type LotteryActivityVO struct {
 	IsFeatured          bool                    `json:"is_featured"`
 	IsHot               bool                    `json:"is_hot"`
 }
+
+// LotteryVO 抽奖结果
+type LotteryVO struct {
+	PrizeIndex int    `json:"prize_index"` // 奖品在奖池中的位置，默认是优先级
+	WinMessage string `json:"win_message"`
+	PrizeImage string `json:"prize_image"`
+}
+
+type LotteryRecordsVO struct {
+	Id                    uint   `json:"id"`
+	ActivityId            uint   `json:"activity_id"`
+	PrizeId               uint   `json:"prize_id"`
+	UserId                uint   `json:"user_id"`
+	OrderId               string `json:"order_id"`
+	ActivityPrizeSnapshot string `json:"activity_prize_snapshot"` // 活动信息&奖品信息快照
+	// ================================================
+	ActivityTitle string    `json:"activity_title"`
+	ActivityPrice float64   `json:"activity_price"`
+	PrizeName     string    `json:"prize_name"`
+	AvatarUrl     string    `json:"avatar_url"`
+	CreatedAt     time.Time `json:"created_at"`
+}

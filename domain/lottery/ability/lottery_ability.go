@@ -46,13 +46,20 @@ func NewLotteryActivity(
 	lotteryRepo repo.ILotteryRepo,
 	relationRepo repo.ILotteryActivityPrizeRelationRepo,
 	lotteryRecordsRepo repo.ILotteryRecordsRepo) ILotteryAbility {
-	return &LotteryAbility{
+	lotteryAbilityInstance = &LotteryAbility{
 		lotteryRepo:         lotteryRepo,
 		lotteryPrizeRepo:    lotteryPrizeRepo,
 		lotteryActivityRepo: lotteryActivityRepo,
 		relationRepo:        relationRepo,
 		lotteryRecordsRepo:  lotteryRecordsRepo,
 	}
+	return lotteryAbilityInstance
+}
+
+var lotteryAbilityInstance ILotteryAbility
+
+func FetchLotteryAbilityInstance() ILotteryAbility {
+	return lotteryAbilityInstance
 }
 
 func (ability *LotteryAbility) FetchLotteryPrizeType() *dto.LotteryPrizeTypeDTO {

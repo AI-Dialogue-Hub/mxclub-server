@@ -87,6 +87,10 @@ func (svc MessageService) PushSystemMessage(ctx jet.Ctx, messageTo uint, content
 	return svc.messageRepo.PushNormalMessage(ctx, enum.SYSTEM_NOTIFICATION, messageTo, "系统通知", content)
 }
 
+func (svc MessageService) PushLotteryMessage(ctx jet.Ctx, messageTo uint, content string) error {
+	return svc.messageRepo.PushNormalMessage(ctx, enum.SYSTEM_NOTIFICATION, messageTo, "抽奖通知", content)
+}
+
 func (svc MessageService) PushRemoveMessage(ctx jet.Ctx, ordersId uint, messageTo uint, content string) error {
 	return svc.messageRepo.PushOrderMessage(ctx, ordersId, enum.REMOVE_MESSAGE, messageTo, "系统通知", content)
 }

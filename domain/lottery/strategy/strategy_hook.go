@@ -15,11 +15,10 @@ import (
 var _ ILotteryStrategyHook = (*LotteryStrategyHook)(nil)
 
 type LotteryStrategyHook struct {
-	lotteryAbility ability.ILotteryAbility
 }
 
 func NewLotteryStrategyHook(lotteryAbility ability.ILotteryAbility) *LotteryStrategyHook {
-	return &LotteryStrategyHook{lotteryAbility: lotteryAbility}
+	return &LotteryStrategyHook{}
 }
 
 const (
@@ -43,6 +42,7 @@ const (
 func (l *LotteryStrategyHook) BeforeDraw(
 	ctx jet.Ctx, beforeDrawDTO *dto.LotteryStrategyBeforeDrawDTO,
 ) (*dto.LotteryStrategyDrawResultDTO, error) {
+	utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#BeforeDraw")
 	// 0. 获取用户连抽不中记录
 	missVal, err := fetchMissVal(ctx, beforeDrawDTO.UserId, beforeDrawDTO.ActivityId)
 	if err != nil {
@@ -51,19 +51,25 @@ func (l *LotteryStrategyHook) BeforeDraw(
 	// 1. 执行策略
 	// 1.1 连续抽中三次三等奖后，中一次二等奖
 	if missVal >= lotteryPrizeLevelThirdQuota {
+		lotteryAbility := ability.FetchLotteryAbilityInstance()
 		// 1.1.1 获取中奖奖品
-		prize, err := l.lotteryAbility.FindFallbackPrize(ctx, beforeDrawDTO.ActivityId)
+		prize, err := lotteryAbility.FindFallbackPrize(ctx, beforeDrawDTO.ActivityId)
 		if err != nil {
 			ctx.Logger().Errorf("get lottery records error,err info:%v", err)
 			return nil, errors.Wrap(err, "get lottery records error")
 		}
 		// 1.1.2 落库
-		err = l.lotteryAbility.AddLotteryRecords(ctx, &po.LotteryRecords{
-			ActivityId:            beforeDrawDTO.ActivityId,
-			PrizeId:               beforeDrawDTO.PrizeId,
-			UserId:                beforeDrawDTO.UserId,
-			OrderId:               "",
-			ActivityPrizeSnapshot: beforeDrawDTO.ActivityPrizeSnapshot,
+		err = lotteryAbility.AddLotteryRecords(ctx, &po.LotteryRecords{
+			ActivityId: beforeDrawDTO.ActivityId,
+			PrizeId:    prize.ID,
+			UserId:     beforeDrawDTO.UserId,
+			OrderId:    "",
+			ActivityPrizeSnapshot: utils.ObjToJsonStr(
+				struct {
+					ActivityId uint             `json:"activity_id"`
+					Prize      *po.LotteryPrize `json:"prize"`
+				}{ActivityId: beforeDrawDTO.ActivityId, Prize: prize},
+			),
 		})
 		if err != nil {
 			ctx.Logger().Errorf("insert lottery records error,err info:%v", err)
@@ -71,8 +77,6 @@ func (l *LotteryStrategyHook) BeforeDraw(
 		}
 
 		return &dto.LotteryStrategyDrawResultDTO{
-			ActivityId:   beforeDrawDTO.ActivityId,
-			UserId:       beforeDrawDTO.UserId,
 			PrizeId:      prize.ID,
 			LotteryPrize: prize,
 		}, nil
@@ -95,6 +99,7 @@ func fetchMissVal(
 }
 
 func (l *LotteryStrategyHook) AfterDraw(ctx jet.Ctx, afterDrawDTO *dto.LotteryStrategyAfterDrawDTO) {
+	utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#AfterDraw")
 	ctx.Logger().Infof("do after draw, afterDrawDTO:%v", utils.ObjToJsonStr(afterDrawDTO))
 	missVal, err := fetchMissVal(ctx, afterDrawDTO.UserId, afterDrawDTO.ActivityId)
 	if err != nil {
@@ -109,8 +114,9 @@ func (l *LotteryStrategyHook) AfterDraw(ctx jet.Ctx, afterDrawDTO *dto.LotterySt
 		ctx.Logger().Infof("useId:%v, activityId:%v, incr count: %v,missKey => %v, err info:%v",
 			afterDrawDTO.UserId, afterDrawDTO.ActivityId, incrVal, missKey, err)
 	}
+	lotteryAbility := ability.FetchLotteryAbilityInstance()
 	// 1. 奖品中奖落库
-	err = l.lotteryAbility.AddLotteryRecords(ctx, &po.LotteryRecords{
+	err = lotteryAbility.AddLotteryRecords(ctx, &po.LotteryRecords{
 		ActivityId:            afterDrawDTO.ActivityId,
 		PrizeId:               afterDrawDTO.PrizeId,
 		UserId:                afterDrawDTO.UserId,

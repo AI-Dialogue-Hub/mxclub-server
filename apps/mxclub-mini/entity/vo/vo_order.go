@@ -59,7 +59,7 @@ type ProductVO struct {
 	Phone            string             `json:"phone"`
 	GameId           string             `json:"gameId"`
 	SalesVolume      int                `json:"sales_volume"`
-	LotteryActivity  bool               `json:"lottery_activity"`
+	LotteryActivity  bool               `json:"lottery_activity"` // 是否是抽奖活动
 }
 
 type WithDrawVO struct {

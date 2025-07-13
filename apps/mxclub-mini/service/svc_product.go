@@ -134,38 +134,43 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 			return b.SalesVolume - a.SalesVolume
 		})
 	}
-	if typeValue == 101 {
-		// 抽奖活动
-		lotteryActivityPOList, count, err := svc.lotteryActivity.ListActivity(
-			ctx, &api.PageParams{Page: 1, PageSize: 1000})
-		if err != nil {
-			ctx.Logger().Errorf("list lottery activity failed, err:%v", err)
-		} else {
-			if count > 0 && lotteryActivityPOList != nil && len(lotteryActivityPOList) > 0 {
-				lotteryProduct := utils.Map(lotteryActivityPOList,
-					func(lotteryActivity *lotteryPO.LotteryActivity) *vo.ProductVO {
-						return &vo.ProductVO{
-							ID:               lotteryActivity.ID,
-							Title:            lotteryActivity.ActivityTitle,
-							Price:            lotteryActivity.ActivityPrice,
-							DiscountRuleID:   0,
-							DiscountPrice:    0,
-							FinalPrice:       lotteryActivity.ActivityPrice,
-							Description:      lotteryActivity.ActivityDesc,
-							ShortDescription: lotteryActivity.ActivitySubtitle,
-							Images:           utils.ToSlice(lotteryActivity.EntryImage),
-							DetailImages:     utils.ToSlice(lotteryActivity.EntryImage),
-							Thumbnail:        lotteryActivity.EntryImage,
-							Phone:            "",
-							GameId:           "",
-							SalesVolume:      0,
-							LotteryActivity:  true,
-						}
-					})
-				productVOS = append(productVOS, lotteryProduct...)
-			}
-		}
-
-	}
+	productVOS = svc.wrapLotteryPrize(ctx, typeValue, productVOS)
 	return productVOS, nil
+}
+
+func (svc ProductService) wrapLotteryPrize(ctx jet.Ctx, typeValue uint, productVOS []*vo.ProductVO) []*vo.ProductVO {
+	if typeValue != 101 {
+		return productVOS
+	}
+	// 抽奖活动
+	lotteryActivityPOList, count, err := svc.lotteryActivity.ListActivity(
+		ctx, &api.PageParams{Page: 1, PageSize: 1000})
+	if err != nil {
+		ctx.Logger().Errorf("list lottery activity failed, err:%v", err)
+	} else {
+		if count > 0 && lotteryActivityPOList != nil && len(lotteryActivityPOList) > 0 {
+			lotteryProduct := utils.Map(lotteryActivityPOList,
+				func(lotteryActivity *lotteryPO.LotteryActivity) *vo.ProductVO {
+					return &vo.ProductVO{
+						ID:               lotteryActivity.ID,
+						Title:            lotteryActivity.ActivityTitle,
+						Price:            lotteryActivity.ActivityPrice,
+						DiscountRuleID:   0,
+						DiscountPrice:    0,
+						FinalPrice:       lotteryActivity.ActivityPrice,
+						Description:      lotteryActivity.ActivityDesc,
+						ShortDescription: lotteryActivity.ActivitySubtitle,
+						Images:           utils.ToSlice(lotteryActivity.EntryImage),
+						DetailImages:     utils.ToSlice(lotteryActivity.EntryImage),
+						Thumbnail:        lotteryActivity.EntryImage,
+						Phone:            "",
+						GameId:           "",
+						SalesVolume:      0,
+						LotteryActivity:  true,
+					}
+				})
+			productVOS = append(lotteryProduct, productVOS...)
+		}
+	}
+	return productVOS
 }

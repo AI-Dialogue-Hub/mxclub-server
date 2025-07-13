@@ -14,17 +14,16 @@ import (
 const RandomStrategy = "randomLotteryStrategy"
 
 func init() {
-	jet.Provide(func(lotteryAbility ability.ILotteryAbility) {
-		utils.IfNotNilPanic(
-			OfferLotteryStrategy(
-				RandomStrategy,
-				NewLotteryStrategyRandom(
-					NewLotteryStrategyHook(lotteryAbility),
-					lotteryAbility,
-				),
+	abilityInstance := ability.FetchLotteryAbilityInstance()
+	utils.IfNotNilPanic(
+		OfferLotteryStrategy(
+			RandomStrategy,
+			NewLotteryStrategyRandom(
+				NewLotteryStrategyHook(abilityInstance),
+				abilityInstance,
 			),
-		)
-	})
+		),
+	)
 }
 
 // LotteryStrategyRandom 具体策略
@@ -39,7 +38,7 @@ func NewLotteryStrategyRandom(
 ) *LotteryStrategyRandom {
 	return &LotteryStrategyRandom{
 		lotteryAbility:      lotteryAbility,
-		LotteryStrategyBase: &LotteryStrategyBase{LotteryStrategyHook: hook},
+		LotteryStrategyBase: &LotteryStrategyBase{hook: hook},
 	}
 }
 
@@ -54,7 +53,6 @@ func (l *LotteryStrategyRandom) handleDraw(
 		ctx.Logger().Errorf("FindActivityPrizeByActivityId error,err info:%v", err)
 		return nil, errors.Wrap(err, "FindActivityPrizeByActivityId error")
 	}
-	drawInfo.ActivityPrizeSnapshot = utils.ObjToJsonStr(activityDTO)
 	prizes := activityDTO.LotteryPrizes
 	if prizes == nil || len(prizes) <= 0 {
 		ctx.Logger().Errorf("activity:%v, no prizes", drawInfo.ActivityId)
@@ -98,10 +96,10 @@ func (l *LotteryStrategyRandom) handleDraw(
 		return nil, errors.New("no prizes")
 	}
 	return &dto.LotteryStrategyDrawResultDTO{
-		ActivityId:                   drawInfo.ActivityId,
 		IsIncreaseLotteryProbability: true,
 		LotteryPrize:                 finalPrize,
 		PrizeId:                      finalPrize.ID,
-		UserId:                       drawInfo.UserId,
+		ActivityPrizeSnapshot:        utils.ObjToJsonStr(activityDTO),
+		PrizeIndex:                   finalPrize.SortOrder,
 	}, nil
 }

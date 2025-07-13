@@ -19,7 +19,6 @@ func init() {
 
 type IProductSalesRepo interface {
 	xmysql.IBaseRepo[po.ProductSale]
-
 	AddOrUpdateSale(ctx jet.Ctx, productId uint, salesVolume int) (err error)
 	FindByProductIds(ctx jet.Ctx, ids []uint64) (maps.IMap[uint64, *po.ProductSale], error)
 	ReplaceSale(ctx jet.Ctx, productId uint, salesVolume int) error
