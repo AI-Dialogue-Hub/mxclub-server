@@ -7,10 +7,12 @@ import (
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/domain/lottery/ability"
+	"mxclub/domain/lottery/entity/dto"
 	"mxclub/domain/lottery/entity/enum"
 	"mxclub/domain/lottery/po"
 	"mxclub/domain/lottery/repo"
 	productRepo "mxclub/domain/product/repo"
+	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 )
@@ -25,6 +27,8 @@ type LotteryService struct {
 	lotteryRepo         repo.ILotteryRepo
 	productRepo         productRepo.IProductRepo
 	lotteryActivity     ability.ILotteryAbility
+	lotteryRecordsRepo  repo.ILotteryRecordsRepo
+	userRepo            userRepo.IUserRepo
 }
 
 func NewLotteryService(
@@ -32,13 +36,17 @@ func NewLotteryService(
 	lotteryActivityRepo repo.ILotteryActivityRepo,
 	lotteryRepo repo.ILotteryRepo,
 	lotteryActivity ability.ILotteryAbility,
-	productRepo productRepo.IProductRepo) *LotteryService {
+	productRepo productRepo.IProductRepo,
+	lotteryRecordsRepo repo.ILotteryRecordsRepo,
+	userRepo userRepo.IUserRepo) *LotteryService {
 	return &LotteryService{
 		lotteryPrizeRepo:    lotteryPrizeRepo,
 		lotteryActivityRepo: lotteryActivityRepo,
 		lotteryRepo:         lotteryRepo,
 		lotteryActivity:     lotteryActivity,
 		productRepo:         productRepo,
+		lotteryRecordsRepo:  lotteryRecordsRepo,
+		userRepo:            userRepo,
 	}
 }
 
@@ -107,8 +115,13 @@ func (svc *LotteryService) AddOrUpdatePrize(ctx jet.Ctx, req *req.LotteryPrizeRe
 }
 
 func (svc *LotteryService) AddPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) error {
-	if req.PrizeType == enum.Virtual && req.ProductAttributeID <= 0 {
-		return errors.New("请选择商品")
+	if req.PrizeType == enum.Virtual {
+		if req.ProductAttributeID <= 0 {
+			return errors.New("请选择商品")
+		}
+		if productPO, err := svc.productRepo.FindByID(req.ProductAttributeID); err == nil {
+			req.PrizeName = productPO.Title
+		}
 	}
 	if req.ActivityId <= 0 {
 		return errors.New("请选择活动")
@@ -217,4 +230,20 @@ func (svc *LotteryService) DelActivity(ctx jet.Ctx, req *req.LotteryActivityReq)
 		return errors.New("删除失败")
 	}
 	return nil
+}
+
+// =======================================================================
+
+func (svc *LotteryService) ListLotteryRecords(ctx jet.Ctx, params *api.PageParams) ([]*vo.LotteryRecordsVO, int64, error) {
+	list, count, err := svc.lotteryRecordsRepo.ListRecords(ctx, params)
+	if err != nil {
+		return nil, 0, errors.New("查找失败")
+	}
+	vos := utils.CopySlice[*dto.LotteryRecordsDTO, *vo.LotteryRecordsVO](list)
+	for _, recordsVO := range vos {
+		if userPO, err := svc.userRepo.FindByIdAroundCache(ctx, recordsVO.UserId); err == nil && userPO != nil {
+			recordsVO.AvatarUrl = userPO.WxIcon
+		}
+	}
+	return vos, count, nil
 }

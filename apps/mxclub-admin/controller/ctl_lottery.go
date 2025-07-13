@@ -59,3 +59,11 @@ func (ctl *LotteryController) PostV1LotteryActivityStatus(ctx jet.Ctx, req *req.
 func (ctl *LotteryController) PostV1LotteryActivityDel(ctx jet.Ctx, req *req.LotteryActivityReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.DelActivity(ctx, req))
 }
+
+// =============================  lottery records  =======================================
+
+func (ctl *LotteryController) PostV1LotteryRecordsList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+	listPrize, count, err := ctl.LotteryService.ListLotteryRecords(ctx, params)
+	pageResult := api.WrapPageResult(params, listPrize, count)
+	return xjet.WrapperResult(ctx, pageResult, err)
+}
