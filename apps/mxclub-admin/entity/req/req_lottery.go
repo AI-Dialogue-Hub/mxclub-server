@@ -2,6 +2,7 @@ package req
 
 import (
 	"mxclub/domain/lottery/entity/enum"
+	"mxclub/pkg/api"
 	"time"
 )
 
@@ -56,4 +57,9 @@ type LotteryActivityReq struct {
 type LotteryActivityStatusReq struct {
 	LotteryActivityId     uint                    `json:"lottery_activity_id"`
 	LotteryActivityStatus enum.ActivityStatusEnum `json:"lottery_activity_status"`
+}
+
+type LotteryPrizePageReq struct {
+	*api.PageParams
+	ActivityId uint `json:"activity_id"`
 }

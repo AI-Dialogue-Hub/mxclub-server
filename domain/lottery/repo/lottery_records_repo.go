@@ -9,6 +9,7 @@ import (
 	"mxclub/domain/lottery/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
+	"sync"
 )
 
 func init() {
@@ -49,6 +50,7 @@ func (repo *LotteryRecordsRepo) ListRecords(
 		FROM lottery_records
 				 LEFT JOIN lottery_activities activity ON activity.id = lottery_records.activity_id
 				 LEFT JOIN lottery_prizes ON lottery_records.prize_id = lottery_prizes.id
+		WHERE lottery_records.deleted_at IS NULL
 		ORDER BY lottery_records.created_at DESC
 		LIMIT ? OFFSET ?
 		;
@@ -58,22 +60,36 @@ func (repo *LotteryRecordsRepo) ListRecords(
 		FROM lottery_records
 				 LEFT JOIN lottery_activities activity ON activity.id = lottery_records.activity_id
 				 LEFT JOIN lottery_prizes ON lottery_records.prize_id = lottery_prizes.id
+		WHERE lottery_records.deleted_at IS NULL
 		;
 	`
 	)
 	var (
 		lotteryRecordsDTOS = make([]*dto.LotteryRecordsDTO, 0)
 		countResult        int64
+		wg                 = new(sync.WaitGroup)
+		dataErr, countErr  error
 	)
-	err := repo.DB().Raw(dataSQL, params.Limit(), params.Offset()).Scan(&lotteryRecordsDTOS).Error
-	if err != nil {
-		ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", err)
-		return nil, 0, errors.Wrap(err, "LotteryRecordsRepo.ListAll")
+	wg.Add(2)
+	go func() {
+		dataErr = repo.DB().Raw(dataSQL, params.Limit(), params.Offset()).Scan(&lotteryRecordsDTOS).Error
+		if dataErr != nil {
+			ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", dataErr)
+		}
+	}()
+	go func() {
+		countErr = repo.DB().Raw(countSQL).Scan(&countResult).Error
+		if countErr != nil {
+			ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", countErr)
+		}
+	}()
+	if dataErr != nil {
+		ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", dataErr)
+		return nil, 0, errors.Wrap(dataErr, "LotteryRecordsRepo.ListAll")
 	}
-	err = repo.DB().Raw(countSQL).Scan(&countResult).Error
-	if err != nil {
-		ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", err)
-		return nil, 0, errors.Wrap(err, "LotteryRecordsRepo.ListAll")
+	if countErr != nil {
+		ctx.Logger().Errorf("LotteryRecordsRepo.ListAll error: %v", countErr)
+		return nil, 0, errors.Wrap(countErr, "LotteryRecordsRepo.ListAll")
 	}
 	return lotteryRecordsDTOS, countResult, nil
 }

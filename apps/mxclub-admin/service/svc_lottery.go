@@ -59,8 +59,17 @@ func (svc *LotteryService) FetchLotteryPrizeType() *vo.LotteryTypeVO {
 	return &vo.LotteryTypeVO{LotteryType: options}
 }
 
-func (svc *LotteryService) ListPrize(ctx jet.Ctx, params *api.PageParams) ([]*vo.LotteryPrizeVO, int64, error) {
-	list, count, err := svc.lotteryPrizeRepo.List(params.Page, params.PageSize, nil)
+func (svc *LotteryService) ListPrize(ctx jet.Ctx, params *req.LotteryPrizePageReq) ([]*vo.LotteryPrizeVO, int64, error) {
+	var (
+		list  []*po.LotteryPrize
+		count int64
+		err   error
+	)
+	if params.ActivityId <= 0 {
+		list, count, err = svc.lotteryPrizeRepo.List(params.Page, params.PageSize, nil)
+	} else {
+		list, count, err = svc.lotteryPrizeRepo.ListByActivityId(ctx, params.ActivityId, params.PageParams)
+	}
 	if err != nil {
 		ctx.Logger().Errorf("[LotteryService#ListPrize] list error, %v", err)
 		return nil, 0, errors.New("查找失败")

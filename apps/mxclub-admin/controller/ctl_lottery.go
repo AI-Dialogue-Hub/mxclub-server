@@ -26,9 +26,9 @@ func (ctl *LotteryController) GetV1LotteryPrizeType(ctx jet.Ctx) (*api.R[*vo.Lot
 	return api.Ok(ctx.Logger().ReqId, ctl.LotteryService.FetchLotteryPrizeType()), nil
 }
 
-func (ctl *LotteryController) PostV1LotteryPrizeList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {
+func (ctl *LotteryController) PostV1LotteryPrizeList(ctx jet.Ctx, params *req.LotteryPrizePageReq) (*api.Response, error) {
 	listPrize, count, err := ctl.LotteryService.ListPrize(ctx, params)
-	pageResult := api.WrapPageResult(params, listPrize, count)
+	pageResult := api.WrapPageResult(params.PageParams, listPrize, count)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
 
