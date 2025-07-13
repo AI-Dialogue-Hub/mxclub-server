@@ -75,6 +75,13 @@ func (s ProductService) DeleteById(ctx jet.Ctx, id int64) error {
 func (s ProductService) Add(ctx jet.Ctx, productReq *req.ProductReq) error {
 	product := utils.MustCopy[po.Product](productReq)
 	product.FinalPrice = product.Price - product.DiscountPrice
+	// 如果图片和详情图片为空，用缩略图填充
+	if len(product.Images) == 0 {
+		product.Images = []string{product.Thumbnail}
+	}
+	if len(product.DetailImages) == 0 {
+		product.DetailImages = []string{product.Thumbnail}
+	}
 	return s.productRepo.Add(ctx, product)
 }
 

@@ -134,29 +134,38 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 			return b.SalesVolume - a.SalesVolume
 		})
 	}
-	// 抽奖活动
-	lotteryActivityPOList, count, err := svc.lotteryActivity.ListActivity(ctx, &api.PageParams{Page: 1, PageSize: 1000})
-	if count > 0 && lotteryActivityPOList != nil && len(lotteryActivityPOList) > 0 {
-		lotteryProduct := utils.Map(lotteryActivityPOList, func(lotteryActivity *lotteryPO.LotteryActivity) *vo.ProductVO {
-			return &vo.ProductVO{
-				ID:               lotteryActivity.ID,
-				Title:            lotteryActivity.ActivityTitle,
-				Price:            lotteryActivity.ActivityPrice,
-				DiscountRuleID:   0,
-				DiscountPrice:    0,
-				FinalPrice:       lotteryActivity.ActivityPrice,
-				Description:      lotteryActivity.ActivityDesc,
-				ShortDescription: lotteryActivity.ActivitySubtitle,
-				Images:           utils.ToSlice(lotteryActivity.EntryImage),
-				DetailImages:     utils.ToSlice(lotteryActivity.EntryImage),
-				Thumbnail:        lotteryActivity.EntryImage,
-				Phone:            "",
-				GameId:           "",
-				SalesVolume:      0,
-				LotteryActivity:  true,
+	if typeValue == 101 {
+		// 抽奖活动
+		lotteryActivityPOList, count, err := svc.lotteryActivity.ListActivity(
+			ctx, &api.PageParams{Page: 1, PageSize: 1000})
+		if err != nil {
+			ctx.Logger().Errorf("list lottery activity failed, err:%v", err)
+		} else {
+			if count > 0 && lotteryActivityPOList != nil && len(lotteryActivityPOList) > 0 {
+				lotteryProduct := utils.Map(lotteryActivityPOList,
+					func(lotteryActivity *lotteryPO.LotteryActivity) *vo.ProductVO {
+						return &vo.ProductVO{
+							ID:               lotteryActivity.ID,
+							Title:            lotteryActivity.ActivityTitle,
+							Price:            lotteryActivity.ActivityPrice,
+							DiscountRuleID:   0,
+							DiscountPrice:    0,
+							FinalPrice:       lotteryActivity.ActivityPrice,
+							Description:      lotteryActivity.ActivityDesc,
+							ShortDescription: lotteryActivity.ActivitySubtitle,
+							Images:           utils.ToSlice(lotteryActivity.EntryImage),
+							DetailImages:     utils.ToSlice(lotteryActivity.EntryImage),
+							Thumbnail:        lotteryActivity.EntryImage,
+							Phone:            "",
+							GameId:           "",
+							SalesVolume:      0,
+							LotteryActivity:  true,
+						}
+					})
+				productVOS = append(productVOS, lotteryProduct...)
 			}
-		})
-		productVOS = append(productVOS, lotteryProduct...)
+		}
+
 	}
 	return productVOS, nil
 }

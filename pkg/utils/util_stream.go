@@ -16,6 +16,16 @@ func Filter[T any](in []T, f func(in T) bool) []T {
 	return out
 }
 
+func FindFirst[T any](in []T, f func(T) bool) (T, bool) {
+	for _, v := range in {
+		if f(v) {
+			return v, true
+		}
+	}
+	var zero T
+	return zero, false
+}
+
 func Map[In any, Out any](in []In, f func(in In) Out) []Out {
 	out := make([]Out, len(in))
 	for index, entity := range in {

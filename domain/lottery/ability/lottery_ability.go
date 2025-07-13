@@ -22,11 +22,14 @@ type ILotteryAbility interface {
 	FetchLotteryPrizeType() *dto.LotteryPrizeTypeDTO
 	AddPrize(ctx jet.Ctx, activityId uint, lotteryPrize *po.LotteryPrize) error
 	DelPrize(ctx jet.Ctx, lotteryPrizeId uint) error
-	AddOrUpdateActivity(ctx jet.Ctx, lotteryability *po.LotteryActivity) error
+	AddOrUpdateActivity(ctx jet.Ctx, lotteryAbility *po.LotteryActivity) error
 	ListActivity(ctx jet.Ctx, params *api.PageParams) ([]*po.LotteryActivity, int64, error)
 	ListActivityPrize(ctx jet.Ctx, params *api.PageParams) ([]*dto.LotteryActivityDTO, int64, error)
 	DelActivity(ctx jet.Ctx, lotteryActivityId uint) error
 	FindActivityPrizeByActivityId(ctx jet.Ctx, activityId uint) (*dto.LotteryActivityDTO, error)
+	AddLotteryRecords(ctx jet.Ctx, lotteryRecords *po.LotteryRecords) error
+	// FindFallbackPrize 查找多次不中后，兜底的二等奖
+	FindFallbackPrize(ctx jet.Ctx, activityId uint) (*po.LotteryPrize, error)
 }
 
 type LotteryAbility struct {
@@ -34,18 +37,21 @@ type LotteryAbility struct {
 	lotteryPrizeRepo    repo.ILotteryPrizeRepo
 	lotteryActivityRepo repo.ILotteryActivityRepo
 	relationRepo        repo.ILotteryActivityPrizeRelationRepo
+	lotteryRecordsRepo  repo.ILotteryRecordsRepo
 }
 
 func NewLotteryActivity(
 	lotteryPrizeRepo repo.ILotteryPrizeRepo,
 	lotteryActivityRepo repo.ILotteryActivityRepo,
 	lotteryRepo repo.ILotteryRepo,
-	relationRepo repo.ILotteryActivityPrizeRelationRepo) ILotteryAbility {
+	relationRepo repo.ILotteryActivityPrizeRelationRepo,
+	lotteryRecordsRepo repo.ILotteryRecordsRepo) ILotteryAbility {
 	return &LotteryAbility{
 		lotteryRepo:         lotteryRepo,
 		lotteryPrizeRepo:    lotteryPrizeRepo,
 		lotteryActivityRepo: lotteryActivityRepo,
 		relationRepo:        relationRepo,
+		lotteryRecordsRepo:  lotteryRecordsRepo,
 	}
 }
 
@@ -216,4 +222,29 @@ func (ability *LotteryAbility) FindActivityPrizeByActivityId(ctx jet.Ctx, activi
 		LotteryActivity: lotteryActivity,
 		LotteryPrizes:   lotteryPrizes,
 	}, nil
+}
+
+func (ability *LotteryAbility) AddLotteryRecords(ctx jet.Ctx, lotteryRecords *po.LotteryRecords) error {
+	err := ability.lotteryRecordsRepo.InsertOne(lotteryRecords)
+	if err != nil {
+		return errors.Wrap(err, "insert lottery records error")
+	}
+	return nil
+}
+
+func (ability *LotteryAbility) FindFallbackPrize(ctx jet.Ctx, activityId uint) (*po.LotteryPrize, error) {
+	activityPO, err := ability.lotteryActivityRepo.FindByID(activityId)
+	if err != nil || activityPO == nil {
+		ctx.Logger().Errorf(
+			"[LotteryAbility#FindFallbackPrize] find activityId:%v activity_prize_relation error, %v", activityId, err)
+		return nil, errors.Wrap(err, "find fallback prize error")
+	}
+	fallbackPrizeId := activityPO.FallbackPrizeId
+	prizePO, err := ability.lotteryPrizeRepo.FindByID(fallbackPrizeId)
+	if err != nil {
+		ctx.Logger().Errorf(
+			"[LotteryAbility#FindFallbackPrize] find activityId:%v activity_prize_relation error, %v", activityId, err)
+		return nil, errors.Wrap(err, "find fallback prize error")
+	}
+	return prizePO, nil
 }

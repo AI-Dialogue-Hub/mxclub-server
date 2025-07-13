@@ -6,9 +6,9 @@ import (
 
 type LotteryRecords struct {
 	gorm.Model
-	ActivityId            int
-	PrizeId               int
-	UserId                int
+	ActivityId            uint
+	PrizeId               uint
+	UserId                uint
 	OrderId               string
 	ActivityPrizeSnapshot string // 活动信息&奖品信息快照
 }
