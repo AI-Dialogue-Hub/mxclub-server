@@ -54,3 +54,8 @@ func (ctl *LotteryController) GetV1LotteryRecordsList(ctx jet.Ctx) (*api.Respons
 	pageResult := api.WrapPageResult(&api.PageParams{}, listPrize, count)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
+
+func (ctl *LotteryController) GetV1LotteryCandraw(ctx jet.Ctx, drawReq *req.LotteryCanDrawReq) (*api.Response, error) {
+	canDraw, err := ctl.lotteryService.CanDrawLottery(ctx, drawReq)
+	return xjet.WrapperResult(ctx, canDraw, err)
+}

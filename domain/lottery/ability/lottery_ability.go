@@ -30,14 +30,24 @@ type ILotteryAbility interface {
 	AddLotteryRecords(ctx jet.Ctx, lotteryRecords *po.LotteryRecords) error
 	// FindFallbackPrize 查找多次不中后，兜底的二等奖
 	FindFallbackPrize(ctx jet.Ctx, activityId uint) (*po.LotteryPrize, error)
+	// FindPurchaseRecord 查看用户的抽奖购买记录
+	FindPurchaseRecord(
+		ctx jet.Ctx, userId uint, activityId uint, canDrawLottery bool) ([]*po.LotteryPurchaseRecord, error)
+	FindPurchaseRecordByTransactionId(
+		ctx jet.Ctx, transactionId string) (*po.LotteryPurchaseRecord, error)
+	AddPurchaseRecordByActivityId(
+		ctx jet.Ctx, userId uint, activityId uint, transactionNo string) (*po.LotteryPurchaseRecord, error)
+	UpdatePurchaseRecordStatus(
+		ctx jet.Ctx, transactionId string, status enum.PurchaseStatusEnum) error
 }
 
 type LotteryAbility struct {
-	lotteryRepo         repo.ILotteryRepo
-	lotteryPrizeRepo    repo.ILotteryPrizeRepo
-	lotteryActivityRepo repo.ILotteryActivityRepo
-	relationRepo        repo.ILotteryActivityPrizeRelationRepo
-	lotteryRecordsRepo  repo.ILotteryRecordsRepo
+	lotteryRepo                repo.ILotteryRepo
+	lotteryPrizeRepo           repo.ILotteryPrizeRepo
+	lotteryActivityRepo        repo.ILotteryActivityRepo
+	relationRepo               repo.ILotteryActivityPrizeRelationRepo
+	lotteryRecordsRepo         repo.ILotteryRecordsRepo
+	lotteryPurchaseRecordsRepo repo.ILotteryPurchaseRecordsRepo
 }
 
 func NewLotteryActivity(
@@ -45,13 +55,15 @@ func NewLotteryActivity(
 	lotteryActivityRepo repo.ILotteryActivityRepo,
 	lotteryRepo repo.ILotteryRepo,
 	relationRepo repo.ILotteryActivityPrizeRelationRepo,
-	lotteryRecordsRepo repo.ILotteryRecordsRepo) ILotteryAbility {
+	lotteryRecordsRepo repo.ILotteryRecordsRepo,
+	lotteryPurchaseRecordsRepo repo.ILotteryPurchaseRecordsRepo) ILotteryAbility {
 	lotteryAbilityInstance = &LotteryAbility{
-		lotteryRepo:         lotteryRepo,
-		lotteryPrizeRepo:    lotteryPrizeRepo,
-		lotteryActivityRepo: lotteryActivityRepo,
-		relationRepo:        relationRepo,
-		lotteryRecordsRepo:  lotteryRecordsRepo,
+		lotteryRepo:                lotteryRepo,
+		lotteryPrizeRepo:           lotteryPrizeRepo,
+		lotteryActivityRepo:        lotteryActivityRepo,
+		relationRepo:               relationRepo,
+		lotteryRecordsRepo:         lotteryRecordsRepo,
+		lotteryPurchaseRecordsRepo: lotteryPurchaseRecordsRepo,
 	}
 	return lotteryAbilityInstance
 }

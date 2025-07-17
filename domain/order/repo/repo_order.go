@@ -407,7 +407,7 @@ func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, erro
 		"order_status = 2 and (executor_id = ? or executor2_id = ? or executor3_id = ?)",
 		dasherId, dasherId, dasherId,
 	)
-	return repo.FindByWrapper(query)
+	return repo.FindOneByWrapper(query)
 }
 
 func (repo OrderRepo) FindByDasherIdAndStatus(ctx jet.Ctx, dasherId int, status enum.OrderStatus) ([]*po.Order, error) {

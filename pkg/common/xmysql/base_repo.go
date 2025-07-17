@@ -20,7 +20,8 @@ type IBaseRepo[T any] interface {
 	FindByID(id interface{}) (*T, error)
 	Find(filter any, data ...any) ([]*T, error)
 	FindOne(filter any, data ...any) (*T, error)
-	FindByWrapper(query *MysqlQuery) (*T, error)
+	FindOneByWrapper(query *MysqlQuery) (*T, error)
+	FindByWrapper(query *MysqlQuery) ([]*T, error)
 	FindAll() ([]*T, error)
 	FindOrCreate(findFunc func() bool, t *T) (*T, error)
 	List(pageNo int64, pageSize int64, filter any, data ...any) ([]*T, int64, error)
@@ -100,10 +101,16 @@ func (r *BaseRepo[T]) Find(filter any, data ...any) ([]*T, error) {
 	return entities, err
 }
 
-func (r *BaseRepo[T]) FindByWrapper(query *MysqlQuery) (*T, error) {
+func (r *BaseRepo[T]) FindOneByWrapper(query *MysqlQuery) (*T, error) {
 	var entity *T
 	err := r.db.Model(r.ModelPO).WithContext(r.Ctx).Where(query.Query, query.Args...).Find(&entity).Error
 	return entity, err
+}
+
+func (r *BaseRepo[T]) FindByWrapper(query *MysqlQuery) ([]*T, error) {
+	var entityList = make([]*T, 0)
+	err := r.db.Model(r.ModelPO).WithContext(r.Ctx).Where(query.Query, query.Args...).Find(&entityList).Error
+	return entityList, err
 }
 
 func (r *BaseRepo[T]) FindOne(filter any, data ...any) (*T, error) {

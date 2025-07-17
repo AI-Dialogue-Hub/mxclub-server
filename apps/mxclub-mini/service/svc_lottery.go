@@ -24,7 +24,7 @@ func init() {
 
 type LotteryService struct {
 	lotteryPrizeRepo   repo.ILotteryPrizeRepo
-	lotteryActivity    ability.ILotteryAbility
+	lotteryAbility     ability.ILotteryAbility
 	messageService     *MessageService
 	lotteryRecordsRepo repo.ILotteryRecordsRepo
 	userRepo           userRepo.IUserRepo
@@ -38,7 +38,7 @@ func NewLotteryService(
 	userRepo userRepo.IUserRepo) *LotteryService {
 	return &LotteryService{
 		lotteryPrizeRepo:   lotteryPrizeRepo,
-		lotteryActivity:    lotteryActivity,
+		lotteryAbility:     lotteryActivity,
 		messageService:     messageService,
 		lotteryRecordsRepo: lotteryRecordsRepo,
 		userRepo:           userRepo,
@@ -46,7 +46,7 @@ func NewLotteryService(
 }
 
 func (svc *LotteryService) ListLotteryPrize(ctx jet.Ctx, params *api.PageParams) ([]*vo.LotteryActivityPrizeVO, int64, error) {
-	listActivity, count, err := svc.lotteryActivity.ListActivityPrize(ctx, params)
+	listActivity, count, err := svc.lotteryAbility.ListActivityPrize(ctx, params)
 	if err != nil {
 		ctx.Logger().Errorf("[LotteryService#ListLotteryPrize] ERROR:%v", err)
 		return nil, 0, errors.New("活动获取错误")
@@ -61,7 +61,7 @@ func (svc *LotteryService) ListLotteryPrize(ctx jet.Ctx, params *api.PageParams)
 }
 
 func (svc *LotteryService) FindActivityPrizeByActivityId(ctx jet.Ctx, activityId int) (*vo.LotteryActivityPrizeVO, error) {
-	activityDTO, err := svc.lotteryActivity.FindActivityPrizeByActivityId(ctx, uint(activityId))
+	activityDTO, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, uint(activityId))
 	if err != nil {
 		return nil, errors.New("活动获取错误")
 	}
@@ -83,7 +83,7 @@ func (svc *LotteryService) StartLottery(ctx jet.Ctx, req *req.LotteryStartReq) (
 	})
 	ctx.Logger().Infof("[LotteryService#StartLottery] DoDraw result:%v", utils.ObjToJsonStr(drawResultDTO))
 	if err != nil || drawResultDTO == nil {
-		ctx.Logger().Errorf("[LotteryService#StartLottery] DoDraw err:%v, drawResultDTO", err, drawResultDTO)
+		ctx.Logger().Errorf("[LotteryService#StartLottery] DoDraw err:%v, drawResultDTO:%v", err, drawResultDTO)
 		return nil, errors.New("抽奖失败，请联系客服")
 	}
 	prize := drawResultDTO.LotteryPrize
@@ -127,4 +127,17 @@ func (svc *LotteryService) ListLotteryRecords(ctx jet.Ctx) ([]*vo.LotteryRecords
 		}
 	}
 	return vos, count, nil
+}
+
+// ===========================================================
+
+// CanDrawLottery 能否进行抽奖
+func (svc *LotteryService) CanDrawLottery(ctx jet.Ctx, req *req.LotteryCanDrawReq) (bool, error) {
+	userId := middleware.MustGetUserId(ctx)
+	record, err := svc.lotteryAbility.FindPurchaseRecord(ctx, userId, req.ActivityId, true)
+	if err != nil {
+		ctx.Logger().Errorf("find purse chase record error: %v", err)
+		return false, err
+	}
+	return len(record) > 0, nil
 }

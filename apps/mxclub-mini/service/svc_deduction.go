@@ -106,6 +106,18 @@ func (svc *OrderService) SyncPrePayOrder() {
 	}
 }
 
+// SyncLotteryPrePayOrder TODO@lfy 抽奖未支付订单
+func (svc *OrderService) SyncLotteryPrePayOrder() {
+	var (
+		now      = time.Now()
+		duration = -time.Minute * 8 // 八分钟还没支付就移除掉
+	)
+	err := svc.orderRepo.Remove("created_at <= ? and order_status = ?", now.Add(duration), enum.PrePay)
+	if err != nil {
+		xlog.Errorf("SyncPrePayOrder ERROR:%v", err)
+	}
+}
+
 func (svc *OrderService) RemoveDeductRecord(ctx jet.Ctx) error {
 	if value, exists := ctx.Get(constantMini.LOGOUT_DASHER_ID); exists {
 		dasherId := value.(int)

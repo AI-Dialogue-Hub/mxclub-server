@@ -13,6 +13,7 @@ import (
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/event"
+	"mxclub/domain/lottery/ability"
 	"mxclub/domain/order/biz/penalty"
 	orderDTO "mxclub/domain/order/entity/dto"
 	productRepo "mxclub/domain/product/repo"
@@ -66,6 +67,7 @@ type OrderService struct {
 	productSalesRepo productRepo.IProductSalesRepo
 	rewardRecordRepo repo.IRewardRecordRepo
 	wxNotifyService  *WxNotifyService
+	lotteryAbility   ability.ILotteryAbility
 }
 
 var orderService *OrderService
@@ -82,7 +84,8 @@ func NewOrderService(
 	transferRepo repo.ITransferRepo,
 	productSalesRepo productRepo.IProductSalesRepo,
 	rewardRecordRepo repo.IRewardRecordRepo,
-	wxNotifyService *WxNotifyService) *OrderService {
+	wxNotifyService *WxNotifyService,
+	lotteryAbility ability.ILotteryAbility) *OrderService {
 	orderService = &OrderService{
 		orderRepo:        repo,
 		withdrawalRepo:   withdrawalRepo,
@@ -96,6 +99,7 @@ func NewOrderService(
 		productSalesRepo: productSalesRepo,
 		rewardRecordRepo: rewardRecordRepo,
 		wxNotifyService:  wxNotifyService,
+		lotteryAbility:   lotteryAbility,
 	}
 	// 初始化
 	setUp(orderService)

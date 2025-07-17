@@ -25,6 +25,8 @@ type OrderReq struct {
 	OrderName       string `json:"order_name"`
 	OrderIcon       string `json:"order_icon"`
 	OrderTradeNo    string `json:"out_trade_no"`
+	IsActivity      bool   `json:"is_activity"`
+	ActivityId      uint   `json:"activity_id"`
 }
 
 type OrderFinishReq struct {
