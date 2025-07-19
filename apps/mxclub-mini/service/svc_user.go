@@ -155,16 +155,12 @@ func (svc UserService) ToBeAssistant(ctx jet.Ctx, req req.AssistantReq) error {
 	}
 	// 获取当前用户ID
 	userID := middleware.MustGetUserId(ctx)
-	// 检查打手Id对应账号之前是否干净
+	// 清理之前账号信息
+	_ = svc.doClearDasherInfo(ctx, req)
+	// 再重新检查一次，打手Id对应账号之前是否干净
 	if err := svc.checkDasherIdStatus(ctx, req); err != nil {
-		ctx.Logger().Errorf("[UserService#ToBeAssistant] checkDasherIdStatus ERROR:%v", err)
-		// 清理之前账号信息
-		_ = svc.doClearDasherInfo(ctx, req)
-		// 再重新检查一次
-		if err = svc.checkDasherIdStatus(ctx, req); err != nil {
-			ctx.Logger().Errorf("[UserService#ToBeAssistant] checkDasherIdStatus double fuck ERROR:%v", err)
-			return err
-		}
+		ctx.Logger().Errorf("[UserService#ToBeAssistant] checkDasherIdStatus double fuck ERROR:%v", err)
+		return err
 	}
 	// 创建打手申请记录
 	err := svc.apRepo.CreateAssistantApplication(ctx, userID, req.Phone, req.MemberNumber, req.Name)
