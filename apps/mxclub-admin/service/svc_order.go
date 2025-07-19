@@ -267,6 +267,11 @@ func (svc *OrderService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int
 func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
+	// 0. 注销前，打印账户余额信息
+	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx, &req.HistoryWithDrawAmountReq{UserId: userId}); err == nil {
+		ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
+			userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+	}
 	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }
 
