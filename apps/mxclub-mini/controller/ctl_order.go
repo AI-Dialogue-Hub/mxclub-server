@@ -1,13 +1,17 @@
 package controller
 
 import (
+	"errors"
+	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
+	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
+	"time"
 )
 
 func init() {
@@ -75,6 +79,10 @@ func (ctl OrderController) PostV1OrderFinish(ctx jet.Ctx, req *req.OrderFinishRe
 
 // GetV1OrderDasher 获取抢单大厅里面的订单
 func (ctl OrderController) GetV1OrderDasher(ctx jet.Ctx) (*api.Response, error) {
+	err := xredis.Debounce(fmt.Sprintf("GetV1OrderDasher:%v", middleware.MustGetUserId(ctx)), time.Second*3)
+	if err != nil {
+		return xjet.WrapperResult(ctx, nil, errors.New("请等待三秒再刷新一次"))
+	}
 	orderVOS, err := ctl.orderService.GetProcessingOrderList(ctx)
 	return xjet.WrapperResult(ctx, orderVOS, err)
 }

@@ -75,6 +75,7 @@ func (ability *LotteryAbility) AddPurchaseRecordByActivityId(
 		ctx.Logger().Errorf("[LotteryAbility#AddPurchaseRecordByActivityId] err:%v", err)
 		return nil, errors.Wrap(err, "insert purchase record error")
 	}
+	ctx.Logger().Infof("[LotteryAbility#AddPurchaseRecordByActivityId] purchase record:%v", purchaseRecordPO)
 	return purchaseRecordPO, nil
 }
 
