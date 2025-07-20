@@ -1,6 +1,9 @@
 package po
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type WithdrawalRecord struct {
 	ID               uint    `gorm:"primaryKey"`
@@ -16,7 +19,7 @@ type WithdrawalRecord struct {
 	WithdrawalMethod string     `gorm:"size:100"`
 	CreatedAt        time.Time  `gorm:"autoCreateTime"`
 	UpdatedAt        time.Time  `gorm:"autoUpdateTime"`
-	DeletedAt        *time.Time `gorm:"index"`
+	DeletedAt        gorm.DeletedAt
 }
 
 // TableName sets the table name for the WithdrawalRecord model.

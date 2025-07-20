@@ -1,6 +1,7 @@
 package po
 
 import (
+	"gorm.io/gorm"
 	"mxclub/domain/order/entity/enum"
 	"time"
 )
@@ -20,7 +21,7 @@ type RewardRecord struct {
 	OutTradeNo   string           `gorm:"size:50;not null" json:"out_trade_no"` // 微信支付唯一标识
 	CreatedAt    time.Time        `json:"created_at"`                           // 创建时间
 	UpdatedAt    time.Time        `json:"updated_at"`                           // 更新时间
-	DeletedAt    *time.Time       `gorm:"index" json:"deleted_at,omitempty"`    // 删除时间
+	DeletedAt    gorm.DeletedAt   `json:"deleted_at,omitempty"`                 // 删除时间
 }
 
 func (RewardRecord) TableName() string {

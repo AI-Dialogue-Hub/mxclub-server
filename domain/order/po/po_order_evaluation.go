@@ -1,6 +1,9 @@
 package po
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type OrderEvaluation struct {
 	ID uint `gorm:"primaryKey;autoIncrement"`
@@ -11,9 +14,9 @@ type OrderEvaluation struct {
 	Rating     int    `gorm:"not null"`  // 评价的评分（假设是从 1 到 5）
 	Comments   string `gorm:"type:text"` // 评价的评论
 
-	CreatedAt time.Time  `gorm:"autoCreateTime"` // 创建时间
-	UpdatedAt time.Time  `gorm:"autoUpdateTime"` // 更新时间
-	DeletedAt *time.Time `gorm:"default:NULL"`
+	CreatedAt time.Time `gorm:"autoCreateTime"` // 创建时间
+	UpdatedAt time.Time `gorm:"autoUpdateTime"` // 更新时间
+	DeletedAt gorm.DeletedAt
 }
 
 func (*OrderEvaluation) TableName() string {
