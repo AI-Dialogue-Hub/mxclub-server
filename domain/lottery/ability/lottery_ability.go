@@ -37,8 +37,14 @@ type ILotteryAbility interface {
 		ctx jet.Ctx, transactionId string) (*po.LotteryPurchaseRecord, error)
 	AddPurchaseRecordByActivityId(
 		ctx jet.Ctx, userId uint, activityId uint, transactionNo string) (*po.LotteryPurchaseRecord, error)
-	UpdatePurchaseRecordStatus(
+	PayAndUpdatePurchaseRecordStatus(
 		ctx jet.Ctx, transactionId string, status enum.PurchaseStatusEnum) error
+	// UpdatePurchaseRecordStatus 更新购买记录状态
+	//
+	// 	- @param lotteryQualifiedStatus 是否获得抽奖资格
+	// 	- @param lotteryUsedStatus 是否已使用抽奖资格
+	UpdatePurchaseRecordStatus(
+		ctx jet.Ctx, transactionId string, lotteryQualifiedStatus, lotteryUsedStatus bool) error
 }
 
 type LotteryAbility struct {

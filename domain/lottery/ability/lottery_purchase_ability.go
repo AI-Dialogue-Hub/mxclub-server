@@ -82,7 +82,7 @@ func (ability *LotteryAbility) AddPurchaseRecordByActivityId(
 	return purchaseRecordPO, nil
 }
 
-func (ability *LotteryAbility) UpdatePurchaseRecordStatus(
+func (ability *LotteryAbility) PayAndUpdatePurchaseRecordStatus(
 	ctx jet.Ctx, transactionId string, status enum.PurchaseStatusEnum) error {
 	if status != enum.PurchaseStatusSuccess {
 		ctx.Logger().Errorf("LotteryAbility status is not success, transactionId=%v", transactionId)
@@ -92,6 +92,15 @@ func (ability *LotteryAbility) UpdatePurchaseRecordStatus(
 		"lottery_qualified": true,
 		"lottery_used":      false,
 		"payment_time":      time.Now(),
+	}
+	return ability.lotteryPurchaseRecordsRepo.Update(updateMap, "transaction_id = ?", transactionId)
+}
+
+func (ability *LotteryAbility) UpdatePurchaseRecordStatus(
+	ctx jet.Ctx, transactionId string, lotteryQualifiedStatus, lotteryUsedStatus bool) error {
+	updateMap := map[string]any{
+		"lottery_qualified": lotteryQualifiedStatus,
+		"lottery_used":      lotteryUsedStatus,
 	}
 	return ability.lotteryPurchaseRecordsRepo.Update(updateMap, "transaction_id = ?", transactionId)
 }

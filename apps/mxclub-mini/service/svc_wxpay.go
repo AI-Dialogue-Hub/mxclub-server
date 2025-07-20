@@ -176,7 +176,7 @@ func (s WxPayService) handleCallback(ctx jet.Ctx, transaction *payments.Transact
 
 func (s WxPayService) handleActivityWxpayNotify(ctx jet.Ctx, transaction *payments.Transaction) {
 	// 更新状态
-	err := s.lotteryAbility.UpdatePurchaseRecordStatus(ctx, *transaction.OutTradeNo, lotteryEnum.PurchaseStatusSuccess)
+	err := s.lotteryAbility.PayAndUpdatePurchaseRecordStatus(ctx, *transaction.OutTradeNo, lotteryEnum.PurchaseStatusSuccess)
 	if err != nil {
 		ctx.Logger().Errorf("[handleActivityWxpayNotify] %v", err)
 	}

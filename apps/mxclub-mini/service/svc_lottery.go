@@ -44,14 +44,18 @@ func NewLotteryService(
 	messageService *MessageService,
 	lotteryRecordsRepo repo.ILotteryRecordsRepo,
 	userRepo userRepo.IUserRepo,
-	orderRepo orderRepo.IOrderRepo) *LotteryService {
+	orderRepo orderRepo.IOrderRepo,
+	lotteryActivityRepo repo.ILotteryActivityRepo,
+	commonRepo commonRepo.IMiniConfigRepo) *LotteryService {
 	return &LotteryService{
-		lotteryPrizeRepo:   lotteryPrizeRepo,
-		lotteryAbility:     lotteryActivity,
-		messageService:     messageService,
-		lotteryRecordsRepo: lotteryRecordsRepo,
-		userRepo:           userRepo,
-		orderRepo:          orderRepo,
+		lotteryPrizeRepo:    lotteryPrizeRepo,
+		lotteryAbility:      lotteryActivity,
+		messageService:      messageService,
+		lotteryRecordsRepo:  lotteryRecordsRepo,
+		userRepo:            userRepo,
+		orderRepo:           orderRepo,
+		lotteryActivityRepo: lotteryActivityRepo,
+		commonRepo:          commonRepo,
 	}
 }
 
@@ -61,10 +65,16 @@ func (svc *LotteryService) ListLotteryPrize(ctx jet.Ctx, params *api.PageParams)
 		ctx.Logger().Errorf("[LotteryService#ListLotteryPrize] ERROR:%v", err)
 		return nil, 0, errors.New("活动获取错误")
 	}
+	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
 	lotteryActivityPrizeVOS := utils.Map(listActivity, func(activityDTO *dto.LotteryActivityDTO) *vo.LotteryActivityPrizeVO {
+		prizeVOS := utils.CopySlice[*po.LotteryPrize, *vo.LotteryPrizeVO](activityDTO.LotteryPrizes)
+		utils.ForEach(prizeVOS, func(in *vo.LotteryPrizeVO) {
+			in.Phone = userPO.Phone
+			in.RoleId = userPO.GameId
+		})
 		return &vo.LotteryActivityPrizeVO{
 			LotteryActivity: utils.MustCopy[vo.LotteryActivityVO](activityDTO.LotteryActivity),
-			LotteryPrizes:   utils.CopySlice[*po.LotteryPrize, *vo.LotteryPrizeVO](activityDTO.LotteryPrizes),
+			LotteryPrizes:   prizeVOS,
 		}
 	})
 	return lotteryActivityPrizeVOS, count, nil
@@ -110,6 +120,7 @@ func (svc *LotteryService) StartLottery(ctx jet.Ctx, req *req.LotteryStartReq) (
 //
 // 目前就代打订单和实物两种奖品
 func (svc *LotteryService) DistributePrize(ctx jet.Ctx, userId uint, activityId uint, prize *po.LotteryPrize) {
+	defer utils.RecoverWithPrefix(ctx, "DistributePrize")
 	// 1. 执行发奖策略
 	switch prize.PrizeType {
 	case enum.Physical:
@@ -128,7 +139,7 @@ func (svc *LotteryService) DistributePrize(ctx jet.Ctx, userId uint, activityId 
 
 func (svc *LotteryService) handleAddPrizeToOrder(ctx jet.Ctx, userId uint, activityId uint, prize *po.LotteryPrize) error {
 	// 1. 查找用户最新一次的购买记录
-	purchaseRecords, err := svc.lotteryAbility.FindPurchaseRecord(ctx, userId, activityId, false)
+	purchaseRecords, err := svc.lotteryAbility.FindPurchaseRecord(ctx, userId, activityId, true)
 	if err != nil {
 		ctx.Logger().Errorf("find purchase record error")
 		_ = svc.messageService.PushSystemMessage(ctx, userId, "系统异常，抽奖失败，请联系客服")
@@ -138,6 +149,10 @@ func (svc *LotteryService) handleAddPrizeToOrder(ctx jet.Ctx, userId uint, activ
 	ctx.Logger().Infof(
 		"[LotteryService#handleAddPrizeToOrder] purchase prize: %v", utils.ObjToJsonStr(prize))
 	purchaseRecord, _ := utils.FindFirst(purchaseRecords, func(p *po.LotteryPurchaseRecord) bool { return true })
+	if purchaseRecord == nil || purchaseRecord.ID <= 0 {
+		ctx.Logger().Errorf("[LotteryService#handleAddPrizeToOrder] find purchase record error")
+		return errors.New("find purchase record error")
+	}
 	// 2. 查到抽奖活动
 	lotteryActivity, err := svc.lotteryActivityRepo.FindByID(activityId)
 	if err != nil {
@@ -171,6 +186,11 @@ func (svc *LotteryService) handleAddPrizeToOrder(ctx jet.Ctx, userId uint, activ
 		ctx.Logger().Errorf("addRawOrder ERROR:%v", err)
 	}
 	ctx.Logger().Infof("handleAddPrizeToOrder addRawOrder SUCCESS: %v", utils.ObjToJsonStr(order))
+	// 4. 注销抽奖机会
+	if svc.lotteryAbility.UpdatePurchaseRecordStatus(
+		ctx, purchaseRecord.TransactionID, true, true) != nil {
+		ctx.Logger().Errorf("handleAddPrizeToOrder UpdatePurchaseRecordStatus ERROR:%v", err)
+	}
 	return nil
 }
 

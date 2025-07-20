@@ -21,6 +21,7 @@ import (
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/constant"
+	"strconv"
 	"sync"
 
 	commonEnum "mxclub/domain/common/entity/enum"
@@ -476,6 +477,12 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 		return nil, errors.New("订单查询失败，请联系客服")
 	}
 	orderVOS := utils.CopySlice[*po.Order, *vo.OrderVO](orders)
+	// 转盘单要隐藏名称
+	utils.ForEach(orderVOS, func(ele *vo.OrderVO) {
+		if ability.IsLotteryOrder(strconv.FormatUint(ele.OrderId, 10)) {
+			ele.OrderName = "转盘单，接单后显示内容"
+		}
+	})
 	// 将gameId和roleId分开
 	id2OrderPOMap := utils.SliceToSingleMap(orders, func(ele *po.Order) uint { return ele.ID })
 	for _, orderVO := range orderVOS {

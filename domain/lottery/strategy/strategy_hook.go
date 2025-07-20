@@ -42,7 +42,7 @@ const (
 func (l *LotteryStrategyHook) BeforeDraw(
 	ctx jet.Ctx, beforeDrawDTO *dto.LotteryStrategyBeforeDrawDTO,
 ) (*dto.LotteryStrategyDrawResultDTO, error) {
-	utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#BeforeDraw")
+	defer utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#BeforeDraw")
 	// 0. 获取用户连抽不中记录
 	missVal, err := fetchMissVal(ctx, beforeDrawDTO.UserId, beforeDrawDTO.ActivityId)
 	if err != nil {
@@ -99,7 +99,7 @@ func fetchMissVal(
 }
 
 func (l *LotteryStrategyHook) AfterDraw(ctx jet.Ctx, afterDrawDTO *dto.LotteryStrategyAfterDrawDTO) {
-	utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#AfterDraw")
+	defer utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#AfterDraw")
 	ctx.Logger().Infof("do after draw, afterDrawDTO:%v", utils.ObjToJsonStr(afterDrawDTO))
 	missVal, err := fetchMissVal(ctx, afterDrawDTO.UserId, afterDrawDTO.ActivityId)
 	if err != nil {
@@ -107,7 +107,7 @@ func (l *LotteryStrategyHook) AfterDraw(ctx jet.Ctx, afterDrawDTO *dto.LotterySt
 		return
 	}
 	if missVal < lotteryPrizeLevelThirdQuota {
-		// 0. 增加抽中奖的记录
+		// 0. 增加抽奖的记录
 		missKey := fmt.Sprintf(missKeyTemplate, afterDrawDTO.UserId, afterDrawDTO.ActivityId, enum.PrizeLevelThird)
 		// 增加值
 		incrVal, err := xredis.Incr(missKey)

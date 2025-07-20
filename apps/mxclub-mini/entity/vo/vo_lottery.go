@@ -22,6 +22,8 @@ type LotteryPrizeVO struct {
 	DisplayProbability    float64            `json:"displayProbability"`
 	ActualProbability     float64            `json:"actualProbability"`
 	ProbabilityAdjustment float64            `json:"probabilityAdjustment"`
+	Phone                 string             `json:"phone"`
+	RoleId                string             `json:"role_id"`
 	SortOrder             int                `json:"sortOrder"`
 	IsActive              bool               `json:"isActive"`
 	StartTime             *time.Time         `json:"startTime"`

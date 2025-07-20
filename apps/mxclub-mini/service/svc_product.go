@@ -11,6 +11,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/product/po"
 	"mxclub/domain/product/repo"
+	userPOInfo "mxclub/domain/user/po"
 	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
@@ -109,7 +110,11 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 	productVOS := utils.CopySlice[*po.Product, *vo.ProductVO](list)
 	// 老板已经保存电话了，选用上一次老板保存的电话
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
-	utils.ForEach(productVOS, func(ele *vo.ProductVO) { ele.Phone = userPO.Phone })
+	// 老板保存的gameId
+	utils.ForEach(productVOS, func(ele *vo.ProductVO) {
+		ele.Phone = userPO.Phone
+		ele.GameId = userPO.GameId
+	})
 	if config.GetConfig().WxPayConfig.IsBaoZaoClub() {
 		sort.Slice(productVOS, func(i, j int) bool {
 			return productVOS[i].FinalPrice < productVOS[j].FinalPrice
@@ -134,11 +139,13 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 			return b.SalesVolume - a.SalesVolume
 		})
 	}
-	productVOS = svc.wrapLotteryPrize(ctx, typeValue, productVOS)
+	productVOS = svc.wrapLotteryPrize(ctx, typeValue, productVOS, userPO)
 	return productVOS, nil
 }
 
-func (svc ProductService) wrapLotteryPrize(ctx jet.Ctx, typeValue uint, productVOS []*vo.ProductVO) []*vo.ProductVO {
+func (svc ProductService) wrapLotteryPrize(
+	ctx jet.Ctx, typeValue uint, productVOS []*vo.ProductVO, userPO *userPOInfo.User,
+) []*vo.ProductVO {
 	if typeValue != 101 {
 		return productVOS
 	}
@@ -163,8 +170,8 @@ func (svc ProductService) wrapLotteryPrize(ctx jet.Ctx, typeValue uint, productV
 						Images:           utils.ToSlice(lotteryActivity.EntryImage),
 						DetailImages:     utils.ToSlice(lotteryActivity.EntryImage),
 						Thumbnail:        lotteryActivity.EntryImage,
-						Phone:            "",
-						GameId:           "",
+						Phone:            userPO.Phone,
+						GameId:           userPO.GameId,
 						SalesVolume:      0,
 						LotteryActivity:  true,
 					}
