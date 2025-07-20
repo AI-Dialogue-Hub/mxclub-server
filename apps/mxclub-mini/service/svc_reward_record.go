@@ -214,6 +214,6 @@ func (svc RewardRecordService) RemoveRewardRecord(ctx jet.Ctx) error {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
 		return err
 	}
-	ctx.Logger().Infof("[RewardRecordService#RemoveRewardRecord]SUCCESS, userId:%v", dasherId)
+	ctx.Logger().Infof("[RewardRecordService#RemoveRewardRecord]SUCCESS, dasherId:%v", dasherId)
 	return nil
 }

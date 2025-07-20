@@ -429,11 +429,15 @@ func (svc *OrderService) SendMessagesToExecutors(ctx jet.Ctx, orderPO *po.Order,
 
 // getCutRate 返回小数抽成比例
 func (svc *OrderService) getCutRate(ctx jet.Ctx) (cutRate float64) {
+	return getCutRate(ctx, svc.commonRepo)
+}
+
+func getCutRate(ctx jet.Ctx, commonRepo commonRepo.IMiniConfigRepo) (cutRate float64) {
 	defer utils.RecoverAndLogError(ctx)
 	defer traceUtil.TraceElapsedByName(time.Now(), "getCutRate")
 	// 默认抽成20%
 	cutRate = 0.2
-	cutRatePO, err := svc.commonRepo.FindConfigByName(ctx, commonEnum.CutRate.String())
+	cutRatePO, err := commonRepo.FindConfigByName(ctx, commonEnum.CutRate.String())
 	if err != nil || cutRatePO == nil {
 		ctx.Logger().Errorf("[getCutRate]ERROR: %v", err)
 	} else if len(cutRatePO.Content) >= 1 {

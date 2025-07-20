@@ -19,6 +19,8 @@ type LotteryPurchaseRecord struct {
 	PaymentTime      *time.Time               `gorm:"comment:支付完成时间"`
 	LotteryQualified bool                     `gorm:"default:false;comment:是否获得抽奖资格"`
 	LotteryUsed      bool                     `gorm:"default:false;comment:是否已使用抽奖资格"`
+	Phone            string                   `gorm:"size:40;comment:手机号"`
+	RoleId           string                   `gorm:"size:255;comment:角色ID"`
 	IPAddress        *string                  `gorm:"size:45;comment:用户IP地址"`
 	DeviceInfo       *string                  `gorm:"size:255;comment:设备信息"`
 	CreatedAt        time.Time                `gorm:"autoCreateTime;comment:创建时间"`

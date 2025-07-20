@@ -27,10 +27,11 @@ func (ability *LotteryAbility) FindPurchaseRecord(
 		}
 		return utils.ToSlice(purchaseRecords), nil
 	} else {
-		// 已经获得抽奖资格未使用 和 未获得抽奖资格，状态是hold的订单
+		// 未获得抽奖资格，状态是hold的订单
 		query.SetFilter(
-			"((lottery_used = ? and lottery_qualified = ?) or (lottery_used = ? and lottery_qualified = ?))",
-			true, true, false, false)
+			"lottery_used = ? and lottery_qualified = ?",
+			false, false)
+		query.SetFilter("purchase_status = ?", enum.PurchaseStatusHold)
 		purchaseRecords, err := ability.lotteryPurchaseRecordsRepo.FindByWrapper(query)
 		if err != nil || purchaseRecords == nil || len(purchaseRecords) <= 0 {
 			ctx.Logger().Errorf("ERROR:%v", err)
@@ -39,6 +40,7 @@ func (ability *LotteryAbility) FindPurchaseRecord(
 		return utils.Filter(purchaseRecords, func(in *po.LotteryPurchaseRecord) bool { return in.ID > 0 }), nil
 	}
 }
+
 func (ability *LotteryAbility) FindPurchaseRecordByTransactionId(
 	ctx jet.Ctx, transactionId string) (*po.LotteryPurchaseRecord, error) {
 	one, err := ability.lotteryPurchaseRecordsRepo.FindOne("transaction_id = ?", transactionId)
