@@ -130,5 +130,5 @@ func (repo RewardRepoImpl) ListNoCountDuration(ctx jet.Ctx, startDateStr, endDat
 }
 
 func (repo RewardRepoImpl) ClearAllRewardByDasherId(ctx jet.Ctx, dasherId any) error {
-	return repo.Remove("dasher_number = ?", dasherId)
+	return repo.Remove("dasher_id = ?", dasherId)
 }

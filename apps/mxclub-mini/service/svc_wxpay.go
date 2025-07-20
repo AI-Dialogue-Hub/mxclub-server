@@ -63,7 +63,7 @@ func (s WxPayService) Prepay(ctx jet.Ctx, id uint, orderReq *req.OrderReq) (*wxp
 	return prepayDTO, nil
 }
 
-// PrepayActivity 抽奖活动
+// PrepayActivity 抽奖活动预支付订单
 func (s WxPayService) PrepayActivity(ctx jet.Ctx, userId uint, orderReq *req.OrderReq) (*wxpay.PrePayDTO, error) {
 	var (
 		outTradeNo = ability.GenerateUniqueOrderNumber()

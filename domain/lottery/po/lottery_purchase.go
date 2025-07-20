@@ -17,7 +17,7 @@ type LotteryPurchaseRecord struct {
 	PurchaseStatus   enum.PurchaseStatusEnum  `gorm:"not null;default:1;comment:购买状态(1:成功 2:失败 3:退款)"`
 	PaymentMethod    enum.PurchasePaymentEnum `gorm:"comment:支付方式(1:微信 2:支付宝 3:银行卡)"`
 	PaymentTime      *time.Time               `gorm:"comment:支付完成时间"`
-	LotteryQualified bool                     `gorm:"default:true;comment:是否获得抽奖资格"`
+	LotteryQualified bool                     `gorm:"default:false;comment:是否获得抽奖资格"`
 	LotteryUsed      bool                     `gorm:"default:false;comment:是否已使用抽奖资格"`
 	IPAddress        *string                  `gorm:"size:45;comment:用户IP地址"`
 	DeviceInfo       *string                  `gorm:"size:255;comment:设备信息"`

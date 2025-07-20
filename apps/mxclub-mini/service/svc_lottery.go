@@ -88,7 +88,7 @@ func (svc *LotteryService) StartLottery(ctx jet.Ctx, req *req.LotteryStartReq) (
 	}
 	prize := drawResultDTO.LotteryPrize
 	// todo@lfy 这里如果发货失败了，会有问题
-	go svc.DistributePrize(ctx, userId, prize)
+	go svc.DistributePrize(ctx, userId, req.ActivityId, prize)
 	return &vo.LotteryVO{
 		PrizeIndex: prize.SortOrder,
 		WinMessage: prize.WinMessage,
@@ -99,17 +99,54 @@ func (svc *LotteryService) StartLottery(ctx jet.Ctx, req *req.LotteryStartReq) (
 // DistributePrize 发放奖品
 //
 // 目前就代打订单和实物两种奖品
-func (svc *LotteryService) DistributePrize(ctx jet.Ctx, userId uint, prize *po.LotteryPrize) {
+func (svc *LotteryService) DistributePrize(ctx jet.Ctx, userId uint, activityId uint, prize *po.LotteryPrize) {
 	// 1. 执行发奖策略
 	switch prize.PrizeType {
 	case enum.Physical:
 		_ = svc.messageService.PushSystemMessage(ctx, userId,
 			fmt.Sprintf("恭喜您抽中%s，请联系客服进行领取", prize.PrizeName))
+		// 扣减库存
 	case enum.Virtual:
 		_ = svc.messageService.PushSystemMessage(ctx, userId,
 			fmt.Sprintf("恭喜您抽中单:%s，打手接单后会直接开始订单", prize.PrizeName))
+
 	}
 
+}
+
+func (svc *LotteryService) handleAddPrizeToOrder(ctx jet.Ctx, userId uint, activityId uint, prize *po.LotteryPrize) {
+	// 1. 查找用户最新一次的购买记录
+	purchaseRecords, err := svc.lotteryAbility.FindPurchaseRecord(ctx, userId, activityId, false)
+	if err != nil {
+		ctx.Logger().Errorf("find purchase record error")
+		_ = svc.messageService.PushSystemMessage(ctx, userId, "系统异常，抽奖失败，请联系客服")
+	}
+	ctx.Logger().Infof("purchase records: %v", purchaseRecords)
+	//// 2. 创建订单
+	//order := &orderPO.Order{
+	//	OrderId:         orderTradeNo,
+	//	PurchaseId:      userId,
+	//	OrderName:       req.OrderName,
+	//	OrderIcon:       req.OrderIcon,
+	//	OrderStatus:     status,
+	//	OriginalPrice:   preferentialVO.OriginalPrice,
+	//	ProductID:       req.ProductId,
+	//	Phone:           req.Phone,
+	//	GameRegion:      req.GameRegion,
+	//	RoleId:          req.RoleId,
+	//	SpecifyExecutor: req.SpecifyExecutor,
+	//	ExecutorID:      -1,
+	//	Executor2Id:     -1,
+	//	Executor3Id:     -1,
+	//	ExecutorName:    "",
+	//	Notes:           req.Notes,
+	//	DiscountPrice:   preferentialVO.OriginalPrice - preferentialVO.DiscountedPrice,
+	//	FinalPrice:      preferentialVO.DiscountedPrice,
+	//	ExecutorPrice:   0,
+	//	PurchaseDate:    utils.Ptr(time.Now()),
+	//	GrabAt:          nil,
+	//	OutRefundNo:     utils.ParseString(executorId), // 保存下用户选择的打手
+	//}
 }
 
 // ============================================================

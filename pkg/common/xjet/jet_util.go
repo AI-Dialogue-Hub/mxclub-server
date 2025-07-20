@@ -7,7 +7,10 @@ import (
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"mxclub/pkg/api"
+	"mxclub/pkg/utils"
+	"net"
 	"net/http"
+	"strings"
 )
 
 func NewCommonJetController[T jet.IJetController]() {
@@ -68,4 +71,26 @@ var defaultCtx = context.NewContext(new(fasthttp.RequestCtx), xlog.NewWith("defa
 
 func NewDefaultJetContext() jet.Ctx {
 	return defaultCtx
+}
+
+func GetClientIP(ctx jet.Ctx) string {
+	defer utils.RecoverAndLogError(ctx)
+	fastHttpCtx := ctx.FastHttpCtx()
+	// 尝试从X-Forwarded-For获取
+	if ip := string(fastHttpCtx.Request.Header.Peek("X-Forwarded-For")); ip != "" {
+		ips := strings.Split(ip, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	// 尝试从X-Real-IP获取
+	if ip := string(fastHttpCtx.Request.Header.Peek("X-Real-IP")); ip != "" {
+		return ip
+	}
+
+	// 从RemoteAddr获取
+	ip, _, err := net.SplitHostPort(fastHttpCtx.RemoteAddr().String())
+	if err != nil {
+		return fastHttpCtx.RemoteAddr().String()
+	}
+	return ip
 }

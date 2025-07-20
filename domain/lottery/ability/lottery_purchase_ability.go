@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"mxclub/domain/lottery/entity/enum"
 	"mxclub/domain/lottery/po"
+	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/utils"
 	"time"
@@ -67,7 +68,7 @@ func (ability *LotteryAbility) AddPurchaseRecordByActivityId(
 		PaymentMethod:    enum.PaymentMethodWeChat,
 		LotteryQualified: false,
 		LotteryUsed:      false,
-		IPAddress:        nil,
+		IPAddress:        utils.Ptr(xjet.GetClientIP(ctx)),
 		DeviceInfo:       nil,
 	}
 	err = ability.lotteryPurchaseRecordsRepo.InsertOne(purchaseRecordPO)
