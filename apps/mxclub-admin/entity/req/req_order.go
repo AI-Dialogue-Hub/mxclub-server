@@ -40,3 +40,9 @@ type OrderTradeExportReq struct {
 type HistoryWithDrawAmountReq struct {
 	UserId uint `json:"user_id" validate:"required"`
 }
+
+type DeactivateReq struct {
+	*api.PageParams
+	DasherId   int    `json:"dasher_id"`
+	DasherName string `json:"dasher_name"`
+}

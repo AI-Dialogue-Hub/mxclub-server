@@ -14,6 +14,7 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/domain/order/repo"
+	userPOInfo "mxclub/domain/user/po"
 	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/wxpay"
@@ -35,18 +36,19 @@ func init() {
 }
 
 type OrderService struct {
-	orderRepo          repo.IOrderRepo
-	wxPayCallbackRepo  repo.IWxPayCallbackRepo
-	withdrawRepo       repo.IWithdrawalRepo
-	deductionRepo      repo.IDeductionRepo
-	userRepo           userRepo.IUserRepo
-	messageService     *MessageService
-	transferRepo       repo.ITransferRepo
-	evaluationRepo     repo.IEvaluationRepo
-	rewardRepo         repo.IRewardRecordRepo
-	operatorLogService *OperatorLogService
-	rewardRecordRepo   repo.IRewardRecordRepo
-	commonRepo         commonRepo.IMiniConfigRepo
+	orderRepo            repo.IOrderRepo
+	wxPayCallbackRepo    repo.IWxPayCallbackRepo
+	withdrawRepo         repo.IWithdrawalRepo
+	deductionRepo        repo.IDeductionRepo
+	userRepo             userRepo.IUserRepo
+	messageService       *MessageService
+	transferRepo         repo.ITransferRepo
+	evaluationRepo       repo.IEvaluationRepo
+	rewardRepo           repo.IRewardRecordRepo
+	operatorLogService   *OperatorLogService
+	rewardRecordRepo     repo.IRewardRecordRepo
+	commonRepo           commonRepo.IMiniConfigRepo
+	deactivateDasherRepo userRepo.IDeactivateDasherRepo
 }
 
 func NewOrderService(repo repo.IOrderRepo,
@@ -60,19 +62,21 @@ func NewOrderService(repo repo.IOrderRepo,
 	rewardRepo repo.IRewardRecordRepo,
 	operatorLogService *OperatorLogService,
 	rewardRecordRepo repo.IRewardRecordRepo,
-	commonRepo commonRepo.IMiniConfigRepo) *OrderService {
+	commonRepo commonRepo.IMiniConfigRepo,
+	deactivateDasherRepo userRepo.IDeactivateDasherRepo) *OrderService {
 	return &OrderService{orderRepo: repo,
-		withdrawRepo:       withdrawRepo,
-		deductionRepo:      deductionRepo,
-		wxPayCallbackRepo:  wxPayCallbackRepo,
-		messageService:     messageService,
-		userRepo:           userRepo,
-		transferRepo:       transferRepo,
-		evaluationRepo:     evaluationRepo,
-		rewardRepo:         rewardRepo,
-		operatorLogService: operatorLogService,
-		rewardRecordRepo:   rewardRecordRepo,
-		commonRepo:         commonRepo,
+		withdrawRepo:         withdrawRepo,
+		deductionRepo:        deductionRepo,
+		wxPayCallbackRepo:    wxPayCallbackRepo,
+		messageService:       messageService,
+		userRepo:             userRepo,
+		transferRepo:         transferRepo,
+		evaluationRepo:       evaluationRepo,
+		rewardRepo:           rewardRepo,
+		operatorLogService:   operatorLogService,
+		rewardRecordRepo:     rewardRecordRepo,
+		commonRepo:           commonRepo,
+		deactivateDasherRepo: deactivateDasherRepo,
 	}
 }
 
@@ -269,8 +273,20 @@ func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	// 0. 注销前，打印账户余额信息
 	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx, &req.HistoryWithDrawAmountReq{UserId: userId}); err == nil {
-		ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
-			userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+		go func() {
+			defer utils.RecoverAndLogError(ctx)
+			ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
+				userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+			allOrderPOList, _ := svc.orderRepo.FindAllByDasherId(ctx, userPO.MemberNumber)
+			// 保存打手最后的金额
+			_ = svc.deactivateDasherRepo.InsertOne(&userPOInfo.DeactivateDasher{
+				DasherID:              userPO.MemberNumber,
+				DasherName:            userPO.Name,
+				HistoryWithdrawAmount: historyWithDrawAmount.HistoryWithDrawAmount,
+				WithdrawAbleAmount:    historyWithDrawAmount.WithdrawAbleAmount,
+				OrderSnapshot:         utils.MustGzipCompressToString(utils.ObjToJsonStr(allOrderPOList)),
+			})
+		}()
 	}
 	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }
@@ -304,4 +320,16 @@ func (svc *OrderService) RemoveRewardRecord(ctx jet.Ctx) error {
 		return err
 	}
 	return nil
+}
+
+func (svc *OrderService) ListDeactivateDasher(ctx jet.Ctx, req *req.DeactivateReq) ([]*vo.DeactivateDasherVO, int64, error) {
+	mysqlQuery := xmysql.NewMysqlQuery().WithPageInfo(req.PageParams)
+	if req.DasherId >= 0 {
+		mysqlQuery.SetFilter("dasher_id = ?", req.DasherId)
+	}
+	if req.DasherName != "" {
+		mysqlQuery.SetFilter("dasher_name like ?", "%"+req.DasherName+"%")
+	}
+	data, count, err := svc.deactivateDasherRepo.ListByWrapper(ctx, mysqlQuery)
+	return utils.CopySlice[*userPOInfo.DeactivateDasher, *vo.DeactivateDasherVO](data), count, err
 }

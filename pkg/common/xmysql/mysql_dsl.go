@@ -3,6 +3,7 @@ package xmysql
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"mxclub/pkg/api"
 	"reflect"
 	"time"
 )
@@ -197,6 +198,11 @@ func (m *MysqlQuery) SetConditions(obj any) {
 			m.SetFilter(tag+"=?", value)
 		}
 	}
+}
+
+func (m *MysqlQuery) WithPageInfo(pageInfo *api.PageParams) *MysqlQuery {
+	m.SetPage(pageInfo.Page, pageInfo.PageSize)
+	return m
 }
 
 type MysqlUpdate struct {

@@ -18,6 +18,7 @@ import (
 	orderDTO "mxclub/domain/order/entity/dto"
 	productRepo "mxclub/domain/product/repo"
 	userPOInfo "mxclub/domain/user/po"
+	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/constant"
@@ -56,19 +57,20 @@ func setUp(svc *OrderService) {
 }
 
 type OrderService struct {
-	orderRepo        repo.IOrderRepo
-	withdrawalRepo   repo.IWithdrawalRepo
-	userService      *UserService
-	productService   *ProductService
-	messageService   *MessageService
-	commonRepo       commonRepo.IMiniConfigRepo
-	deductionRepo    repo.IDeductionRepo
-	evaluationRepo   repo.IEvaluationRepo
-	transferRepo     repo.ITransferRepo
-	productSalesRepo productRepo.IProductSalesRepo
-	rewardRecordRepo repo.IRewardRecordRepo
-	wxNotifyService  *WxNotifyService
-	lotteryAbility   ability.ILotteryAbility
+	orderRepo            repo.IOrderRepo
+	withdrawalRepo       repo.IWithdrawalRepo
+	userService          *UserService
+	productService       *ProductService
+	messageService       *MessageService
+	commonRepo           commonRepo.IMiniConfigRepo
+	deductionRepo        repo.IDeductionRepo
+	evaluationRepo       repo.IEvaluationRepo
+	transferRepo         repo.ITransferRepo
+	productSalesRepo     productRepo.IProductSalesRepo
+	rewardRecordRepo     repo.IRewardRecordRepo
+	wxNotifyService      *WxNotifyService
+	lotteryAbility       ability.ILotteryAbility
+	deactivateDasherRepo userRepo.IDeactivateDasherRepo
 }
 
 var orderService *OrderService
@@ -86,21 +88,23 @@ func NewOrderService(
 	productSalesRepo productRepo.IProductSalesRepo,
 	rewardRecordRepo repo.IRewardRecordRepo,
 	wxNotifyService *WxNotifyService,
-	lotteryAbility ability.ILotteryAbility) *OrderService {
+	lotteryAbility ability.ILotteryAbility,
+	deactivateDasherRepo userRepo.IDeactivateDasherRepo) *OrderService {
 	orderService = &OrderService{
-		orderRepo:        repo,
-		withdrawalRepo:   withdrawalRepo,
-		userService:      userService,
-		productService:   productService,
-		messageService:   messageService,
-		commonRepo:       commonRepo,
-		deductionRepo:    deductionRepo,
-		evaluationRepo:   evaluationRepo,
-		transferRepo:     transferRepo,
-		productSalesRepo: productSalesRepo,
-		rewardRecordRepo: rewardRecordRepo,
-		wxNotifyService:  wxNotifyService,
-		lotteryAbility:   lotteryAbility,
+		orderRepo:            repo,
+		withdrawalRepo:       withdrawalRepo,
+		userService:          userService,
+		productService:       productService,
+		messageService:       messageService,
+		commonRepo:           commonRepo,
+		deductionRepo:        deductionRepo,
+		evaluationRepo:       evaluationRepo,
+		transferRepo:         transferRepo,
+		productSalesRepo:     productSalesRepo,
+		rewardRecordRepo:     rewardRecordRepo,
+		wxNotifyService:      wxNotifyService,
+		lotteryAbility:       lotteryAbility,
+		deactivateDasherRepo: deactivateDasherRepo,
 	}
 	// 初始化
 	setUp(orderService)
@@ -902,6 +906,20 @@ func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 		if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx); err == nil {
 			ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
 				userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+			go func() {
+				defer utils.RecoverAndLogError(ctx)
+				ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
+					userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+				allOrderPOList, _ := svc.orderRepo.FindAllByDasherId(ctx, userPO.MemberNumber)
+				// 保存打手最后的金额
+				_ = svc.deactivateDasherRepo.InsertOne(&userPOInfo.DeactivateDasher{
+					DasherID:              userPO.MemberNumber,
+					DasherName:            userPO.Name,
+					HistoryWithdrawAmount: historyWithDrawAmount.HistoryWithDrawAmount,
+					WithdrawAbleAmount:    historyWithDrawAmount.WithdrawAbleAmount,
+					OrderSnapshot:         utils.MustGzipCompressToString(utils.ObjToJsonStr(allOrderPOList)),
+				})
+			}()
 		}
 		return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 	}

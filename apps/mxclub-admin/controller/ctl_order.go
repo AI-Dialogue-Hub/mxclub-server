@@ -66,5 +66,10 @@ func (ctl OrderController) PostV1OrderHistorywithdrawamount(ctx jet.Ctx, req *re
 }
 
 func (ctl OrderController) PostV1OrderWithdrawamountAll(ctx jet.Ctx) {
-	ctl.orderService.ExportAllDasherWithDrawAmount(ctx)
+	_ = ctl.orderService.ExportAllDasherWithDrawAmount(ctx)
+}
+
+func (ctl OrderController) PostV1OrderDeactivateDasherList(ctx jet.Ctx, req *req.DeactivateReq) (*api.Response, error) {
+	pageResult, count, err := ctl.orderService.ListDeactivateDasher(ctx, req)
+	return xjet.WrapperResult(ctx, api.WrapPageResult(req.PageParams, pageResult, count), err)
 }

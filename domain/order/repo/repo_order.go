@@ -59,6 +59,8 @@ type IOrderRepo interface {
 	RemoveByTradeNo(orderNo string) error
 	// FindByDasherId 检查是否有在进行中的订单
 	FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, error)
+	// FindAllByDasherId 查找打手所有订单
+	FindAllByDasherId(ctx jet.Ctx, dasherId int) ([]*po.Order, error)
 	// FindByDasherIdAndStatus 查找指定打手状态下的订单
 	FindByDasherIdAndStatus(ctx jet.Ctx, dasherId int, status enum.OrderStatus) ([]*po.Order, error)
 	ClearOrderDasherInfo(ctx jet.Ctx, ordersId uint) error
@@ -408,6 +410,12 @@ func (repo OrderRepo) FindByDasherId(ctx jet.Ctx, dasherId int) (*po.Order, erro
 		dasherId, dasherId, dasherId,
 	)
 	return repo.FindOneByWrapper(query)
+}
+
+func (repo OrderRepo) FindAllByDasherId(ctx jet.Ctx, dasherId int) ([]*po.Order, error) {
+	query := xmysql.NewMysqlQuery()
+	query.SetFilter("executor_id = ? or executor2_id = ? or executor3_id = ?", dasherId, dasherId, dasherId)
+	return repo.FindByWrapper(query)
 }
 
 func (repo OrderRepo) FindByDasherIdAndStatus(ctx jet.Ctx, dasherId int, status enum.OrderStatus) ([]*po.Order, error) {

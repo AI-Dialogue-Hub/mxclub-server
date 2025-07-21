@@ -1,6 +1,7 @@
 package vo
 
 import (
+	"gorm.io/gorm"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/pkg/common/xmysql"
 	"time"
@@ -78,4 +79,16 @@ type HistoryWithDrawVO struct {
 	*WithDrawVO
 	DasherID   uint   `json:"dasher_id"`
 	DasherName string `json:"dasher_name"`
+}
+
+type DeactivateDasherVO struct {
+	ID                    uint           `json:"id"`
+	DasherID              int            `json:"dasher_id"`
+	DasherName            string         `json:"dasher_name"`
+	HistoryWithdrawAmount float64        `json:"history_withdraw_amount"`
+	WithdrawAbleAmount    float64        `json:"withdraw_able_amount"`
+	OrderSnapshot         string         `json:"order_snapshot"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             *time.Time     `json:"updated_at"`
+	DeletedAt             gorm.DeletedAt `json:"deleted_at"`
 }
