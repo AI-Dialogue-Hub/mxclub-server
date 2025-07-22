@@ -60,6 +60,12 @@ func (ctl *LotteryController) PostV1LotteryActivityDel(ctx jet.Ctx, req *req.Lot
 	return xjet.WrapperResult(ctx, "OK", ctl.LotteryService.DelActivity(ctx, req))
 }
 
+func (ctl *LotteryController) GetV1LotteryActivity0(ctx jet.Ctx, params *api.PathParam) (*api.Response, error) {
+	got, _ := params.GetInt64(0)
+	data, err := ctl.LotteryService.FindActivityById(ctx, uint(got))
+	return xjet.WrapperResult(ctx, data, err)
+}
+
 // =============================  lottery records  =======================================
 
 func (ctl *LotteryController) PostV1LotteryRecordsList(ctx jet.Ctx, params *api.PageParams) (*api.Response, error) {

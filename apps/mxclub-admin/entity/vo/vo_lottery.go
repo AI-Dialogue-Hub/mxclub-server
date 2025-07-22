@@ -64,6 +64,8 @@ type LotteryActivityVO struct {
 	DisplayOrder        int                     `json:"display_order"`
 	IsFeatured          bool                    `json:"is_featured"`
 	IsHot               bool                    `json:"is_hot"`
+	FallbackPrizeName   string                  `json:"fallback_prize_name"`
+	FallbackPrizeId     uint                    `json:"fallback_prize_id"`
 }
 
 type LotteryRecordsVO struct {

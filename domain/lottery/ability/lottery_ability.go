@@ -11,6 +11,7 @@ import (
 	"mxclub/domain/lottery/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
+	"slices"
 )
 
 func init() {
@@ -243,6 +244,9 @@ func (ability *LotteryAbility) FindActivityPrizeByActivityId(ctx jet.Ctx, activi
 		ctx.Logger().Errorf("[LotteryAbility#ListActivity] find lottery_prize error, %v", err)
 		return nil, errors.Wrap(err, "ListActivity lotteryPrizeRepo error")
 	}
+	slices.SortFunc(lotteryPrizes, func(a, b *po.LotteryPrize) int {
+		return a.SortOrder - b.SortOrder
+	})
 	return &dto.LotteryActivityDTO{
 		LotteryActivity: lotteryActivity,
 		LotteryPrizes:   lotteryPrizes,

@@ -8,6 +8,7 @@ import (
 	"mxclub/domain/lottery/po"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/utils"
 	"sync"
 )
 
@@ -19,6 +20,7 @@ type ILotteryPrizeRepo interface {
 	xmysql.IBaseRepo[po.LotteryPrize]
 	RemoveByPrizeIds(ctx jet.Ctx, ids []uint) (delCount int64, err error)
 	ListByActivityId(ctx jet.Ctx, activityId uint, params *api.PageParams) ([]*po.LotteryPrize, int64, error)
+	FindByIds(ctx jet.Ctx, ids []uint) (map[uint]*po.LotteryPrize, error)
 }
 
 func NewLotteryPrizeRepo(db *gorm.DB) ILotteryPrizeRepo {
@@ -82,4 +84,16 @@ func (repo *LotteryPrizeRepo) ListByActivityId(
 		return nil, 0, errors.Wrap(err, "LotteryPrizeRepo.ListPrizeByActivityId")
 	}
 	return datas, count, nil
+}
+
+func (repo *LotteryPrizeRepo) FindByIds(ctx jet.Ctx, ids []uint) (map[uint]*po.LotteryPrize, error) {
+	query := xmysql.NewMysqlQuery()
+	query.SetFilter("id in ?", ids)
+	data, err := repo.ListNoCountByQuery(query)
+	if err != nil {
+		ctx.Logger().Errorf("LotteryPrizeRepo.FindByIds Raw error: %v", err)
+		return nil, errors.Wrap(err, "LotteryPrizeRepo.FindByIds")
+	}
+	return utils.SliceToRawMap(data,
+		func(ele *po.LotteryPrize) uint { return ele.ID }), nil
 }

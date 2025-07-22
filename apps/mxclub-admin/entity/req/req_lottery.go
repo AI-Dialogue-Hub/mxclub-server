@@ -32,6 +32,7 @@ type LotteryPrizeReq struct {
 
 type LotteryActivityReq struct {
 	ID                  uint                    `json:"id"`
+	FallbackPrizeId     uint                    `json:"fallback_prize_id"`
 	ActivityPrice       float64                 `json:"activity_price" validate:"required" reg_err_info:"价格字段不能为空"`
 	ActivityTitle       string                  `json:"activity_title" validate:"required"`
 	ActivitySubtitle    string                  `json:"activity_subtitle" validate:"required"`

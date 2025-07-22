@@ -146,11 +146,12 @@ func ParseFloat64(str string) (result float64) {
 
 func ParseDefaultInt(args interface{}, callBack func(str string) (interface{}, error)) interface{} {
 	if args == nil {
-		log.Panic("NPE")
+		xlog.Errorf("NPE")
+		return nil
 	}
 	intArgs, err := callBack(ParseString(args))
 	if err != nil {
-		log.Panicf("类型转换失败，错误信息：%v", err)
+		xlog.Errorf("类型转换失败，错误信息：%v", err)
 	}
 	return intArgs
 }

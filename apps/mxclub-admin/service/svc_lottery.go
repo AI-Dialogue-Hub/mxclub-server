@@ -26,7 +26,7 @@ type LotteryService struct {
 	lotteryActivityRepo repo.ILotteryActivityRepo
 	lotteryRepo         repo.ILotteryRepo
 	productRepo         productRepo.IProductRepo
-	lotteryActivity     ability.ILotteryAbility
+	lotteryAbility      ability.ILotteryAbility
 	lotteryRecordsRepo  repo.ILotteryRecordsRepo
 	userRepo            userRepo.IUserRepo
 }
@@ -43,7 +43,7 @@ func NewLotteryService(
 		lotteryPrizeRepo:    lotteryPrizeRepo,
 		lotteryActivityRepo: lotteryActivityRepo,
 		lotteryRepo:         lotteryRepo,
-		lotteryActivity:     lotteryActivity,
+		lotteryAbility:      lotteryActivity,
 		productRepo:         productRepo,
 		lotteryRecordsRepo:  lotteryRecordsRepo,
 		userRepo:            userRepo,
@@ -51,7 +51,7 @@ func NewLotteryService(
 }
 
 func (svc *LotteryService) FetchLotteryPrizeType() *vo.LotteryTypeVO {
-	prizeType := svc.lotteryActivity.FetchLotteryPrizeType()
+	prizeType := svc.lotteryAbility.FetchLotteryPrizeType()
 	options := make([]vo.Option, 0)
 	prizeType.PrizeType.ForEach(func(key enum.PrizeTypeEnum, value string) {
 		options = append(options, vo.Option{Label: value, Value: string(key)})
@@ -137,7 +137,7 @@ func (svc *LotteryService) AddPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) error
 	}
 	// 添加
 	wrappedPO := wrap2PO(req)
-	err := svc.lotteryActivity.AddPrize(ctx, req.ActivityId, wrappedPO)
+	err := svc.lotteryAbility.AddPrize(ctx, req.ActivityId, wrappedPO)
 	if err != nil {
 		ctx.Logger().Errorf(
 			"[LotteryService#AddOrUpdatePrize] LotteryPrizeReq is %v, insert error, %v", utils.ObjToJsonStr(req), err)
@@ -147,7 +147,7 @@ func (svc *LotteryService) AddPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) error
 }
 
 func (svc *LotteryService) DelPrize(ctx jet.Ctx, req *req.LotteryPrizeReq) error {
-	if err := svc.lotteryActivity.DelPrize(ctx, req.Id); err != nil {
+	if err := svc.lotteryAbility.DelPrize(ctx, req.Id); err != nil {
 		ctx.Logger().Errorf(
 			"[LotteryService#DelPrize] LotteryPrizeReq is %v, delete error, %v", utils.ObjToJsonStr(req), err)
 		return errors.New("删除失败")
@@ -183,7 +183,7 @@ func wrap2PO(req *req.LotteryPrizeReq) *po.LotteryPrize {
 // =====================================================================
 
 func (svc *LotteryService) AddOrUpdateActivity(ctx jet.Ctx, req *req.LotteryActivityReq) error {
-	if err := svc.lotteryActivity.AddOrUpdateActivity(ctx, wrapActivity(req)); err != nil {
+	if err := svc.lotteryAbility.AddOrUpdateActivity(ctx, wrapActivity(req)); err != nil {
 		ctx.Logger().Errorf("AddOrUpdateActivity, err:%v", err)
 		return errors.New("添加失败")
 	}
@@ -193,6 +193,7 @@ func (svc *LotteryService) AddOrUpdateActivity(ctx jet.Ctx, req *req.LotteryActi
 func wrapActivity(req *req.LotteryActivityReq) *po.LotteryActivity {
 	return &po.LotteryActivity{
 		ID:                  req.ID,
+		FallbackPrizeId:     req.FallbackPrizeId,
 		ActivityPrice:       req.ActivityPrice,
 		ActivityTitle:       req.ActivityTitle,
 		ActivitySubtitle:    req.ActivitySubtitle,
@@ -217,15 +218,69 @@ func wrapActivity(req *req.LotteryActivityReq) *po.LotteryActivity {
 }
 
 func (svc *LotteryService) ListActivity(ctx jet.Ctx, params *api.PageParams) ([]*vo.LotteryActivityVO, int64, error) {
-	list, count, err := svc.lotteryActivity.ListActivity(ctx, params)
+	list, count, err := svc.lotteryAbility.ListActivity(ctx, params)
 	if err != nil {
 		ctx.Logger().Errorf("ListActivity error: %v", err)
 		return nil, 0, errors.Wrap(err, "ListActivity 错误")
 	}
-	return utils.CopySlice[*po.LotteryActivity, *vo.LotteryActivityVO](list), count, nil
+	vos := utils.CopySlice[*po.LotteryActivity, *vo.LotteryActivityVO](list)
+	fallbackIds := stream.Of[*po.LotteryActivity, uint](list).
+		Filter(func(ele *po.LotteryActivity) bool { return ele.FallbackPrizeId > 0 }).
+		Map(func(ele *po.LotteryActivity) uint { return ele.FallbackPrizeId }).
+		CollectToSlice()
+	if fallbackIds != nil && len(fallbackIds) > 0 {
+		if id2PrizeMap, err := svc.lotteryPrizeRepo.FindByIds(ctx, fallbackIds); err == nil && id2PrizeMap != nil {
+			for _, v := range vos {
+				if fallbackPrize, ok := id2PrizeMap[v.FallbackPrizeId]; ok {
+					v.FallbackPrizeName = fallbackPrize.PrizeLevel.String() + " " + fallbackPrize.PrizeName
+				}
+			}
+		}
+	}
+	return vos, count, nil
+}
+
+func (svc *LotteryService) FindActivityById(ctx jet.Ctx, activityId uint) (any, error) {
+	data, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, activityId)
+	if err != nil {
+		return nil, errors.New("活动获取错误")
+	}
+	return data, nil
 }
 
 func (svc *LotteryService) UpdateActivityStatus(ctx jet.Ctx, req *req.LotteryActivityStatusReq) error {
+	// 如果改为进行中，需要检查要有8个奖品，并且奖品概率小于1
+	if req.LotteryActivityStatus == enum.Ongoing {
+		activityPrizeDTO, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, req.LotteryActivityId)
+		if err != nil || activityPrizeDTO == nil || activityPrizeDTO.LotteryActivity == nil {
+			ctx.Logger().Errorf("FindActivityPrizeByActivityId error: %v", err)
+			return errors.New("活动查询失败")
+		}
+		lotteryPrizes := activityPrizeDTO.LotteryPrizes
+		if lotteryPrizes == nil || len(lotteryPrizes) < 8 {
+			ctx.Logger().Errorf("prizes number less 8")
+			return errors.New("奖品数量不足")
+		}
+		var (
+			displayProbability, actualProbability float64
+		)
+		for _, lotteryPrize := range lotteryPrizes {
+			actualProbability += lotteryPrize.ActualProbability
+			displayProbability += lotteryPrize.DisplayProbability
+		}
+		if actualProbability > 1.0 {
+			ctx.Logger().Errorf("prize actualProbability greater than 1")
+			return errors.New("奖品池实际概率需要小于1")
+		}
+		if displayProbability > 1.0 {
+			ctx.Logger().Errorf("prize displayProbability greater than 1")
+			return errors.New("奖品池展示概率需要小于1")
+		}
+		if activityPrizeDTO.LotteryActivity.FallbackPrizeId <= 0 {
+			ctx.Logger().Error("activity:%v, fallbackPrizeId is empty")
+			return errors.New("无抽奖三次必中奖品")
+		}
+	}
 	if err := svc.lotteryActivityRepo.UpdateStatus(ctx, req.LotteryActivityId, req.LotteryActivityStatus); err != nil {
 		ctx.Logger().Errorf("UpdateActivityStatus error: %v", err)
 		return errors.New("更新失败")
@@ -234,7 +289,7 @@ func (svc *LotteryService) UpdateActivityStatus(ctx jet.Ctx, req *req.LotteryAct
 }
 
 func (svc *LotteryService) DelActivity(ctx jet.Ctx, req *req.LotteryActivityReq) error {
-	if err := svc.lotteryActivity.DelActivity(ctx, req.ID); err != nil {
+	if err := svc.lotteryAbility.DelActivity(ctx, req.ID); err != nil {
 		ctx.Logger().Errorf("DelActivity error: %v", err)
 		return errors.New("删除失败")
 	}
