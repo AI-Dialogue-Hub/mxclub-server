@@ -277,7 +277,7 @@ func (svc *LotteryService) UpdateActivityStatus(ctx jet.Ctx, req *req.LotteryAct
 			return errors.New("奖品池展示概率需要小于1")
 		}
 		if activityPrizeDTO.LotteryActivity.FallbackPrizeId <= 0 {
-			ctx.Logger().Error("activity:%v, fallbackPrizeId is empty")
+			ctx.Logger().Errorf("activity:%v, fallbackPrizeId is empty")
 			return errors.New("无抽奖三次必中奖品")
 		}
 	}

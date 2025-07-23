@@ -917,7 +917,7 @@ func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 					DasherName:            userPO.Name,
 					HistoryWithdrawAmount: historyWithDrawAmount.HistoryWithDrawAmount,
 					WithdrawAbleAmount:    historyWithDrawAmount.WithdrawAbleAmount,
-					OrderSnapshot:         utils.MustGzipCompressToString(utils.ObjToJsonStr(allOrderPOList)),
+					OrderSnapshot:         utils.ObjToJsonStr(allOrderPOList),
 				})
 			}()
 		}
