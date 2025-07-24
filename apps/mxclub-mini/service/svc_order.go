@@ -23,6 +23,7 @@ import (
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/constant"
 	"strconv"
+	"strings"
 	"sync"
 
 	commonEnum "mxclub/domain/common/entity/enum"
@@ -484,7 +485,7 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 	// 转盘单要隐藏名称
 	utils.ForEach(orderVOS, func(ele *vo.OrderVO) {
 		if ability.IsLotteryOrder(strconv.FormatUint(ele.OrderId, 10)) {
-			ele.OrderName = "转盘单，接单后显示内容"
+			ele.OrderName = fmt.Sprintf("%s，接单后显示内容", extractPrefixBeforeColon(ele.OrderName))
 		}
 	})
 	// 将gameId和roleId分开
@@ -496,6 +497,17 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 		}
 	}
 	return orderVOS, nil
+}
+
+func extractPrefixBeforeColon(input string) string {
+	// 查找冒号的位置
+	colonIndex := strings.Index(input, ":")
+	if colonIndex == -1 {
+		return input // 如果没有冒号，返回整个字符串
+	}
+
+	// 返回冒号前的部分
+	return input[:colonIndex]
 }
 
 func (svc *OrderService) Start(ctx jet.Ctx, req *req.OrderStartReq) error {

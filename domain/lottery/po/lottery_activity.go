@@ -10,6 +10,7 @@ import (
 type LotteryActivity struct {
 	ID                  uint                    `gorm:"primaryKey;autoIncrement" json:"id"`
 	FallbackPrizeId     uint                    `json:"fallback_prize_id"`
+	SalesVolume         int                     `gorm:"sales_volume"`
 	ActivityPrice       float64                 `gorm:"type:decimal(5,2);not null" json:"activity_price"`
 	ActivityTitle       string                  `gorm:"size:100;not null" json:"activity_title"`
 	ActivitySubtitle    string                  `gorm:"size:255" json:"activity_subtitle"`

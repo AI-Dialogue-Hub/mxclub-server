@@ -102,6 +102,8 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 	} else if typeValue != 0 {
 		query.SetFilter("type = ?", typeValue)
 	}
+	// 转盘单品不展示 TODO@lfy magic number
+	query.SetFilter("type <> ?", 201)
 	list, err = svc.productRepo.ListNoCountByQuery(query)
 	if err != nil || list == nil || len(list) == 0 {
 		ctx.Logger().Errorf("list product failed, err:%v", err)
@@ -150,7 +152,7 @@ func (svc ProductService) wrapLotteryPrize(
 		return productVOS
 	}
 	// 抽奖活动
-	lotteryActivityPOList, count, err := svc.lotteryActivity.ListActivity(
+	lotteryActivityPOList, count, err := svc.lotteryActivity.ListHotActivity(
 		ctx, &api.PageParams{Page: 1, PageSize: 1000})
 	if err != nil {
 		ctx.Logger().Errorf("list lottery activity failed, err:%v", err)
@@ -172,7 +174,7 @@ func (svc ProductService) wrapLotteryPrize(
 						Thumbnail:        lotteryActivity.EntryImage,
 						Phone:            userPO.Phone,
 						GameId:           userPO.GameId,
-						SalesVolume:      0,
+						SalesVolume:      lotteryActivity.SalesVolume,
 						LotteryActivity:  true,
 					}
 				})

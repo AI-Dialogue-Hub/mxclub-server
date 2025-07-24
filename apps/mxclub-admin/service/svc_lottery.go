@@ -214,6 +214,7 @@ func wrapActivity(req *req.LotteryActivityReq) *po.LotteryActivity {
 		DisplayOrder:        req.DisplayOrder,
 		IsFeatured:          req.IsFeatured,
 		IsHot:               req.IsHot,
+		SalesVolume:         req.SalesVolume,
 	}
 }
 
@@ -240,12 +241,27 @@ func (svc *LotteryService) ListActivity(ctx jet.Ctx, params *api.PageParams) ([]
 	return vos, count, nil
 }
 
-func (svc *LotteryService) FindActivityById(ctx jet.Ctx, activityId uint) (any, error) {
+func (svc *LotteryService) FindActivityById(ctx jet.Ctx, activityId uint) (*vo.LotteryActivityPrizeVO, error) {
 	data, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, activityId)
 	if err != nil {
 		return nil, errors.New("活动获取错误")
 	}
-	return data, nil
+	activityPrizeVO := &vo.LotteryActivityPrizeVO{
+		LotteryActivity: utils.MustCopy[vo.LotteryActivityVO](data.LotteryActivity),
+		LotteryPrizes:   utils.CopySlice[*po.LotteryPrize, *vo.LotteryPrizeVO](data.LotteryPrizes),
+	}
+	prizes := data.LotteryPrizes
+	productIds := utils.Map[*po.LotteryPrize, uint64](prizes, func(in *po.LotteryPrize) uint64 {
+		return in.ProductAttributeID
+	})
+	if productList, err := svc.productRepo.FindByIds(ctx, productIds); err == nil {
+		for _, prizeVO := range activityPrizeVO.LotteryPrizes {
+			if product, ok := productList[prizeVO.ProductAttributeID]; ok {
+				prizeVO.PrizeInfo = product.Description
+			}
+		}
+	}
+	return activityPrizeVO, nil
 }
 
 func (svc *LotteryService) UpdateActivityStatus(ctx jet.Ctx, req *req.LotteryActivityStatusReq) error {
@@ -277,7 +293,7 @@ func (svc *LotteryService) UpdateActivityStatus(ctx jet.Ctx, req *req.LotteryAct
 			return errors.New("奖品池展示概率需要小于1")
 		}
 		if activityPrizeDTO.LotteryActivity.FallbackPrizeId <= 0 {
-			ctx.Logger().Errorf("activity:%v, fallbackPrizeId is empty")
+			ctx.Logger().Error("activity:%v, fallbackPrizeId is empty")
 			return errors.New("无抽奖三次必中奖品")
 		}
 	}

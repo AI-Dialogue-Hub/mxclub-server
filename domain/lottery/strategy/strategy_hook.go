@@ -127,4 +127,9 @@ func (l *LotteryStrategyHook) AfterDraw(ctx jet.Ctx, afterDrawDTO *dto.LotterySt
 		ctx.Logger().Errorf("insert lottery records error,err info:%v", err)
 		return
 	}
+	// 2. 销量增加
+	err = lotteryAbility.IncrementSalesVolume(ctx, afterDrawDTO.ActivityId, 1)
+	if err != nil {
+		ctx.Logger().Errorf("increment sales volume error,err info:%v", err)
+	}
 }

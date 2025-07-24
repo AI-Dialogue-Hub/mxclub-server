@@ -23,8 +23,11 @@ type ILotteryAbility interface {
 	FetchLotteryPrizeType() *dto.LotteryPrizeTypeDTO
 	AddPrize(ctx jet.Ctx, activityId uint, lotteryPrize *po.LotteryPrize) error
 	DelPrize(ctx jet.Ctx, lotteryPrizeId uint) error
+	// ===========
 	AddOrUpdateActivity(ctx jet.Ctx, lotteryAbility *po.LotteryActivity) error
 	ListActivity(ctx jet.Ctx, params *api.PageParams) ([]*po.LotteryActivity, int64, error)
+	ListHotActivity(ctx jet.Ctx, params *api.PageParams) ([]*po.LotteryActivity, int64, error)
+	IncrementSalesVolume(ctx jet.Ctx, activityId uint, count int) error
 	ListActivityPrize(ctx jet.Ctx, params *api.PageParams) ([]*dto.LotteryActivityDTO, int64, error)
 	DelActivity(ctx jet.Ctx, lotteryActivityId uint) error
 	FindActivityPrizeByActivityId(ctx jet.Ctx, activityId uint) (*dto.LotteryActivityDTO, error)
@@ -137,6 +140,22 @@ func (ability *LotteryAbility) ListActivity(ctx jet.Ctx, params *api.PageParams)
 		return make([]*po.LotteryActivity, 0, 0), lotteryActivityCount, nil
 	}
 	return lotteryActivities, lotteryActivityCount, nil
+}
+
+func (ability *LotteryAbility) ListHotActivity(ctx jet.Ctx, params *api.PageParams) ([]*po.LotteryActivity, int64, error) {
+	lotteryActivities, lotteryActivityCount, err := ability.
+		lotteryActivityRepo.List(params.Page, params.PageSize, "is_hot", true)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "ListActivity error")
+	}
+	if lotteryActivities == nil || len(lotteryActivities) == 0 {
+		return make([]*po.LotteryActivity, 0, 0), lotteryActivityCount, nil
+	}
+	return lotteryActivities, lotteryActivityCount, nil
+}
+
+func (ability *LotteryAbility) IncrementSalesVolume(ctx jet.Ctx, activityId uint, count int) error {
+	return ability.lotteryActivityRepo.IncrementSalesVolume(ctx, activityId, count)
 }
 
 func (ability *LotteryAbility) ListActivityPrize(ctx jet.Ctx, params *api.PageParams) ([]*dto.LotteryActivityDTO, int64, error) {

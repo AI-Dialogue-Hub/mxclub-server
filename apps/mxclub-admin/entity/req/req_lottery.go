@@ -52,6 +52,7 @@ type LotteryActivityReq struct {
 	ActivityStatus      enum.ActivityStatusEnum `json:"activity_status"`
 	DisplayOrder        int                     `json:"display_order"`
 	IsFeatured          bool                    `json:"is_featured"`
+	SalesVolume         int                     `json:"sales_volume"`
 	IsHot               bool                    `json:"is_hot"`
 }
 

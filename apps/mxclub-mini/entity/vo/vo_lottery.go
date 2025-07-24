@@ -7,7 +7,8 @@ import (
 
 type LotteryPrizeVO struct {
 	ID                    uint               `json:"id"`
-	ProductAttributeID    uint               `json:"productAttributeId"`
+	ProductAttributeID    uint64             `json:"productAttributeId"`
+	PrizeInfo             string             `json:"prizeInfo"`
 	PrizeLevel            string             `json:"prizeLevel"`
 	PrizeName             string             `json:"prizeName"`
 	PrizeType             enum.PrizeTypeEnum `json:"prizeType"`

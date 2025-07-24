@@ -16,7 +16,8 @@ type LotteryTypeVO struct {
 
 type LotteryPrizeVO struct {
 	ID                    uint               `json:"id"`
-	ProductAttributeID    uint               `json:"productAttributeId"`
+	ProductAttributeID    uint64             `json:"productAttributeId"`
+	PrizeInfo             string             `json:"prizeInfo"` // 奖品描述
 	PrizeLevel            string             `json:"prizeLevel"`
 	PrizeName             string             `json:"prizeName"`
 	PrizeType             enum.PrizeTypeEnum `json:"prizeType"`
@@ -66,6 +67,7 @@ type LotteryActivityVO struct {
 	IsHot               bool                    `json:"is_hot"`
 	FallbackPrizeName   string                  `json:"fallback_prize_name"`
 	FallbackPrizeId     uint                    `json:"fallback_prize_id"`
+	SalesVolume         int                     `json:"sales_volume"`
 }
 
 type LotteryRecordsVO struct {

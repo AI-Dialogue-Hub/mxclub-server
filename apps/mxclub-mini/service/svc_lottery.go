@@ -17,6 +17,7 @@ import (
 	orderEnum "mxclub/domain/order/entity/enum"
 	orderPO "mxclub/domain/order/po"
 	orderRepo "mxclub/domain/order/repo"
+	productRepo "mxclub/domain/product/repo"
 	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
@@ -36,6 +37,7 @@ type LotteryService struct {
 	userRepo            userRepo.IUserRepo
 	commonRepo          commonRepo.IMiniConfigRepo
 	orderRepo           orderRepo.IOrderRepo
+	productRepo         productRepo.IProductRepo
 }
 
 func NewLotteryService(
@@ -46,7 +48,8 @@ func NewLotteryService(
 	userRepo userRepo.IUserRepo,
 	orderRepo orderRepo.IOrderRepo,
 	lotteryActivityRepo repo.ILotteryActivityRepo,
-	commonRepo commonRepo.IMiniConfigRepo) *LotteryService {
+	commonRepo commonRepo.IMiniConfigRepo,
+	productRepo productRepo.IProductRepo) *LotteryService {
 	return &LotteryService{
 		lotteryPrizeRepo:    lotteryPrizeRepo,
 		lotteryAbility:      lotteryActivity,
@@ -56,6 +59,7 @@ func NewLotteryService(
 		orderRepo:           orderRepo,
 		lotteryActivityRepo: lotteryActivityRepo,
 		commonRepo:          commonRepo,
+		productRepo:         productRepo,
 	}
 }
 
@@ -81,11 +85,26 @@ func (svc *LotteryService) ListLotteryPrize(ctx jet.Ctx, params *api.PageParams)
 }
 
 func (svc *LotteryService) FindActivityPrizeByActivityId(ctx jet.Ctx, activityId int) (*vo.LotteryActivityPrizeVO, error) {
-	activityDTO, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, uint(activityId))
+	data, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, uint(activityId))
 	if err != nil {
 		return nil, errors.New("活动获取错误")
 	}
-	return utils.MustCopy[vo.LotteryActivityPrizeVO](activityDTO), nil
+	activityPrizeVO := &vo.LotteryActivityPrizeVO{
+		LotteryActivity: utils.MustCopy[vo.LotteryActivityVO](data.LotteryActivity),
+		LotteryPrizes:   utils.CopySlice[*po.LotteryPrize, *vo.LotteryPrizeVO](data.LotteryPrizes),
+	}
+	prizes := data.LotteryPrizes
+	productIds := utils.Map[*po.LotteryPrize, uint64](prizes, func(in *po.LotteryPrize) uint64 {
+		return in.ProductAttributeID
+	})
+	if productList, err := svc.productRepo.FindByIds(ctx, productIds); err == nil {
+		for _, prizeVO := range activityPrizeVO.LotteryPrizes {
+			if product, ok := productList[prizeVO.ProductAttributeID]; ok {
+				prizeVO.PrizeInfo = product.Description
+			}
+		}
+	}
+	return activityPrizeVO, nil
 }
 
 func (svc *LotteryService) StartLottery(ctx jet.Ctx, req *req.LotteryStartReq) (*vo.LotteryVO, error) {
@@ -164,7 +183,7 @@ func (svc *LotteryService) handleAddPrizeToOrder(ctx jet.Ctx, userId uint, activ
 	order := &orderPO.Order{
 		OrderId:         utils.ParseUint64(purchaseRecord.TransactionID),
 		PurchaseId:      userId,
-		OrderName:       prize.PrizeName,
+		OrderName:       fmt.Sprintf("抽奖单-%s:%s", lotteryActivity.ActivityTitle, prize.PrizeName),
 		OrderIcon:       prize.PrizeImage,
 		OrderStatus:     orderEnum.PROCESSING,
 		OriginalPrice:   lotteryActivity.ActivityPrice,
