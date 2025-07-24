@@ -60,8 +60,8 @@ github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f h1:lO4WD4F/r
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 h1:Yzb9+7DPaBjB8zlTR87/ElzFsnQfuHnVUVqpZZIcV5Y=
 github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5/go.mod h1:a2zkGnVExMxdzMo3M0Hi/3sEU+cWnZpSni0O6/Yb/P0=
-github.com/fengyuan-liang/GoKit v0.1.4 h1:v4NSkvB7HrG6wSqidh4d7mMbweG/GlRYHAe6+MV5ldw=
-github.com/fengyuan-liang/GoKit v0.1.4/go.mod h1:qVsJ6e/mpCtaEeC/5j8qIushXxSNfYm6AyiKY0ub6Rs=
+github.com/fengyuan-liang/GoKit v0.1.5 h1:t2ETnzq8wt1gmjOsMVhaEDuCOMrKsEBQWgMZcnDk/4E=
+github.com/fengyuan-liang/GoKit v0.1.5/go.mod h1:qVsJ6e/mpCtaEeC/5j8qIushXxSNfYm6AyiKY0ub6Rs=
 github.com/fengyuan-liang/jet-web-fasthttp v0.1.5 h1:ywME/WH785pZaA/Mw0erMXX62mqrHz2WpFIta9bzPKo=
 github.com/fengyuan-liang/jet-web-fasthttp v0.1.5/go.mod h1:FwOcmHCfRrpUSA9P/Miq8ZBm+u6Br1zLvMQBM3/UObo=
 github.com/gabriel-vasile/mimetype v1.4.2 h1:w5qFW6JKBz9Y393Y4q372O9A7cUSequkh1Q7OhCmWKU=
