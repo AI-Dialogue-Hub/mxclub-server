@@ -19,6 +19,7 @@ import (
 	productRepo "mxclub/domain/product/repo"
 	userPOInfo "mxclub/domain/user/po"
 	userRepo "mxclub/domain/user/repo"
+	"mxclub/pkg/common/txsms"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/constant"
@@ -143,7 +144,7 @@ func (svc *OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 	if err = svc.productSalesRepo.AddOrUpdateSale(ctx, orderPO.ProductID, productRepo.Default_Sale_Volume); err != nil {
 		ctx.Logger().Errorf("[PaySuccessOrder]sales add failed, err:%v", err)
 	}
-	// 如果指定订单，给打手发送接单消息
+	// 如果指定打手，给打手发送接单消息
 	if orderPO.SpecifyExecutor {
 		// 指定打手需要该打手同意
 		// 特殊编号打手
@@ -165,6 +166,11 @@ func (svc *OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 				)
 				// 微信消息通知
 				//_ = svc.wxNotifyService.SendMessage(ctx, dasherPO.ID, "您有新的指定订单，请赶快前往小程序查看!")
+				// 短信推送消息
+				err = txsms.SendDefaultDispatchMsg(dasherPO.Phone)
+				if err != nil {
+					ctx.Logger().Errorf("[PaySuccessOrder] phone:%v send sms failed:%v", dasherPO.Phone, err)
+				}
 			}()
 		}
 	} else {

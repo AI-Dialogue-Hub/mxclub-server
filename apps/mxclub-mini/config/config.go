@@ -3,8 +3,10 @@ package config
 import (
 	"flag"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 	"log"
+	"mxclub/pkg/common/txsms"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xlogger"
 	"mxclub/pkg/common/xmysql"
@@ -15,7 +17,6 @@ import (
 	"sync"
 
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/go-playground/validator/v10"
 )
 
 var (
@@ -48,6 +49,8 @@ func init() {
 	wxpay.InitWxPay(config.WxPayConfig)
 	// oss or localStorage
 	xupload.SetUp(config.UploadConfig)
+	// tx sms
+	txsms.NewTxSmsService(config.TxSmsConfig)
 }
 
 type Config struct {
@@ -58,8 +61,9 @@ type Config struct {
 	File         File                  `yaml:"file" validate:"required"`
 	UploadConfig *xupload.UploadConfig `yaml:"upload_config" validate:"required"`
 
-	Mysql *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
-	Redis *xredis.RedisConfig `yaml:"redis" validate:"required"`
+	Mysql       *xmysql.MySqlConfig `yaml:"mysql" validate:"required"`
+	Redis       *xredis.RedisConfig `yaml:"redis" validate:"required"`
+	TxSmsConfig *txsms.TxSmsConfig  `yaml:"tx_sms_config" validate:"required"`
 }
 
 type Server struct {

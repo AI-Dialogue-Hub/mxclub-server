@@ -26,6 +26,8 @@ require (
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1200
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1200
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.20
 	github.com/xuri/excelize/v2 v2.9.0
 	gopkg.in/robfig/cron.v2 v2.0.0-20150107220207-be2e0b0deed5

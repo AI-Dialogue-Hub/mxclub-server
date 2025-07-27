@@ -171,6 +171,10 @@ github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcU
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stvp/tempredis v0.0.0-20181119212430-b82af8480203 h1:QVqDTf3h2WHt08YuiTGPZLls0Wq99X9bWd0Q5ZSBesM=
 github.com/stvp/tempredis v0.0.0-20181119212430-b82af8480203/go.mod h1:oqN97ltKNihBbwlX8dLpwxCl3+HnXKV/R0e+sRLd9C8=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1200 h1:n6elge0PuoOtHt67BhlQka5Y7ChPbCtp23zYDFw56V0=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1200/go.mod h1:r5r4xbfxSaeR04b166HGsBa/R4U3SueirEUpXGuw+Q0=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1200 h1:bu2Jqn/rc5CQslIgTCyG4CTqMpkz2luIOq7dzuLp4G8=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1200/go.mod h1:JzzUsHoueCXnMEYcgorKxyfR0OZAI416XKgHEpgyO7o=
 github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
