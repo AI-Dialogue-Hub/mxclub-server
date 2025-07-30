@@ -117,6 +117,7 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 		ele.Phone = userPO.Phone
 		ele.GameId = userPO.GameId
 	})
+	// 暴躁电竞特殊排序逻辑
 	if config.GetConfig().WxPayConfig.IsBaoZaoClub() {
 		sort.Slice(productVOS, func(i, j int) bool {
 			return productVOS[i].FinalPrice < productVOS[j].FinalPrice

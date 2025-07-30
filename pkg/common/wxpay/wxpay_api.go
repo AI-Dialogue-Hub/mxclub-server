@@ -21,22 +21,22 @@ import (
 
 func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
 	var desc string
-	if wxPayConfig.IsBaoZaoClub() {
-		desc = "暴躁电竞-代打订单"
-	} else {
-		desc = "明星电竞-代打订单"
+	payName := wxPayConfig.PayName
+	if payName == "" {
+		payName = "明星电竞"
 	}
+	desc = fmt.Sprintf("%s-打赏订单", payName)
 	return prepayWithDesc(ctx, prePayRequestDTO, desc, wxPayConfig.CallBackURL)
 }
 
 // PrepayWithReward 打赏使用
 func PrepayWithReward(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
 	var desc string
-	if wxPayConfig.IsBaoZaoClub() {
-		desc = "暴躁电竞-打赏订单"
-	} else {
-		desc = "明星电竞-打赏订单"
+	payName := wxPayConfig.PayName
+	if payName == "" {
+		payName = "明星电竞"
 	}
+	desc = fmt.Sprintf("%s-打赏订单", payName)
 	return prepayWithDesc(ctx, prePayRequestDTO, desc, wxPayConfig.RewardCallBackURL)
 }
 

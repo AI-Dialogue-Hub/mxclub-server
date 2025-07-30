@@ -111,11 +111,7 @@ func (svc UserService) UpdateWxUserInfo(ctx jet.Ctx, userInfo *req.UserInfoReq) 
 		imageURL = ""
 	}
 	if imageURL == "" {
-		if config.GetConfig().WxPayConfig.IsBaoZaoClub() {
-			imageURL = "https://cdn.fengxianhub.top/resources-master/20250111193118.jpg"
-		} else {
-			imageURL = "https://mx.fengxianhub.top/v1/file/2024071622064557713.jpg"
-		}
+		imageURL = config.GetConfig().WxPayConfig.ClubAvatar
 	}
 	err = svc.userRepo.UpdateUserIconAndNickName(ctx, userId, imageURL, "", "")
 	if err != nil {

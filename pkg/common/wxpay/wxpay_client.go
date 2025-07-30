@@ -39,7 +39,7 @@ func NewWxPayClient(config *WxPayConfig) *core.Client {
 	ctx := context.Background()
 	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力
 	var opts []core.ClientOption
-	if config.IsBaoZaoClub() {
+	if config.IsNewPay() {
 		// 2024年之后使用公钥加载
 		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(config.PublicKeyPath)
 		if err != nil {
@@ -71,7 +71,7 @@ func NewWxPayClient(config *WxPayConfig) *core.Client {
 // NewWxPayCertHandler 处理回调参数
 func NewWxPayCertHandler(config *WxPayConfig) *Handler {
 
-	if config.IsBaoZaoClub() {
+	if config.IsNewPay() {
 		notifyHandler = NewWxPayCertHandlerWithPublicKey(config)
 		return notifyHandler
 	}
