@@ -790,6 +790,12 @@ func (svc *OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 // GrabOrder 抢单逻辑
 func (svc *OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("%s GrabOrder", ctx.Logger().ReqId))
+	// 0. 如果有进行中订单，不允许抢单
+	orders, _ := svc.orderRepo.FindByDasherIdAndStatus(ctx, grabReq.ExecutorId, enum.PROCESSING, enum.RUNNING)
+	if orders != nil && len(orders) > 0 {
+		ctx.Logger().Errorf("[GrabOrder] has durable orders => %v", utils.ObjToJsonStr(orders))
+		return errors.New("您有进行中的订单，请勿重复抢单")
+	}
 	// 1. 抢单
 	var dasherName string
 	dasher, _ := svc.userService.FindUserByDashId(ctx, grabReq.ExecutorId)
