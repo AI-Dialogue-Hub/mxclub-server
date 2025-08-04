@@ -21,6 +21,7 @@ type Product struct {
 	DetailImages     xmysql.StringArray `gorm:"type:json;not null" json:"detail_images"`
 	Thumbnail        string
 	IsHot            bool `gorm:"column:isHot"`
+	Visible          bool `gorm:"column:visible"`
 
 	CreatedAt time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time      `gorm:"type:timestamp;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"updated_at"`

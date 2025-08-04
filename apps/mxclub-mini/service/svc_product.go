@@ -97,6 +97,7 @@ func (svc ProductService) List(ctx jet.Ctx, typeValue uint) ([]*vo.ProductVO, er
 	query := xmysql.NewMysqlQuery()
 	query.SetPage(1, 1000)
 	query.SetSort("created_at DESC")
+	query.SetFilter("visible = ?", true)
 	if typeValue == 101 {
 		query.SetFilter("isHot = ?", true)
 	} else if typeValue != 0 {

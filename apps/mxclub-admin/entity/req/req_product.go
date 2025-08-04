@@ -20,8 +20,9 @@ type ProductReq struct {
 }
 
 type ProductHotReq struct {
-	ID    uint64 `json:"id,omitempty"`
-	IsHot bool   `json:"isHot"`
+	ID      uint64 `json:"id,omitempty"`
+	IsHot   bool   `json:"isHot"`
+	Visible bool   `json:"visible"`
 }
 
 // ProductListReq get嵌套结构体解析不出来
