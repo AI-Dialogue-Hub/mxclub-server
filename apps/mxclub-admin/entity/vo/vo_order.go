@@ -39,9 +39,10 @@ type OrderVO struct {
 	PurchaseDate       *time.Time            `json:"purchase_date"`
 	CompletionDate     *time.Time            `json:"completion_date"`
 	StartImages        string                `json:"start_images"`
-	DetailImages       xmysql.StringArray    `json:"detail_images"`   // 订单结束后上传的图片
-	CutRate            float64               `json:"cut_rate"`        // 抽成比例
-	IsEvaluation       bool                  `json:"is_evaluation"`   // 是否完成评价
+	DetailImages       xmysql.StringArray    `json:"detail_images"` // 订单结束后上传的图片
+	CutRate            float64               `json:"cut_rate"`      // 抽成比例
+	IsEvaluation       bool                  `json:"is_evaluation"` // 是否完成评价
+	Visible            bool                  `json:"visible"`
 	EvaluationInfo     map[int]*EvaluationVO `json:"evaluation_info"` // 评价信息 ExecutorID => evaluation
 }
 
