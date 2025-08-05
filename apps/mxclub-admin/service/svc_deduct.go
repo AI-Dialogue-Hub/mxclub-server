@@ -6,6 +6,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
+	"mxclub/apps/mxclub-admin/middleware"
 	"mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
@@ -45,12 +46,24 @@ func (svc *OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListRe
 }
 
 func (svc *OrderService) AddDeduction(ctx jet.Ctx, addReq *req.DeductionAddReq) error {
+	if addReq.DasherId == 0 {
+		return errors.New("DasherId不能为空")
+	}
+	dasher, err := svc.userRepo.FindByMemberNumber(ctx, int(addReq.DasherId))
+	if err == nil && dasher.ID > 0 {
+		addReq.UserID = dasher.ID
+	} else {
+		return errors.New(fmt.Sprintf("编号不存在:%v", addReq.DasherId))
+	}
+	addReq.ConfirmPersonId = middleware.MustGetUserInfo(ctx).ID
 	deductPO := utils.MustCopy[po.Deduction](addReq)
-	err := svc.deductionRepo.InsertOne(deductPO)
+	err = svc.deductionRepo.InsertOne(deductPO)
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]AddDeduction ERROR:%v", err.Error())
 		return errors.New("添加失败")
 	}
+	_ = svc.messageService.PushSystemMessage(
+		ctx, dasher.ID, fmt.Sprintf("您被管理员处罚%v元，原因为:%v", addReq.Amount, addReq.Reason))
 	return nil
 }
 
