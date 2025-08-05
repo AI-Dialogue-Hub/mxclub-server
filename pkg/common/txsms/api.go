@@ -15,6 +15,9 @@ var (
 
 func SendDefaultDispatchMsg(phone string) error {
 	defer utils.RecoverByPrefixNoCtx("SendDefaultDispatchMsg")
+	if !txSmsService.config.IsOk {
+		return fmt.Errorf("tx sms service is not ok")
+	}
 	if txSmsService != nil {
 		return txSmsService.SendDispatchMsg(phone)
 	}
