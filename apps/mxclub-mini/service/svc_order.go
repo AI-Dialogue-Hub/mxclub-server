@@ -790,11 +790,19 @@ func (svc *OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 // GrabOrder 抢单逻辑
 func (svc *OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error {
 	defer traceUtil.TraceElapsedByName(time.Now(), fmt.Sprintf("%s GrabOrder", ctx.Logger().ReqId))
-	// 0. 如果有进行中订单，不允许抢单
+	// 0. 最多有两笔进行中订单 且十分钟内只能抢一单
 	orders, _ := svc.orderRepo.FindByDasherIdAndStatus(ctx, grabReq.ExecutorId, enum.PROCESSING, enum.RUNNING)
-	if orders != nil && len(orders) > 0 {
+	if orders != nil && len(orders) > 1 {
 		ctx.Logger().Errorf("[GrabOrder] has durable orders => %v", utils.ObjToJsonStr(orders))
-		return errors.New("您有进行中的订单，请勿重复抢单")
+		return errors.New("进行中订单不能超过两单")
+	}
+	if orders != nil && len(orders) == 1 {
+		orderPO := orders[0]
+		if time.Duration(time.Now().Unix()-orderPO.GrabAt.Unix()).Minutes() < 10 {
+			ctx.Logger().Errorf(
+				"[GrabOrder] has durable orders between 10 minutes => %v", utils.ObjToJsonStr(orders))
+			return errors.New("您有进行中的订单，十分钟内只能抢一单")
+		}
 	}
 	// 1. 抢单
 	var dasherName string
