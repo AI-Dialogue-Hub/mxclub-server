@@ -102,5 +102,9 @@ func (ctl OrderController) PostV1OrderExecutorDelete(ctx jet.Ctx, executorReq *r
 
 // PostV1OrderGrab 抢单逻辑
 func (ctl OrderController) PostV1OrderGrab(ctx jet.Ctx, grabReq *req.OrderGrabReq) (*api.Response, error) {
+	err := xredis.Debounce(fmt.Sprintf("PostV1OrderGrab:%v", middleware.MustGetUserId(ctx)), time.Second*3)
+	if err != nil {
+		return xjet.WrapperResult(ctx, nil, errors.New("请等待三秒再刷新一次"))
+	}
 	return xjet.WrapperResult(ctx, "抢单成功", ctl.orderService.GrabOrder(ctx, grabReq))
 }
