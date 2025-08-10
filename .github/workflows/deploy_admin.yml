@@ -58,4 +58,5 @@ jobs:
           script: |
             sh /home/lfy/workspace/script/deploy.sh fengyuan-liang mxclub-admin 8001 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
             sh /home/lfy/workspace/script/real-deploy.sh fengyuan-liang mxclub-admin 8003 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
+            sh /home/lfy/workspace/script/mx-delta-deploy.sh fengyuan-liang mxclub-admin 8004 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
             # sh /home/lfy/workspace/script/baozao-deploy.sh fengyuan-liang mxclub-admin 8002 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1

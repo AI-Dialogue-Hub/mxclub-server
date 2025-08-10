@@ -34,7 +34,7 @@ func NewWxPayClient(config *WxPayConfig) *core.Client {
 	var err error
 	mchPrivateKey, err = utils.LoadPrivateKeyWithPath(config.PrivateKeyPath)
 	if err != nil {
-		xlog.Fatal("load merchant private key error")
+		xlog.Fatalf("load merchant private key error, err:%v", err)
 	}
 	ctx := context.Background()
 	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力

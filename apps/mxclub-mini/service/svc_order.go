@@ -199,7 +199,7 @@ func (svc *OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status
 	if req.Phone != "" {
 		go func() {
 			_ = svc.userService.userRepo.UpdateUserPhone(ctx, userId, req.Phone)
-			if id, extractErr := po.ExtractID(req.RoleId); extractErr != nil {
+			if id, extractErr := po.ExtractID(req.RoleId); extractErr == nil {
 				_ = svc.userService.userRepo.UpdateUserGameId(ctx, userId, id)
 			}
 		}()
