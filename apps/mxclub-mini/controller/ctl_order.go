@@ -35,6 +35,9 @@ func (ctl OrderController) PostV1OrderList(ctx jet.Ctx, params *req.OrderListReq
 	if !params.OrderStatus.Valid() {
 		return nil, api.ErrorBadRequest(ctx.Logger().ReqId, "params OrderStatus invalid")
 	}
+	if xredis.Debounce(fmt.Sprintf("PostV1OrderList:%v", middleware.MustGetUserId(ctx)), time.Second*3) != nil {
+		return nil, errors.New("请等待三秒再刷新一次")
+	}
 	pageResult, err := ctl.orderService.List(ctx, params)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
