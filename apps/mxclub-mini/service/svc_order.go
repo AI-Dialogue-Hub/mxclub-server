@@ -156,7 +156,8 @@ func (svc *OrderService) PaySuccessOrder(ctx jet.Ctx, orderNo uint64) error {
 		if err == nil && dasherPO != nil && dasherPO.ID > 0 {
 			go func() {
 				defer utils.RecoverAndLogError(ctx)
-				ctx.Logger().Infof("指定订单, id:%v,order: %v", orderPO.OrderId, orderPO)
+				ctx.Logger().Infof(
+					"指定订单, id:%v, dasherId:%v,order: %v", orderPO.OrderId, dasherPO.MemberNumber, orderPO)
 				// 发送派单信息
 				svc.messageService.PushMessage(
 					ctx,
