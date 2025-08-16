@@ -17,7 +17,7 @@ var (
 	SalesThreshold      MiniConfigEnum = "sales_threshold"        // 出销量热门标阈值
 	PayOrderWarningInfo MiniConfigEnum = "pay_order_warning_info" // 订单页面warning信息
 	OrderReward         MiniConfigEnum = "order_reward"           // 打赏金额
-	payOrderFaker       MiniConfigEnum = "pay_order_faker"        // 打赏金额
+	PayOrderFaker       MiniConfigEnum = "pay_order_faker"        // 打赏金额
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -35,7 +35,7 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	SalesThreshold:      "出销量热门标阈值",
 	PayOrderWarningInfo: "订单页面warning信息",
 	OrderReward:         "打赏金额(直接输入数字不要带单位)",
-	payOrderFaker:       "假下单页面(1表示开启，其他为关闭)",
+	PayOrderFaker:       "假下单页面(1表示开启，其他为关闭)",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
