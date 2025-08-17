@@ -9,6 +9,7 @@ import (
 type User struct {
 	gorm.Model
 	Name         string            `gorm:"name"` // 打手名字
+	Password     string            `gorm:"password"`
 	WxNumber     string            `gorm:"wx_number"`
 	WxName       string            `gorm:"wx_name"`
 	WxOpenId     string            `gorm:"wx_open_id"`

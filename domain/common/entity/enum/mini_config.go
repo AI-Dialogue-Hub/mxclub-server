@@ -18,6 +18,7 @@ var (
 	PayOrderWarningInfo MiniConfigEnum = "pay_order_warning_info" // 订单页面warning信息
 	OrderReward         MiniConfigEnum = "order_reward"           // 打赏金额
 	PayOrderFaker       MiniConfigEnum = "pay_order_faker"        // 打赏金额
+	TransferPenalty     MiniConfigEnum = "transfer_penalty"       // 打赏金额
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
@@ -36,6 +37,7 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	PayOrderWarningInfo: "订单页面warning信息",
 	OrderReward:         "打赏金额(直接输入数字不要带单位)",
 	PayOrderFaker:       "假下单页面(1表示开启，其他为关闭)",
+	TransferPenalty:     "转单罚款",
 }
 
 func (m MiniConfigEnum) IsValid() bool {

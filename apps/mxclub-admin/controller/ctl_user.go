@@ -104,3 +104,16 @@ func (ctl UserController) GetV1AssistantOnline(ctx jet.Ctx) (*api.Response, erro
 func (ctl UserController) PostV1Dasher(ctx jet.Ctx, removeReq *req.UserRemoveReq) (*api.Response, error) {
 	return xjet.WrapperResult(ctx, ctl.userService.RemoveDasher(ctx, removeReq), nil)
 }
+
+func (ctl UserController) GetV1UserPermission(ctx jet.Ctx) (*api.Response, error) {
+	data, err := ctl.userService.FetchPermissionUser(ctx)
+	return xjet.WrapperResult(ctx, data, err)
+}
+
+func (ctl UserController) PutV1UserRole(ctx jet.Ctx, roleReq *req.UserRoleReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", ctl.userService.PutPermissionUser(ctx, roleReq))
+}
+
+func (ctl UserController) PostV1UserRoleDelete(ctx jet.Ctx, roleReq *req.UserRoleReq) (*api.Response, error) {
+	return xjet.WrapperResult(ctx, "ok", ctl.userService.DeletePermissionUser(ctx, roleReq))
+}

@@ -21,6 +21,7 @@ func init() {
 type IUserRepo interface {
 	xmysql.IBaseRepo[po.User]
 	QueryUserByAccount(username string, password string) (*po.User, error)
+	QueryUserByName(username string) (*po.User, error)
 	AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error)
 	FindByOpenId(ctx jet.Ctx, userId string) (*po.User, error)
 	// FindByMemberNumber
@@ -47,6 +48,7 @@ type IUserRepo interface {
 	RemoveDasher(ctx jet.Ctx, id uint) error
 	FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 	FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error)
+	DeletePermissionUser(ctx jet.Ctx, name string) error
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -68,6 +70,10 @@ const userListCachePrefix = "mini_user_list"
 
 func (repo UserRepo) QueryUserByAccount(username string, password string) (*po.User, error) {
 	return repo.FindOne("name = ? and password = ?", username, utils.EncryptPassword(password))
+}
+
+func (repo UserRepo) QueryUserByName(username string) (*po.User, error) {
+	return repo.FindOne("name = ?", username)
 }
 
 func (repo UserRepo) AddUserByOpenId(ctx jet.Ctx, openId string) (uint, error) {
@@ -285,4 +291,8 @@ func (repo UserRepo) FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 
 func (repo UserRepo) FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error) {
 	return repo.Find("role != ?", enum.RoleWxUser.String())
+}
+
+func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, name string) error {
+	return repo.Remove("name = ?", name)
 }

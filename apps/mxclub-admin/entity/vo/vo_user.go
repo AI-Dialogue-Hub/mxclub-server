@@ -24,6 +24,7 @@ type UserVO struct {
 	MemberNumber int           `json:"member_number"`                                // 编号
 	Phone        string        `json:"phone"`
 	ActivatedAt  time.Time     `json:"activated_at"` // 最近一次上线
+	CreatedAt    time.Time     `json:"created_at"`
 }
 
 type UserTypeVO struct {

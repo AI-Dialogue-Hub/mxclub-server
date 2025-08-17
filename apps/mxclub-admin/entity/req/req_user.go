@@ -26,3 +26,9 @@ type UserRemoveReq struct {
 	DasherIds []int `json:"dasher_ids" validate:"required" reg_err_info:"不能为空"`
 	OrderId   uint  `json:"order_id" validate:"required" reg_err_info:"不能为空"`
 }
+
+type UserRoleReq struct {
+	Name     string        `json:"name" validate:"required" reg_err_info:"不能为空"`
+	Password string        `json:"password" validate:"required" reg_err_info:"不能为空"`
+	Role     enum.RoleType `json:"role" validate:"required" reg_err_info:"不能为空"`
+}

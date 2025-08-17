@@ -139,3 +139,35 @@ func (svc UserService) FetchPermissionUser(ctx jet.Ctx) ([]*vo.UserVO, error) {
 	}
 	return utils.CopySlice[*po.User, *vo.UserVO](permissionUser), nil
 }
+
+// PutPermissionUser 添加有权限的用户
+func (svc UserService) PutPermissionUser(ctx jet.Ctx, roleReq *req.UserRoleReq) error {
+	ctx.Logger().Infof("[UserService#PutPermissionUser] roleReq:%v", utils.ObjToJsonStr(roleReq))
+	account, err := svc.userRepo.QueryUserByName(roleReq.Name)
+	if account != nil && account.ID > 0 {
+		ctx.Logger().Errorf("[UserService#PutPermissionUser] error:%v", err)
+		return errors.New("账号已经存在")
+	}
+	encryptPassword := utils.EncryptPassword(roleReq.Password)
+	err = svc.userRepo.InsertOne(&po.User{
+		Name:     roleReq.Name,
+		WxOpenId: encryptPassword,
+		Password: encryptPassword,
+		Role:     roleReq.Role,
+	})
+	if err != nil {
+		ctx.Logger().Errorf("[UserService#PutPermissionUser] error:%v", err)
+		return errors.New("添加失败")
+	}
+	return nil
+}
+
+// DeletePermissionUser 删除有权限的用户
+func (svc UserService) DeletePermissionUser(ctx jet.Ctx, roleReq *req.UserRoleReq) error {
+	err := svc.userRepo.DeletePermissionUser(ctx, roleReq.Name)
+	if err != nil {
+		ctx.Logger().Errorf("[UserService#DeletePermissionUser] error:%v", err)
+		return errors.New("删除失败")
+	}
+	return nil
+}
