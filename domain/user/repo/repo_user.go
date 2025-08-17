@@ -46,6 +46,7 @@ type IUserRepo interface {
 	UpdateUserGameId(ctx jet.Ctx, id uint, gameId string) error
 	RemoveDasher(ctx jet.Ctx, id uint) error
 	FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
+	FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error)
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -280,4 +281,8 @@ func (repo UserRepo) FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 	return xredis.GetOrDefault[po.User](ctx, cacheKey, func() (*po.User, error) {
 		return repo.FindByID(id)
 	})
+}
+
+func (repo UserRepo) FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error) {
+	return repo.Find("role != ?", enum.RoleWxUser.String())
 }

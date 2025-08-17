@@ -129,3 +129,13 @@ func (svc UserService) RemoveDasher(ctx jet.Ctx, req *req.UserRemoveReq) error {
 	}
 	return nil
 }
+
+// FetchPermissionUser 获取有权限的用户
+func (svc UserService) FetchPermissionUser(ctx jet.Ctx) ([]*vo.UserVO, error) {
+	permissionUser, err := svc.userRepo.FetchPermissionUser(ctx)
+	if err != nil {
+		ctx.Logger().Errorf("[UserService#FetchPermissionUser] error:%v", err)
+		return nil, errors.New("查找失败")
+	}
+	return utils.CopySlice[*po.User, *vo.UserVO](permissionUser), nil
+}

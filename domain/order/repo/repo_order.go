@@ -263,8 +263,9 @@ func (repo OrderRepo) UpdateOrderStatusIncludingDeleted(ctx jet.Ctx, orderId uin
 	defer xredis.DelMatchingKeys(ctx, cachePrefix)
 
 	updateMap := map[string]any{
-		"order_status": status,
-		"deleted_at":   nil, // 恢复软删除
+		"order_status":  status,
+		"purchase_date": utils.Ptr(time.Now()),
+		"deleted_at":    nil, // 恢复软删除
 	}
 
 	return repo.DB().Unscoped().

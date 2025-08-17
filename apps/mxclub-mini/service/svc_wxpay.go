@@ -150,7 +150,7 @@ func (s WxPayService) HandleWxpayNotify(ctx jet.Ctx, params *maps.LinkedHashMap[
 
 	var orderId = utils.SafeParseUint64(*transaction.OutTradeNo)
 
-	// 修改订单状态为支付成功
+	// 修改订单状态为支付成功 修改购买时间
 	err = s.orderService.PaySuccessOrder(ctx, orderId)
 
 	if err != nil {
