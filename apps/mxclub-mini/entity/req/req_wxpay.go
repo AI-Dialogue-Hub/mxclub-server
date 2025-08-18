@@ -5,6 +5,6 @@ type WxPayReq struct {
 }
 
 type WxPayRefundsReq struct {
-	OutTradeNo string `json:"out_trade_no,omitempty" validate:"required" reg_err_info:"不能为空"`
-	Reason     string `json:"reason"`
+	OrderId string `json:"order_id,omitempty" validate:"required" reg_err_info:"不能为空"`
+	Reason  string `json:"reason"`
 }

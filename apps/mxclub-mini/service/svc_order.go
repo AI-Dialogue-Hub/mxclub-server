@@ -6,6 +6,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"math"
 	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/dto"
@@ -73,6 +74,7 @@ type OrderService struct {
 	wxNotifyService      *WxNotifyService
 	lotteryAbility       ability.ILotteryAbility
 	deactivateDasherRepo userRepo.IDeactivateDasherRepo
+	wxPayCallbackRepo    repo.IWxPayCallbackRepo
 }
 
 var orderService *OrderService
@@ -91,7 +93,8 @@ func NewOrderService(
 	rewardRecordRepo repo.IRewardRecordRepo,
 	wxNotifyService *WxNotifyService,
 	lotteryAbility ability.ILotteryAbility,
-	deactivateDasherRepo userRepo.IDeactivateDasherRepo) *OrderService {
+	deactivateDasherRepo userRepo.IDeactivateDasherRepo,
+	wxPayCallbackRepo repo.IWxPayCallbackRepo) *OrderService {
 	orderService = &OrderService{
 		orderRepo:            repo,
 		withdrawalRepo:       withdrawalRepo,
@@ -107,6 +110,7 @@ func NewOrderService(
 		wxNotifyService:      wxNotifyService,
 		lotteryAbility:       lotteryAbility,
 		deactivateDasherRepo: deactivateDasherRepo,
+		wxPayCallbackRepo:    wxPayCallbackRepo,
 	}
 	// 初始化
 	setUp(orderService)
@@ -956,4 +960,51 @@ func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 		}
 		return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 	}
+}
+
+func (svc *OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) (string, error) {
+	// 0. 日志记录
+	doLogRefundsOperatorLog(ctx, params.OrderId)
+	var (
+		logger     = ctx.Logger()
+		successMsg = "退款请求已发起，请等待客服进行处理"
+	)
+	// 0.1 检查订单状态
+	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, utils.ParseUint(params.OrderId))
+	if orderPO.OrderStatus != enum.PROCESSING || orderPO.ExecutorID > 0 {
+		ctx.Logger().Infof("[OrderService#Refunds]order status error, orderId:%v", params.OrderId)
+		return "", errors.New("该订单已经被抢单，请联系管理员退单")
+
+	}
+	orderId := utils.ParseString(orderPO.OrderId)
+	// 1. 查询回调的参数
+	wxPayCallbackInfo, err := svc.wxPayCallbackRepo.FindByTraceNo(orderId)
+	if err != nil {
+		logger.Errorf("err:%v", err)
+		return "", errors.New("查询不到对应订单信息")
+	}
+	// 1.2 转换
+	transaction := utils.MustMapToObj[payments.Transaction](wxPayCallbackInfo.RawData)
+	// 2. 进行退款
+	outRefundNo := wxpay.GenerateOutRefundNo()
+	logger.Infof("outRefundNo:%v, orderId:%v", outRefundNo, orderId)
+	err = wxpay.Refunds(ctx, transaction, outRefundNo, params.Reason)
+	if err != nil {
+		logger.Errorf("err:%v", err)
+		return "", errors.New("退款失败")
+	}
+	// 3. 修改订单状态
+	err = svc.orderRepo.UpdateOrderStatusIncludingDeleted(ctx, utils.SafeParseUint64(orderId), enum.Refunds)
+	if err != nil {
+		logger.Errorf("[*OrderService#Refunds]err:%v", err)
+		return "", errors.New("退款失败")
+	}
+	return successMsg, nil
+}
+
+func doLogRefundsOperatorLog(ctx jet.Ctx, orderId string) {
+	defer utils.RecoverAndLogError(ctx)
+	userId := middleware.MustGetUserId(ctx)
+	ctx.Logger().Infof("doLogRefundsOperatorLog: %v, orderId:%v", userId, orderId)
+
 }

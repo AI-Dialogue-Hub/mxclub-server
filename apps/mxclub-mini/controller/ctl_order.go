@@ -111,3 +111,8 @@ func (ctl OrderController) PostV1OrderGrab(ctx jet.Ctx, grabReq *req.OrderGrabRe
 	}
 	return xjet.WrapperResult(ctx, "抢单成功", ctl.orderService.GrabOrder(ctx, grabReq))
 }
+
+func (ctl OrderController) PostV1WxpayRefunds(ctx jet.Ctx, params *req.WxPayRefundsReq) (*api.Response, error) {
+	data, err := ctl.orderService.Refunds(ctx, params)
+	return xjet.WrapperResult(ctx, data, err)
+}
