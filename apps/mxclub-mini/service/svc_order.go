@@ -988,6 +988,9 @@ func (svc *OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) (stri
 	// 2. 进行退款
 	outRefundNo := wxpay.GenerateOutRefundNo()
 	logger.Infof("outRefundNo:%v, orderId:%v", outRefundNo, orderId)
+	if params.Reason == "" {
+		params.Reason = "协商一致退款"
+	}
 	err = wxpay.Refunds(ctx, transaction, outRefundNo, params.Reason)
 	if err != nil {
 		logger.Errorf("err:%v", err)
