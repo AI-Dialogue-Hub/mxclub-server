@@ -973,7 +973,7 @@ func (svc *OrderService) Refunds(ctx jet.Ctx, params *req.WxPayRefundsReq) (stri
 	orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, utils.ParseUint(params.OrderId))
 	if orderPO.OrderStatus != enum.PROCESSING || orderPO.ExecutorID > 0 {
 		ctx.Logger().Infof("[OrderService#Refunds]order status error, orderId:%v", params.OrderId)
-		return "", errors.New("该订单已经被抢单，请联系管理员退单")
+		return "", errors.New("进行中订单无法退款，可联系客服退款")
 
 	}
 	orderId := utils.ParseString(orderPO.OrderId)
