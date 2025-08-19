@@ -290,7 +290,8 @@ func (repo UserRepo) FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 }
 
 func (repo UserRepo) FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error) {
-	return repo.Find("role != ?", enum.RoleWxUser.String())
+	return repo.Find("role in ?",
+		[]string{enum.RoleTS.String(), enum.RoleManager.String(), enum.RoleAdministrator.String()})
 }
 
 func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, name string) error {
