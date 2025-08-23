@@ -46,7 +46,7 @@ func (svc ExcelService) ExportExcel(ctx jet.Ctx, startDate, endDate string) (err
 		logger    = ctx.Logger()
 		sheetName = "发货单模板"
 		appId     = config.GetConfig().WxPayConfig.AppId
-		tradeType = "用户自提"
+		tradeType = "虚拟发货"
 		tradeMode = "统一发货"
 		// 列标题
 		headers = []struct {
@@ -73,7 +73,7 @@ func (svc ExcelService) ExportExcel(ctx jet.Ctx, startDate, endDate string) (err
 	// 1. 查找指定时间内的订单
 	wrapper := new(xmysql.MysqlQuery)
 	wrapper.SetFilter("created_at >= ? and created_at <= ? and order_status = ?", startDate, endDate, enum.SUCCESS)
-	wrapper.SetLimit(10000)
+	wrapper.SetLimit(1000000)
 	orderPOList, err := svc.orderRepo.ListNoCountByQuery(wrapper)
 	if err != nil || orderPOList == nil || len(orderPOList) == 0 {
 		logger.Errorf("cannot find any order, duration is: %v %v", startDate, endDate)
