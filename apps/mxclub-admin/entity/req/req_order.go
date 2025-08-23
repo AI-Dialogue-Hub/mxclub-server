@@ -20,9 +20,10 @@ type WitchDrawListReq struct {
 }
 
 type WitchDrawUpdateReq struct {
-	Id               uint    `json:"id"`
-	WithdrawalStatus string  `json:"withdrawal_status"`
-	WithdrawalInfo   string  `json:"withdrawal_info"`                       // 同意提现，提现方式 拒绝提现拒绝原因
+	Id               uint   `json:"id"`
+	WithdrawalStatus string `json:"withdrawal_status"`
+	// 同意提现，提现方式 拒绝提现拒绝原因
+	WithdrawalInfo   string  `json:"withdrawal_info" validate:"required" reg_err_info:"拒绝提现原因不能为空"`
 	DasherId         int     `json:"dasher_id" validate:"required"`         // 打手编号
 	WithdrawalAmount float64 `json:"withdrawal_amount" validate:"required"` // 提现金额
 }
