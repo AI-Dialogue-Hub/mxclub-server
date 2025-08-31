@@ -34,12 +34,18 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 		wg             = new(sync.WaitGroup)
 	)
 
-	// 1. 并发查询所有打手的历史提现记录
+	// 1. 并发查询所有打手的历史提现记录（限制每批次最多50个）
+	concurrencyLimit := 50
+	semaphore := make(chan struct{}, concurrencyLimit)
+
 	for index, dasher := range allDasherList {
 		wg.Add(1)
+		semaphore <- struct{}{} // 获取信号量
+
 		go func(idx int, finalDasher *po.User) {
 			defer utils.RecoverAndLogError(ctx)
 			defer wg.Done()
+			defer func() { <-semaphore }() // 释放信号量
 
 			if finalDasher.MemberNumber < 0 {
 				ctx.Logger().Warnf("invalid MemberNumber: %d", finalDasher.MemberNumber)

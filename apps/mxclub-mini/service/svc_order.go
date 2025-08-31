@@ -8,6 +8,7 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"math"
+	"mxclub/apps/mxclub-mini/config"
 	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
@@ -495,8 +496,10 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 	}
 	// 1. 获取金牌打手提前看到订单时间
 	dasher, _ := svc.userService.FindUserById(ctx, middleware.MustGetUserId(ctx))
-	// 金牌打手可以及时看到所有订单
-	if dasher.DasherLevel == userEnum.DasherLevel_Gold {
+	payName := config.GetConfig().WxPayConfig.PayName
+	// 金牌打手可以及时看到所有订单 三角洲金牌逻辑和其他不一样，其他小程序是打手id小于100的
+	if (payName == "明星三角洲" && dasher.DasherLevel == userEnum.DasherLevel_Gold) ||
+		(payName != "明星三角洲" && dasher.MemberNumber < 100) {
 		orders, err = svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
 	} else if dasher.DasherLevel == userEnum.DasherLevel_Silver {
 		// 银牌打手延迟多久看到订单
