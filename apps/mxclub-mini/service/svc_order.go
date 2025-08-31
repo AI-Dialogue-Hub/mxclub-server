@@ -24,6 +24,7 @@ import (
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/constant"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -471,22 +472,47 @@ func getCutRate(ctx jet.Ctx, commonRepo commonRepo.IMiniConfigRepo) (cutRate flo
 
 func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, error) {
 	var (
-		orders []*po.Order
-		err    error
+		orders           []*po.Order
+		err              error
+		defaultDelayTime = 20 // 默认delay 20s
 	)
-	// 1. 获取金牌打手提前看到订单时间
-	dasher, _ := svc.userService.FindUserById(ctx, middleware.MustGetUserId(ctx))
-	if dasher.MemberNumber <= 100 {
-		orders, err = svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
-	} else {
-		var delayTime int = 20 // 默认20s
-		// 非金牌打手 晚指定秒后才能看到订单
+	fetchDelayTime := func(index int) (delayDate time.Time) {
+		if r := recover(); r != nil {
+			ctx.Logger().Error("Recovered from panic:", r)
+			debug.PrintStack()
+			return time.Now().Add(-time.Second * time.Duration(defaultDelayTime))
+		}
+		var delayTime int
 		configByName, _ := svc.commonRepo.FindConfigByName(ctx, commonEnum.DelayTime.String())
-		if configByName != nil && len(configByName.Content) > 0 && configByName.Content[0]["desc"] != nil {
+		if configByName != nil && len(configByName.Content) >= index && configByName.Content[index]["desc"] != nil {
 			delayTime = utils.SafeParseNumber[int](configByName.Content[0]["desc"])
+		} else {
+			ctx.Logger().Infof("fetch delayTime error, set default value %v", defaultDelayTime)
+			delayTime = defaultDelayTime
 		}
 		delayDuration := time.Now().Add(-time.Second * time.Duration(delayTime))
-		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, delayDuration)
+		return delayDuration
+	}
+	// 1. 获取金牌打手提前看到订单时间
+	dasher, _ := svc.userService.FindUserById(ctx, middleware.MustGetUserId(ctx))
+	// 金牌打手可以及时看到所有订单
+	if dasher.DasherLevel == userEnum.DasherLevel_Gold {
+		orders, err = svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
+	} else if dasher.DasherLevel == userEnum.DasherLevel_Silver {
+		// 银牌打手延迟多久看到订单
+		silverDasherDelayTime := fetchDelayTime(0)
+		ctx.Logger().Infof("silverDasherDelayTime:%v", silverDasherDelayTime)
+		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, silverDasherDelayTime)
+	} else if dasher.DasherLevel == userEnum.DasherLevel_Bronze {
+		// 铜牌打手延迟多久看到订单
+		dasherDelayTime := fetchDelayTime(1)
+		ctx.Logger().Infof("silverDasherDelayTime:%v", dasherDelayTime)
+		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, dasherDelayTime)
+	} else {
+		// 其他打手
+		dasherDelayTime := fetchDelayTime(2)
+		ctx.Logger().Infof("silverDasherDelayTime:%v", dasherDelayTime)
+		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, dasherDelayTime)
 	}
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())

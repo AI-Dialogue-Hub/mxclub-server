@@ -27,7 +27,7 @@ var miniConfigEnumMap = map[MiniConfigEnum]string{
 	MyMessage:           "我的消息",
 	ProductType:         "商品类型",
 	CutRate:             "抽成比例(百分之多少，填整数，例如20)",
-	DelayTime:           "金牌打手可以提前多少秒看到单(例如：20 单位s)",
+	DelayTime:           "银牌打手、铜牌打手、普通打手延迟多久看到订单(例如：20 单位s), 一行一个",
 	DasherEvaluation:    "提示给用户看到评价信息",
 	WarningInfo:         "提示打手接单的信息",
 	SellingPoint:        "滚动卖点",
