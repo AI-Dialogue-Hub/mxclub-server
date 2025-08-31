@@ -49,6 +49,7 @@ type IUserRepo interface {
 	FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 	FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error)
 	DeletePermissionUser(ctx jet.Ctx, name string) error
+	UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -296,4 +297,8 @@ func (repo UserRepo) FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error) {
 
 func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, name string) error {
 	return repo.Remove("name = ?", name)
+}
+
+func (repo UserRepo) UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error {
+	return repo.UpdateById(map[string]any{"dasher_level": level}, id)
 }

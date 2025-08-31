@@ -11,8 +11,8 @@ type UploadStrategy interface {
 	PutFromLocalFile(ctx jet.Ctx, filePath string) (string, error)
 	PutFromWeb(ctx jet.Ctx) (string, error)
 	// GetFile
-	// @param path 文件名称，包含路径，比如/file/xxx.log
-	// @param filePath 文件保存路径 /file/
+	//  @param path 文件名称，包含路径，比如/file/xxx.log
+	//  @param filePath 文件保存路径 /file/
 	GetFile(ctx jet.Ctx, path string, filePath string)
 }
 

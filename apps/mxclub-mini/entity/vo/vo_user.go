@@ -6,15 +6,16 @@ import (
 )
 
 type UserVO struct {
-	WxNumber        string        `json:"wx_number"`
-	WxName          string        `json:"wx_name"`
-	WxIcon          string        `json:"wx_icon,omitempty"`
-	WxGrade         string        `json:"wx_grade"`
-	DasherStaring   float64       `json:"dasher_staring"`
-	Role            enum.RoleType `json:"role"`
-	MemberNumber    int           `json:"member_number"`
-	CurrentPoints   float64       `json:"currentPoints"`
-	NextLevelPoints int           `json:"nextLevelPoints"`
+	WxNumber        string           `json:"wx_number"`
+	WxName          string           `json:"wx_name"`
+	WxIcon          string           `json:"wx_icon,omitempty"`
+	WxGrade         string           `json:"wx_grade"`
+	DasherStaring   float64          `json:"dasher_staring"`
+	Role            enum.RoleType    `json:"role"`
+	DasherLevel     enum.DasherLevel `json:"dasher_level"`
+	MemberNumber    int              `json:"member_number"`
+	CurrentPoints   float64          `json:"currentPoints"`
+	NextLevelPoints int              `json:"nextLevelPoints"`
 }
 
 func (userVO *UserVO) SetCurrentPoints(currentPoints float64) {
