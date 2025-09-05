@@ -6,7 +6,7 @@ type CaptchaReq struct {
 }
 
 type AssistantReq struct {
-	MemberNumber int64  `json:"member_number" validate:"required"`
+	MemberNumber int64  `json:"member_number"`
 	Phone        string `json:"phone" validate:"required"`
 	Name         string `json:"name"`
 }
