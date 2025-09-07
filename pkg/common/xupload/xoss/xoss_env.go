@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"time"
 )
 
@@ -27,6 +28,9 @@ func NewClient(config *Config) *oss.Client {
 		WithRegion(config.Region)
 
 	client = oss.NewClient(cfg)
+	if ossCfg.Image2WebpURI != "" {
+		xlog.Infof("use compress function, image2webp uri is:%v", ossCfg.Image2WebpURI)
+	}
 	return client
 }
 
