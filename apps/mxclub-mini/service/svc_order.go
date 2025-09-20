@@ -195,6 +195,15 @@ func (svc *OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status
 	if req.OrderTradeNo == "" {
 		req.OrderTradeNo = wxpay.GenerateUniqueOrderNumber()
 	}
+	// 检查商品是否还是可售状态
+	productId := req.ProductId
+	if productVO, _ := svc.productService.FindById(ctx, productId); productVO == nil {
+		return nil, errors.New("商品不存在")
+	} else {
+		if !productVO.Visible {
+			return nil, errors.New("商品已下架")
+		}
+	}
 	// 检查订单是否已经创建
 	order, err := svc.orderRepo.FindByOrderId(ctx, utils.ParseUint(req.OrderTradeNo))
 
@@ -222,7 +231,7 @@ func (svc *OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status
 		}
 	}
 	// 1.2 折扣信息
-	preferentialVO, err := svc.Preferential(ctx, req.ProductId)
+	preferentialVO, err := svc.Preferential(ctx, productId)
 	if err != nil {
 		logger.Errorf("Preferential ERROR:%v", err)
 	}
@@ -234,7 +243,7 @@ func (svc *OrderService) AddByOrderStatus(ctx jet.Ctx, req *req.OrderReq, status
 		OrderIcon:       req.OrderIcon,
 		OrderStatus:     status,
 		OriginalPrice:   preferentialVO.OriginalPrice,
-		ProductID:       req.ProductId,
+		ProductID:       productId,
 		Phone:           req.Phone,
 		GameRegion:      req.GameRegion,
 		RoleId:          req.RoleId,

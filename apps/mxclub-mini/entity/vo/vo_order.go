@@ -59,6 +59,7 @@ type ProductVO struct {
 	GameId           string             `json:"gameId"`
 	SalesVolume      int                `json:"sales_volume"`
 	LotteryActivity  bool               `json:"lottery_activity"` // 是否是抽奖活动
+	Visible          bool               `json:"visible"`
 }
 
 type WithDrawVO struct {
