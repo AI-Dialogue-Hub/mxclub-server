@@ -5,7 +5,6 @@ import (
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"mxclub/pkg/utils"
-	"sync"
 )
 
 var (
@@ -34,23 +33,16 @@ func PublishEvent(eventCode int, ctx jet.Ctx) {
 		ctx.Logger().Errorf("[event#PublishEvent] cannot find eventCode: %v", eventCode)
 		return
 	}
-	wg := new(sync.WaitGroup)
+	// 这里移除掉并发执行的逻辑，因为删除订单记录的时候需要历史提现金额，不能删掉提现记录这些
 	for _, event := range events {
-		ctx.Logger().Infof("do PublishEvent, event:%v", utils.ObjToJsonStr(event))
-		wg.Add(1)
-		go func(finalEvent *EventBO) {
-			defer utils.RecoverByPrefix(logger, "[event#PublishEvent]")
-			defer wg.Done()
-			ctx.Logger().Infof(
-				"[event#PublishEvent] do event callback, register_name:%v, code:%v",
-				finalEvent.RegisterName, finalEvent.EventCode)
-			if err := finalEvent.EventCallBack(ctx); err != nil {
-				ctx.Logger().Errorf("[event#PublishEvent] ERROR: %v", err)
-			}
-			ctx.Logger().Infof(
-				"[event#PublishEvent] handle success, register_name:%v, code:%v",
-				finalEvent.RegisterName, finalEvent.EventCode)
-		}(event)
+		ctx.Logger().Infof(
+			"[event#PublishEvent] do event callback, register_name:%v, code:%v",
+			event.RegisterName, event.EventCode)
+		if err := event.EventCallBack(ctx); err != nil {
+			ctx.Logger().Errorf("[event#PublishEvent] ERROR: %v", err)
+		}
+		ctx.Logger().Infof(
+			"[event#PublishEvent] handle success, register_name:%v, code:%v",
+			event.RegisterName, event.EventCode)
 	}
-	wg.Wait()
 }
