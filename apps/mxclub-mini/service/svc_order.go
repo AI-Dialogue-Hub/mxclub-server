@@ -841,7 +841,8 @@ func (svc *OrderService) GrabOrder(ctx jet.Ctx, grabReq *req.OrderGrabReq) error
 	}
 	if orders != nil && len(orders) == 1 {
 		orderPO := orders[0]
-		if time.Duration(time.Now().Unix()-orderPO.GrabAt.Unix()).Minutes() < 10 {
+		timeDiff := time.Since(*orderPO.GrabAt)
+		if timeDiff < 10*time.Minute {
 			ctx.Logger().Errorf(
 				"[GrabOrder] has durable orders between 10 minutes => %v", utils.ObjToJsonStr(orders))
 			return errors.New("您有进行中的订单，十分钟内只能抢一单")
