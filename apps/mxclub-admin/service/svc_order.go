@@ -273,20 +273,25 @@ func (svc *OrderService) RemoveAssistantEvent(ctx jet.Ctx) error {
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
 	// 0. 注销前，打印账户余额信息
 	if historyWithDrawAmount, err := svc.HistoryWithDrawAmount(ctx, &req.HistoryWithDrawAmountReq{UserId: userId}); err == nil {
-		go func() {
-			defer utils.RecoverAndLogError(ctx)
-			ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
-				userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
-			allOrderPOList, _ := svc.orderRepo.FindAllByDasherId(ctx, userPO.MemberNumber)
-			// 保存打手最后的金额
-			_ = svc.deactivateDasherRepo.InsertOne(&userPOInfo.DeactivateDasher{
-				DasherID:              userPO.MemberNumber,
-				DasherName:            userPO.Name,
-				HistoryWithdrawAmount: historyWithDrawAmount.HistoryWithDrawAmount,
-				WithdrawAbleAmount:    historyWithDrawAmount.WithdrawAbleAmount,
-				OrderSnapshot:         utils.ObjToJsonStr(allOrderPOList),
-			})
-		}()
+		ctx.Logger().Infof("[RemoveAssistantEvent] dasher:%v, info:%v, HistoryWithDrawAmount info => %v",
+			userPO.MemberNumber, utils.ObjToJsonStr(userPO), utils.ObjToJsonStr(historyWithDrawAmount))
+		allOrderPOList, err := svc.orderRepo.FindAllByDasherId(ctx, userPO.MemberNumber)
+		if err != nil {
+			ctx.Logger().Errorf("[RemoveAssistantEvent]dasher:%v, info:%v, FindAllByDasherId ERROR:%v",
+				userPO.MemberNumber, utils.ObjToJsonStr(userPO), err.Error())
+		}
+		// 保存打手最后的金额
+		err = svc.deactivateDasherRepo.InsertOne(&userPOInfo.DeactivateDasher{
+			DasherID:              userPO.MemberNumber,
+			DasherName:            userPO.Name,
+			HistoryWithdrawAmount: historyWithDrawAmount.HistoryWithDrawAmount,
+			WithdrawAbleAmount:    historyWithDrawAmount.WithdrawAbleAmount,
+			OrderSnapshot:         utils.ObjToJsonStr(allOrderPOList),
+		})
+		if err != nil {
+			ctx.Logger().Errorf("[RemoveAssistantEvent]dasher:%v, info:%v, InsertOne ERROR:%v",
+				userPO.MemberNumber, utils.ObjToJsonStr(userPO), err.Error())
+		}
 	}
 	return svc.orderRepo.RemoveDasherAllOrderInfo(ctx, userPO.MemberNumber)
 }
