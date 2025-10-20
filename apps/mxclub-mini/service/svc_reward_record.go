@@ -201,16 +201,19 @@ func (svc RewardRecordService) List(ctx jet.Ctx, listReq *req.RewardListReq) ([]
 // RemoveRewardRecord 清理打手打赏信息
 func (svc RewardRecordService) RemoveRewardRecord(ctx jet.Ctx) error {
 	defer utils.RecoverAndLogError(ctx)
-	var dasherId int
+	var (
+		dasherId int
+		userId   uint
+	)
 	// 注销之前有问题打手的
 	if value, exists := ctx.Get(constant.LOGOUT_DASHER_ID); exists {
 		dasherId = value.(int)
 	} else {
-		userId := middleware.MustGetUserId(ctx)
+		userId = middleware.MustGetUserId(ctx)
 		userPO, _ := svc.userRepo.FindByID(userId)
 		dasherId = userPO.MemberNumber
 	}
-	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, dasherId); err != nil {
+	if err := svc.rewardRecordRepo.ClearAllRewardByDasherId(ctx, dasherId, userId); err != nil {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
 		return err
 	}

@@ -320,7 +320,7 @@ func (svc *OrderService) RemoveEvaluation(ctx jet.Ctx) error {
 func (svc *OrderService) RemoveRewardRecord(ctx jet.Ctx) error {
 	userId := ctx.MustGet("userId").(uint)
 	userPO, _ := svc.userRepo.FindByIdAroundCache(ctx, userId)
-	if err := svc.rewardRepo.ClearAllRewardByDasherId(ctx, userPO.MemberNumber); err != nil {
+	if err := svc.rewardRepo.ClearAllRewardByDasherId(ctx, userPO.MemberNumber, userId); err != nil {
 		ctx.Logger().Errorf("RemoveRewardRecord ERROR, %v", err)
 		return err
 	}
