@@ -9,6 +9,7 @@ type WxPayConfig struct {
 	WechatpayPublicKeyID       string `yaml:"wechatpay_public_key_id"` // 公钥id
 	AppId                      string `yaml:"app_id"`
 	PayName                    string `yaml:"pay_name"`              // 是哪个小程序在使用
+	UseV2ToV3                  bool   `yaml:"use_v2_to_v3"`          // 是否是v2版本到v3版本过渡
 	NewPay                     bool   `yaml:"new_pay"`               // 是否使用新的支付方式
 	ClubAvatar                 string `yaml:"club_avatar"`           // 小程序默认头像
 	CallBackURL                string `yaml:"call_back_url"`         // 支付回调接口

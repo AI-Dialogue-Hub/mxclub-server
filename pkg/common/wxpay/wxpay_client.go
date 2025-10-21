@@ -109,10 +109,18 @@ func NewWxPayCertHandlerWithPublicKey(config *WxPayConfig) *Handler {
 	if err != nil {
 		panic(fmt.Errorf("load wechatpay public key err:%s", err.Error()))
 	}
+	var handler *Handler
 
-	handler := NewNotifyHandler(
-		config.MchAPIv3Key,
-		verifiers.NewSHA256WithRSAPubkeyVerifier(config.WechatpayPublicKeyID, *wechatpayPublicKey))
+	if config.UseV2ToV3 {
+		certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(config.MchID)
+		handler = NewNotifyHandler(
+			config.MchAPIv3Key,
+			verifiers.NewSHA256WithRSACombinedVerifier(certificateVisitor, config.WechatpayPublicKeyID, *wechatpayPublicKey))
+	} else {
+		handler = NewNotifyHandler(
+			config.MchAPIv3Key,
+			verifiers.NewSHA256WithRSAPubkeyVerifier(config.WechatpayPublicKeyID, *wechatpayPublicKey))
+	}
 
 	return handler
 }
