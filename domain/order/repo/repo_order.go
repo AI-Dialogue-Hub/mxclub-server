@@ -16,6 +16,7 @@ import (
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
+	"strings"
 	"time"
 )
 
@@ -229,6 +230,8 @@ func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
 	update.Set("order_status", enum.SUCCESS)
 	update.Set("executor_price", d.ExecutorPrice)
 	update.Set("cut_rate", d.CutRate)
+	// 增加订单快照
+	update.Set("snapshot", buildOrderSnapshot(d.OrderInfo))
 	if d.ExecutorNum == 2 {
 		if d.OrderInfo.Executor2Id >= 0 {
 			update.Set("executor2_price", d.ExecutorPrice)
@@ -240,6 +243,20 @@ func (repo OrderRepo) FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error {
 		update.Set("executor3_price", d.ExecutorPrice)
 	}
 	return repo.UpdateByWrapper(update)
+}
+
+func buildOrderSnapshot(order *po.Order) string {
+	stringBuilder := new(strings.Builder)
+	if order.ExecutorID >= 0 && order.ExecutorName != "" {
+		stringBuilder.WriteString(fmt.Sprintf("%v(%d):%v", order.ExecutorName, order.ExecutorID, order.ExecutorPrice))
+	}
+	if order.Executor2Id >= 0 && order.Executor2Name != "" {
+		stringBuilder.WriteString(fmt.Sprintf(", %v(%d):%v", order.Executor2Name, order.Executor2Id, order.Executor2Price))
+	}
+	if order.Executor3Id >= 0 && order.Executor3Name != "" {
+		stringBuilder.WriteString(fmt.Sprintf(", %v(%d):%v", order.Executor3Name, order.Executor3Id, order.Executor3Price))
+	}
+	return stringBuilder.String()
 }
 
 func (repo OrderRepo) QueryOrderByStatus(ctx jet.Ctx, status enum.OrderStatus) ([]*po.Order, error) {

@@ -43,6 +43,7 @@ type OrderVO struct {
 	CutRate            float64               `json:"cut_rate"`      // 抽成比例
 	IsEvaluation       bool                  `json:"is_evaluation"` // 是否完成评价
 	Visible            bool                  `json:"visible"`
+	Snapshot           string                `json:"snapshot"`        // 订单完成时候的快照
 	EvaluationInfo     map[int]*EvaluationVO `json:"evaluation_info"` // 评价信息 ExecutorID => evaluation
 }
 
