@@ -44,7 +44,8 @@ type Order struct {
 	CutRate            float64            `gorm:"column:cut_rate"`      // 抽成比例
 	IsEvaluation       bool               `gorm:"column:is_evaluation"` // 是否完成评价
 	OutRefundNo        string             `gorm:"column:out_refund_no"`
-	GrabAt             *time.Time         `gorm:"column:grab_at"` // 打手抢单时间点
+	Snapshot           string             `gorm:"column:snapshot"` // 订单完成时候的快照
+	GrabAt             *time.Time         `gorm:"column:grab_at"`  // 打手抢单时间点
 }
 
 // TableName sets the table name for the Order model.
