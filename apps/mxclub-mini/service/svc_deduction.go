@@ -48,7 +48,7 @@ var (
 // 2. 如果处罚没满五天，在第三天的时候，再次提醒用户一次，找客服解除处罚
 func (svc *OrderService) SyncDeductionInfo() {
 	defer utils.RecoverByPrefix(syncDeductionInfoLogger, "syncDeductionInfo")
-	// 1. 处罚记录超过五天的
+	// 1. 处罚记录超过指定天数的
 	deductions, err := svc.deductionRepo.FindDeDuctListBeyondDuration(deductionDDL)
 	if err != nil || len(deductions) <= 0 {
 		syncDeductionInfoLogger.Errorf("FindDeDuctListBeyondDuration ERROR:%v, deductions: %v", err, deductions)

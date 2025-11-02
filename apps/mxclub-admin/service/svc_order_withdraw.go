@@ -35,7 +35,7 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 	)
 
 	// 1. 并发查询所有打手的历史提现记录（限制每批次最多50个）
-	concurrencyLimit := 50
+	concurrencyLimit := 30
 	semaphore := make(chan struct{}, concurrencyLimit)
 
 	for index, dasher := range allDasherList {
