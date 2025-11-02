@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/pkg/errors"
 	"github.com/xuri/excelize/v2"
 	"mxclub/apps/mxclub-admin/config"
 	"mxclub/domain/order/entity/enum"
@@ -10,6 +11,7 @@ import (
 	"mxclub/domain/order/repo"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xmysql"
+	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
 	"time"
 )
@@ -41,6 +43,11 @@ type exportExcelDTO struct {
 
 func (svc ExcelService) ExportExcel(ctx jet.Ctx, startDate, endDate string) (err error) {
 	defer utils.RecoverAndLogError(ctx)
+	defer utils.TraceElapsed(ctx, "ExportExcel")()
+	// 防止同一时间多个用户同时导出
+	if err = xredis.Debounce("export_excel", time.Minute*5); err != nil {
+		return errors.New("正在有其他用户导出，五分钟内只允许一个用户进行导出")
+	}
 	var (
 		f         = excelize.NewFile()
 		logger    = ctx.Logger()
