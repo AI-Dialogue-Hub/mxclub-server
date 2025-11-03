@@ -66,9 +66,10 @@ type Config struct {
 }
 
 type Server struct {
-	Port    string   `yaml:"port" validate:"required"`
-	JwtKey  string   `yaml:"jwt_key" validate:"required"`
-	OpenApi []string `yaml:"open_api"`
+	Port             string   `yaml:"port" validate:"required"`
+	JwtKey           string   `yaml:"jwt_key" validate:"required"`
+	OpenApi          []string `yaml:"open_api"`
+	ConcurrencyLimit uint     `yaml:"concurrency_limit"` // 查询打手账单的并发限制
 }
 
 type File struct {

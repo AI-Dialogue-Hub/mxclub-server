@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"mxclub/apps/mxclub-admin/config"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	commonEnum "mxclub/domain/common/entity/enum"
@@ -35,7 +36,10 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 	)
 
 	// 1. 并发查询所有打手的历史提现记录（限制每批次最多50个）
-	concurrencyLimit := 30
+	concurrencyLimit := config.GetConfig().Server.ConcurrencyLimit
+	if concurrencyLimit <= 0 {
+		concurrencyLimit = 10
+	}
 	semaphore := make(chan struct{}, concurrencyLimit)
 
 	for index, dasher := range allDasherList {
