@@ -3,41 +3,43 @@ package enum
 type MiniConfigEnum string
 
 var (
-	Swiper              MiniConfigEnum = "swiper"
-	Notifications       MiniConfigEnum = "notifications"          // 通知栏
-	MyMessage           MiniConfigEnum = "mymessage"              // 我的消息
-	ProductType         MiniConfigEnum = "product_type"           // 我的消息
-	CutRate             MiniConfigEnum = "cut_rate"               // 抽成比例
-	DelayTime           MiniConfigEnum = "gold_order_delay_time"  // 非金牌单打手多久能看到单
-	DasherEvaluation    MiniConfigEnum = "dasher_evaluation"      // 打手评价
-	WarningInfo         MiniConfigEnum = "warningInfo"            // warningInfo
-	SellingPoint        MiniConfigEnum = "SellingPoint"           // 滚动卖点
-	WithdrawRangeMin    MiniConfigEnum = "WithdrawRangeMin"       // 滚动卖点
-	WithdrawRangeMax    MiniConfigEnum = "WithdrawRangeMax"       // 滚动卖点
-	SalesThreshold      MiniConfigEnum = "sales_threshold"        // 出销量热门标阈值
-	PayOrderWarningInfo MiniConfigEnum = "pay_order_warning_info" // 订单页面warning信息
-	OrderReward         MiniConfigEnum = "order_reward"           // 打赏金额
-	PayOrderFaker       MiniConfigEnum = "pay_order_faker"        // 打赏金额
-	TransferPenalty     MiniConfigEnum = "transfer_penalty"       // 打赏金额
+	Swiper                MiniConfigEnum = "swiper"
+	Notifications         MiniConfigEnum = "notifications"          // 通知栏
+	MyMessage             MiniConfigEnum = "mymessage"              // 我的消息
+	ProductType           MiniConfigEnum = "product_type"           // 我的消息
+	CutRate               MiniConfigEnum = "cut_rate"               // 抽成比例
+	DelayTime             MiniConfigEnum = "gold_order_delay_time"  // 非金牌单打手多久能看到单
+	DasherEvaluation      MiniConfigEnum = "dasher_evaluation"      // 打手评价
+	WarningInfo           MiniConfigEnum = "warningInfo"            // warningInfo
+	SellingPoint          MiniConfigEnum = "SellingPoint"           // 滚动卖点
+	WithdrawRangeMin      MiniConfigEnum = "WithdrawRangeMin"       // 滚动卖点
+	WithdrawRangeMax      MiniConfigEnum = "WithdrawRangeMax"       // 滚动卖点
+	SalesThreshold        MiniConfigEnum = "sales_threshold"        // 出销量热门标阈值
+	PayOrderWarningInfo   MiniConfigEnum = "pay_order_warning_info" // 订单页面warning信息
+	OrderReward           MiniConfigEnum = "order_reward"           // 打赏金额
+	PayOrderFaker         MiniConfigEnum = "pay_order_faker"        // 打赏金额
+	TransferPenalty       MiniConfigEnum = "transfer_penalty"       // 转单罚款
+	Default_corpid_config MiniConfigEnum = "default_corpid_config"  // 企业微信客服Id & 客服链接
 )
 
 var miniConfigEnumMap = map[MiniConfigEnum]string{
-	Swiper:              "轮播图",
-	Notifications:       "通知栏",
-	MyMessage:           "我的消息",
-	ProductType:         "商品类型",
-	CutRate:             "抽成比例(百分之多少，填整数，例如20)",
-	DelayTime:           "银牌打手、铜牌打手、普通打手延迟多久看到订单(例如：20 单位s), 一行一个",
-	DasherEvaluation:    "提示给用户看到评价信息",
-	WarningInfo:         "提示打手接单的信息",
-	SellingPoint:        "滚动卖点",
-	WithdrawRangeMin:    "最小提现阈值",
-	WithdrawRangeMax:    "最大提现阈值",
-	SalesThreshold:      "出销量热门标阈值",
-	PayOrderWarningInfo: "订单页面warning信息",
-	OrderReward:         "打赏金额(直接输入数字不要带单位)",
-	PayOrderFaker:       "假下单页面(1表示开启，其他为关闭)",
-	TransferPenalty:     "转单罚款",
+	Swiper:                "轮播图",
+	Notifications:         "通知栏",
+	MyMessage:             "我的消息",
+	ProductType:           "商品类型",
+	CutRate:               "抽成比例(百分之多少，填整数，例如20)",
+	DelayTime:             "银牌打手、铜牌打手、普通打手延迟多久看到订单(例如：20 单位s), 一行一个",
+	DasherEvaluation:      "提示给用户看到评价信息",
+	WarningInfo:           "提示打手接单的信息",
+	SellingPoint:          "滚动卖点",
+	WithdrawRangeMin:      "最小提现阈值",
+	WithdrawRangeMax:      "最大提现阈值",
+	SalesThreshold:        "出销量热门标阈值",
+	PayOrderWarningInfo:   "订单页面warning信息",
+	OrderReward:           "打赏金额(直接输入数字不要带单位)",
+	PayOrderFaker:         "假下单页面(1表示开启，其他为关闭)",
+	TransferPenalty:       "转单罚款",
+	Default_corpid_config: "企业微信客服Id",
 }
 
 func (m MiniConfigEnum) IsValid() bool {
