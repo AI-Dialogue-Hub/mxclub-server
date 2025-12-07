@@ -1,10 +1,6 @@
 package main
 
 import (
-	jetContext "github.com/fengyuan-liang/jet-web-fasthttp/core/context"
-	"github.com/fengyuan-liang/jet-web-fasthttp/core/router"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/valyala/fasthttp"
 	"mxclub/apps/mxclub-mini/config"
 	_ "mxclub/apps/mxclub-mini/controller"
 	_ "mxclub/apps/mxclub-mini/cron"
@@ -12,6 +8,11 @@ import (
 	_ "mxclub/apps/mxclub-mini/service"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/common/xmysql"
+
+	jetContext "github.com/fengyuan-liang/jet-web-fasthttp/core/context"
+	"github.com/fengyuan-liang/jet-web-fasthttp/core/router"
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/valyala/fasthttp"
 )
 
 func main() {

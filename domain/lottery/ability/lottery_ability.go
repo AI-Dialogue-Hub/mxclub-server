@@ -1,10 +1,6 @@
 package ability
 
 import (
-	"github.com/fengyuan-liang/GoKit/collection/stream"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/pkg/errors"
-	"gorm.io/gorm"
 	"mxclub/domain/lottery/entity/dto"
 	"mxclub/domain/lottery/entity/enum"
 	"mxclub/domain/lottery/po"
@@ -12,6 +8,11 @@ import (
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 	"slices"
+
+	"github.com/fengyuan-liang/GoKit/collection/stream"
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 func init() {
@@ -113,7 +114,7 @@ func (ability *LotteryAbility) DelPrize(ctx jet.Ctx, lotteryPrizeId uint) error 
 	// 2. 删除跟活动的关联关系
 	if err := ability.relationRepo.DelByPrizeId(ctx, lotteryPrizeId); err != nil {
 		ctx.Logger().Errorf("[LotteryAbility#DelPrize] err:%v", err)
-		if err != gorm.ErrRecordNotFound {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
 		}
 	}

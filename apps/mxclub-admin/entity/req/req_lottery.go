@@ -43,8 +43,8 @@ type LotteryActivityReq struct {
 	BackgroundImage     string                  `json:"background_image"`
 	ActivityRules       string                  `json:"activity_rules"`
 	PrizePoolID         *uint                   `json:"prize_pool_id"`
-	StartTime           time.Time               `json:"start_time"`
-	EndTime             time.Time               `json:"end_time"`
+	StartTime           *time.Time              `json:"start_time"`
+	EndTime             *time.Time              `json:"end_time"`
 	ParticipateTimes    int                     `json:"participate_times"`
 	ShareAddTimes       int                     `json:"share_add_times"`
 	TotalPrizeCount     *int                    `json:"total_prize_count"`

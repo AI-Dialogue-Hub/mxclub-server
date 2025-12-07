@@ -1,9 +1,10 @@
 package po
 
 import (
-	"gorm.io/gorm"
 	"mxclub/domain/lottery/entity/enum"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // LotteryActivity 抽奖活动表
@@ -21,8 +22,8 @@ type LotteryActivity struct {
 	BackgroundImage     string                  `gorm:"size:255" json:"background_image"`
 	ActivityRules       string                  `gorm:"type:text;not null" json:"activity_rules"`
 	PrizePoolID         *uint                   `json:"prize_pool_id"`
-	StartTime           time.Time               `gorm:"not null" json:"start_time"`
-	EndTime             time.Time               `gorm:"not null" json:"end_time"`
+	StartTime           *time.Time              `gorm:"not null" json:"start_time"` // 目前没有活动时间段的概念，不需要维护
+	EndTime             *time.Time              `gorm:"not null" json:"end_time"`   // 目前没有活动时间段的概念，不需要维护
 	ParticipateTimes    int                     `gorm:"default:1" json:"participate_times"`
 	ShareAddTimes       int                     `gorm:"default:0" json:"share_add_times"`
 	TotalPrizeCount     *int                    `json:"total_prize_count"`
