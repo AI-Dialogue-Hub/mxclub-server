@@ -3,10 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
-	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"math"
 	"mxclub/apps/mxclub-mini/config"
 	constantMini "mxclub/apps/mxclub-mini/entity/constant"
@@ -29,6 +25,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	traceUtil "github.com/fengyuan-liang/jet-web-fasthttp/pkg/utils"
+	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 
 	commonEnum "mxclub/domain/common/entity/enum"
 	commonRepo "mxclub/domain/common/repo"
@@ -396,6 +397,14 @@ func (svc *OrderService) Preferential(ctx jet.Ctx, productId uint) (result *vo.P
 
 func (svc *OrderService) Finish(ctx jet.Ctx, finishReq *req.OrderFinishReq) error {
 	orderPO, _ := svc.orderRepo.FindByID(finishReq.OrderId)
+	// 限制只能车头进行结束订单
+	if userPO, err := svc.userService.FindUserById(ctx, middleware.MustGetUserId(ctx)); err == nil && userPO != nil {
+		if userPO.MemberNumber != orderPO.ExecutorID {
+			ctx.Logger().Errorf("do finish order must be main dasher, currentUser:%v, mainDasherId:%v",
+				userPO.MemberNumber, orderPO.ExecutorID)
+			return errors.New("只能车头进行结单")
+		}
+	}
 	executorNum := 1
 	if orderPO.Executor2Id != -1 {
 		executorNum++
