@@ -2,13 +2,13 @@ package service
 
 import (
 	"errors"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/config"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
 	"mxclub/domain/lottery/ability"
 	lotteryPO "mxclub/domain/lottery/po"
 	"mxclub/domain/order/entity/enum"
+	orderPO "mxclub/domain/order/po"
 	"mxclub/domain/product/po"
 	"mxclub/domain/product/repo"
 	userPOInfo "mxclub/domain/user/po"
@@ -18,6 +18,8 @@ import (
 	"mxclub/pkg/utils"
 	"slices"
 	"sort"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
 func init() {
@@ -71,8 +73,20 @@ func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) 
 	// 设置用户手机号
 	productVO.Phone = userPO.Phone
 
-	// 设置用户游戏Id
-	productVO.GameId = userPO.GameId
+	// 设置用户Id和gameId
+	if gameId, err := orderPO.ExtractID(userPO.GameId); err == nil {
+		productVO.GameId = gameId
+	} else {
+		ctx.Logger().Errorf("cannot extract game id, err:%v", err)
+		productVO.GameId = userPO.GameId
+	}
+
+	if roleId, err := orderPO.ExtractRole(userPO.GameId); err == nil {
+		productVO.RoleId = roleId
+	} else {
+		ctx.Logger().Errorf("cannot extract role id, err:%v", err)
+		productVO.RoleId = userPO.GameId
+	}
 
 	// 订单金额大于100才设置折扣
 	if productVO.Price > 100 {

@@ -21,7 +21,7 @@ type OrderReq struct {
 	ProductId       uint   `json:"product_id"`
 	Phone           string `json:"phone"`
 	SpecifyExecutor bool   `json:"specify_executor"`
-	RoleId          string `json:"role_id"`
+	RoleId          string `json:"role_id"` // 包含id和角色
 	OrderName       string `json:"order_name"`
 	OrderIcon       string `json:"order_icon"`
 	OrderTradeNo    string `json:"out_trade_no"`
