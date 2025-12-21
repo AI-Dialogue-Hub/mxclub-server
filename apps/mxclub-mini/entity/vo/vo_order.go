@@ -51,6 +51,7 @@ type ProductVO struct {
 	DiscountPrice    float64            `json:"discount_price"`
 	FinalPrice       float64            `json:"final_price"`
 	Description      string             `json:"description"`
+	IsRichText       bool               `json:"isRichText"`
 	ShortDescription string             `json:"short_description"`
 	Images           xmysql.StringArray `json:"images"`
 	DetailImages     xmysql.StringArray `json:"detail_images"`

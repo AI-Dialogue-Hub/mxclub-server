@@ -5,6 +5,7 @@ import (
 	"mxclub/apps/mxclub-mini/config"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
+	miniUtil "mxclub/apps/mxclub-mini/utils"
 	"mxclub/domain/lottery/ability"
 	lotteryPO "mxclub/domain/lottery/po"
 	"mxclub/domain/order/entity/enum"
@@ -62,7 +63,15 @@ func (svc ProductService) FindById(ctx jet.Ctx, id uint) (*vo.ProductVO, error) 
 	}
 
 	// 拼接 Description 字段
-	productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
+	//productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
+	if miniUtil.IsRichText(productVO.Description) {
+		if enhanced := miniUtil.RepairRichTextEnhanced(productVO.Description); enhanced != "" {
+			productVO.Description = `<p>` + productVO.ShortDescription + `</p>` + enhanced
+			productVO.IsRichText = true
+		}
+	} else {
+		productVO.Description = productVO.ShortDescription + "\n" + productVO.Description
+	}
 
 	// 查找用户信息
 	userPO, err := svc.userRepo.FindByIdAroundCache(ctx, middleware.MustGetUserId(ctx))
