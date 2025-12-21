@@ -58,6 +58,9 @@ type LotteryActivityVO struct {
 	DisplayOrder        int                     `json:"display_order"`
 	IsFeatured          bool                    `json:"is_featured"`
 	IsHot               bool                    `json:"is_hot"`
+	// 用户信息
+	Phone  string `json:"phone"`
+	RoleId string `json:"role_id"` // 打手Id
 }
 
 // LotteryVO 抽奖结果

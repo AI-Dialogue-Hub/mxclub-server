@@ -2,8 +2,6 @@ package service
 
 import (
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/pkg/errors"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/entity/vo"
 	"mxclub/apps/mxclub-mini/middleware"
@@ -22,6 +20,9 @@ import (
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
 	"time"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -85,6 +86,9 @@ func (svc *LotteryService) ListLotteryPrize(ctx jet.Ctx, params *api.PageParams)
 }
 
 func (svc *LotteryService) FindActivityPrizeByActivityId(ctx jet.Ctx, activityId int) (*vo.LotteryActivityPrizeVO, error) {
+	var (
+		userId = middleware.MustGetUserId(ctx)
+	)
 	data, err := svc.lotteryAbility.FindActivityPrizeByActivityId(ctx, uint(activityId))
 	if err != nil {
 		return nil, errors.New("活动获取错误")
@@ -103,6 +107,11 @@ func (svc *LotteryService) FindActivityPrizeByActivityId(ctx jet.Ctx, activityId
 				prizeVO.PrizeInfo = product.Description
 			}
 		}
+	}
+	// 携带用户电话和角色信息
+	if userPO, err := svc.userRepo.FindByID(userId); err == nil && userPO != nil {
+		activityPrizeVO.LotteryActivity.Phone = userPO.Phone
+		activityPrizeVO.LotteryActivity.RoleId = userPO.GameId
 	}
 	return activityPrizeVO, nil
 }

@@ -2,9 +2,10 @@ package utils
 
 import (
 	"bytes"
+	"strings"
+
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	jsoniter "github.com/json-iterator/go"
-	"strings"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -135,10 +136,7 @@ func MustMapToObj[T any](maps map[string]any) *T {
 	t := new(T)
 	err = json.Unmarshal(buf, t)
 	if err != nil {
-		if err != nil {
-			xlog.Errorf("MustMapToObj:%v", err)
-			return nil
-		}
+		xlog.Errorf("MustMapToObj:%v", err)
 		return nil
 	}
 	return t
