@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	constantMini "mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/req"
 	"mxclub/apps/mxclub-mini/middleware"
@@ -12,23 +11,40 @@ import (
 	"mxclub/domain/order/po"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
+	"time"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
-func (svc *OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.EvaluationReq) error {
+const maxEvaluationHours = 24 * 3
 
+func (svc *OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.EvaluationReq) error {
+	var (
+		orderId = evaluationReq.OrderID
+	)
 	// 防抖
 	if err := xredis.DebounceForOneDay(
-		fmt.Sprintf("orderId_%v_executorId_%v", evaluationReq.OrderID, evaluationReq.ExecutorID),
+		fmt.Sprintf("orderId_%v_executorId_%v", orderId, evaluationReq.ExecutorID),
 	); err != nil {
 		ctx.Logger().Errorf("duplicated evaluation,evaluationReq => %v", utils.ObjToJsonStr(evaluationReq))
 		return errors.New("已评价成功")
+	}
+
+	// 如果订单超过三天就无法进行评价
+	if orderPO, err := svc.orderRepo.FindByOrderOrOrdersId(ctx, orderId); err == nil && orderPO != nil {
+		if orderPO.CompletionDate == nil {
+			return errors.New("订单完成时间为空")
+		}
+		if time.Now().Sub(*orderPO.CompletionDate).Hours() > maxEvaluationHours {
+			return errors.New("订单完成已经超过三天，无法进行评价")
+		}
 	}
 
 	var evaluationList = make([]*po.OrderEvaluation, 0)
 
 	evaluation1 := &po.OrderEvaluation{
 		OrdersID:   evaluationReq.OrdersID,
-		OrderID:    uint64(evaluationReq.OrderID),
+		OrderID:    uint64(orderId),
 		ExecutorID: evaluationReq.ExecutorID,
 		Rating:     evaluationReq.Rating,
 		Comments:   evaluationReq.Comments,
@@ -40,7 +56,7 @@ func (svc *OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluatio
 	if evaluationReq.Executor2ID >= 0 && evaluationReq.Rating2 > 0 {
 		evaluation2 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
-			OrderID:    uint64(evaluationReq.OrderID),
+			OrderID:    uint64(orderId),
 			ExecutorID: evaluationReq.Executor2ID,
 			Rating:     evaluationReq.Rating2,
 			Comments:   evaluationReq.Comments2,
@@ -51,7 +67,7 @@ func (svc *OrderService) AddEvaluation(ctx jet.Ctx, evaluationReq *req.Evaluatio
 	if evaluationReq.Executor3ID >= 0 && evaluationReq.Rating3 > 0 {
 		evaluation3 := &po.OrderEvaluation{
 			OrdersID:   evaluationReq.OrdersID,
-			OrderID:    uint64(evaluationReq.OrderID),
+			OrderID:    uint64(orderId),
 			ExecutorID: evaluationReq.Executor3ID,
 			Rating:     evaluationReq.Rating3,
 			Comments:   evaluationReq.Comments3,

@@ -834,7 +834,7 @@ func (svc *OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
 	}
 	// 3. 发消息，已提交提现申请
 	message := fmt.Sprintf("您提现申请已发起，管理员会在3个工作日内处理，"+
-		"您也可以联系管理员进行审批，提现金额为：%v元，请带图联系董事长现结，勿催", drawReq.Amount)
+		"您也可以联系管理员进行审批，提现金额为：%v元，请等待发放，请勿催促", drawReq.Amount)
 	_ = svc.messageService.PushSystemMessage(ctx, userId, message)
 	return nil
 }
