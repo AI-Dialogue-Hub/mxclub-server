@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-mini/entity/constant"
 	"mxclub/apps/mxclub-mini/entity/dto"
 	"mxclub/apps/mxclub-mini/entity/req"
@@ -14,6 +13,8 @@ import (
 	"mxclub/domain/message/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
 func init() {
@@ -96,6 +97,7 @@ func (svc MessageService) PushRemoveMessage(ctx jet.Ctx, ordersId uint, messageT
 }
 
 func (svc MessageService) RemoveAllMessage(ctx jet.Ctx) error {
+	// 如果存在打手Id 说明是后面打手进行注册然后清理的
 	if _, exists := ctx.Get(constant.LOGOUT_DASHER_ID); exists {
 		return nil
 	}

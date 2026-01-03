@@ -62,3 +62,4 @@ jobs:
             sleep 60  # 等待60秒
             sh /home/lfy/workspace/script/mx-delta-deploy.sh fengyuan-liang mxclub-admin 8004 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
             # sh /home/lfy/workspace/script/baozao-deploy.sh fengyuan-liang mxclub-admin 8002 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
+            sh /home/lfy/workspace/script/cloud-delta-deploy.sh fengyuan-liang mxclub-admin 8005 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
