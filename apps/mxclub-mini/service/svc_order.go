@@ -493,6 +493,7 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 		orders           []*po.Order
 		err              error
 		defaultDelayTime = 20 // 默认delay 20s
+		userId           = middleware.MustGetUserId(ctx)
 	)
 	fetchDelayTime := func(index int) (delayDate time.Time) {
 		if r := recover(); r != nil {
@@ -508,30 +509,32 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 			ctx.Logger().Infof("fetch delayTime error, set default value %v", defaultDelayTime)
 			delayTime = defaultDelayTime
 		}
+		ctx.Logger().Infof("index=%v, fetch delayTime %v", index, delayTime)
 		delayDuration := time.Now().Add(-time.Second * time.Duration(delayTime))
 		return delayDuration
 	}
 	// 1. 获取金牌打手提前看到订单时间
-	dasher, _ := svc.userService.FindUserById(ctx, middleware.MustGetUserId(ctx))
+	dasher, _ := svc.userService.FindUserById(ctx, userId)
 	// 金牌打手可以及时看到所有订单
 	if dasher.DasherLevel == userEnum.DasherLevel_Gold {
 		orders, err = svc.orderRepo.QueryOrderByStatus(ctx, enum.PROCESSING)
 	} else if dasher.DasherLevel == userEnum.DasherLevel_Silver {
 		// 银牌打手延迟多久看到订单
 		silverDasherDelayTime := fetchDelayTime(0)
-		ctx.Logger().Infof("silverDasherDelayTime:%v", silverDasherDelayTime)
+		ctx.Logger().Infof("silver_silverDasherDelayTime:%v", silverDasherDelayTime)
 		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, silverDasherDelayTime)
 	} else if dasher.DasherLevel == userEnum.DasherLevel_Bronze {
 		// 铜牌打手延迟多久看到订单
 		dasherDelayTime := fetchDelayTime(1)
-		ctx.Logger().Infof("silverDasherDelayTime:%v", dasherDelayTime)
+		ctx.Logger().Infof("bronze_silverDasherDelayTime:%v", dasherDelayTime)
 		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, dasherDelayTime)
 	} else {
 		// 其他打手
 		dasherDelayTime := fetchDelayTime(2)
-		ctx.Logger().Infof("silverDasherDelayTime:%v", dasherDelayTime)
+		ctx.Logger().Infof("other_silverDasherDelayTime:%v", dasherDelayTime)
 		orders, err = svc.orderRepo.QueryOrderWithDelayTime(ctx, enum.PROCESSING, dasherDelayTime)
 	}
+	ctx.Logger().Infof("userId %v", userId)
 	if err != nil {
 		ctx.Logger().Errorf("[GetProcessingOrderList]ERROR: %v", err.Error())
 		return nil, errors.New("订单查询失败，请联系客服")
