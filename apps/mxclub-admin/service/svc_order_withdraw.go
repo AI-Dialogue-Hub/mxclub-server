@@ -112,6 +112,9 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 		return nil, errors.New("批量查询罚款金额失败")
 	}
 
+	// 获取提现范围
+	minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
+
 	// 3. 组装结果
 	withDrawVOList := make([]*vo.HistoryWithDrawVO, 0, len(allDasherList))
 	for _, dasher := range allDasherList {
@@ -132,9 +135,6 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 		// 计算可提现金额
 		withdrawAbleAmount := utils.RoundToTwoDecimalPlaces(
 			orderWithdrawAbleAmount + rewardAmount - withdrawnAmount - totalDeduct)
-
-		// 获取提现范围
-		minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
 
 		withDrawVOList = append(withDrawVOList, &vo.HistoryWithDrawVO{
 			WithDrawVO: &vo.WithDrawVO{

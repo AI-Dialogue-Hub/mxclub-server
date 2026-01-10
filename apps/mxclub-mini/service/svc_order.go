@@ -504,7 +504,7 @@ func (svc *OrderService) GetProcessingOrderList(ctx jet.Ctx) ([]*vo.OrderVO, err
 		var delayTime int
 		configByName, _ := svc.commonRepo.FindConfigByName(ctx, commonEnum.DelayTime.String())
 		if configByName != nil && len(configByName.Content) >= index && configByName.Content[index]["desc"] != nil {
-			delayTime = utils.SafeParseNumber[int](configByName.Content[0]["desc"])
+			delayTime = utils.SafeParseNumber[int](configByName.Content[index]["desc"])
 		} else {
 			ctx.Logger().Infof("fetch delayTime error, set default value %v", defaultDelayTime)
 			delayTime = defaultDelayTime
