@@ -20,6 +20,9 @@ func init() {
 type IDeductionRepo interface {
 	xmysql.IBaseRepo[po.Deduction]
 	TotalDeduct(ctx jet.Ctx, userId uint) (float64, error)
+	// BatchTotalDeductByUserIds 批量查询用户的罚款金额
+	// @return map[userId]罚款金额
+	BatchTotalDeductByUserIds(ctx jet.Ctx, userIds []uint) (map[uint]float64, error)
 	ListDeduction(ctx jet.Ctx, d *dto.DeductionDTO) ([]*po.Deduction, int64, error)
 	FindDeDuctListBeyondDuration(duration time.Duration) ([]*po.Deduction, error)
 	// FindDeDuctListWithDurations 获取指定时间段超时的处罚记录
@@ -58,6 +61,42 @@ func (repo DeductionRepo) TotalDeduct(ctx jet.Ctx, userId uint) (float64, error)
 		ctx.Logger().Errorf("[DeductionRepo]TotalDeduct ERROR:%v", err)
 		return 0, err
 	}
+	return result, nil
+}
+
+func (repo DeductionRepo) BatchTotalDeductByUserIds(ctx jet.Ctx, userIds []uint) (map[uint]float64, error) {
+	if len(userIds) == 0 {
+		return make(map[uint]float64), nil
+	}
+
+	result := make(map[uint]float64)
+	for _, userId := range userIds {
+		result[userId] = 0
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT user_id, COALESCE(SUM(amount), 0) AS total_amount
+		FROM %s
+		WHERE user_id IN (?) AND status = ? AND deleted_at IS NULL
+		GROUP BY user_id`,
+		repo.ModelPO.TableName(),
+	)
+
+	type Result struct {
+		UserID      uint
+		TotalAmount float64
+	}
+
+	var results []Result
+	if err := repo.DB().Raw(sql, userIds, enum.Deduct_SUCCESS).Scan(&results).Error; err != nil {
+		ctx.Logger().Errorf("[BatchTotalDeductByUserIds] ERROR:%v", err)
+		return nil, err
+	}
+
+	for _, r := range results {
+		result[r.UserID] = r.TotalAmount
+	}
+
 	return result, nil
 }
 

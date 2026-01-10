@@ -3,15 +3,16 @@ package repo
 import (
 	"context"
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"gorm.io/gorm"
 	"mxclub/domain/order/entity/dto"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/common/xmysql"
 	"strings"
 	"time"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"gorm.io/gorm"
 )
 
 func init() {
@@ -28,6 +29,9 @@ type IWithdrawalRepo interface {
 	// ApproveWithdrawnAmountByDasherIds 打手们运行提现的钱
 	// @return 打手id -> 可以提现的钱
 	ApproveWithdrawnAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, error)
+	// BatchWithdrawAmountByDasherIds 批量查询所有打手的提现金额（成功和进行中）
+	// @return map[dasherId]已提现金额, map[dasherId]已成功提现金额
+	BatchWithdrawAmountByDasherIds(ctx jet.Ctx, dasherIds []int) (map[int]float64, map[int]float64, error)
 	RemoveWithdrawalRecord(ctx jet.Ctx, userId uint) error
 	RemoveWithdrawalRecordByDasherId(ctx jet.Ctx, dasherId int) error
 	// FindWithdrawnWithDuration 查找指定日期的提现记录
@@ -190,4 +194,61 @@ func (repo WithdrawalRepo) FindWithdrawnByStatus(
 		return nil, err
 	}
 	return records, nil
+}
+
+func (repo WithdrawalRepo) BatchWithdrawAmountByDasherIds(
+	ctx jet.Ctx, dasherIds []int) (map[int]float64, map[int]float64, error) {
+	if len(dasherIds) == 0 {
+		return make(map[int]float64), make(map[int]float64), nil
+	}
+
+	// 初始化结果map
+	withdrawnAmounts := make(map[int]float64) // 已提现金额（非拒绝）
+	approvedAmounts := make(map[int]float64)  // 已成功提现金额
+
+	// 批量查询：一次SQL获取所有数据
+	sql := `SELECT dasher_id, withdrawal_status, COALESCE(SUM(withdrawal_amount), 0) AS amount
+			FROM withdrawal_records
+			WHERE dasher_id IN (?) AND deleted_at IS NULL
+			GROUP BY dasher_id, withdrawal_status`
+
+	type Result struct {
+		DasherID         int
+		WithdrawalStatus string
+		Amount           float64
+	}
+
+	var results []Result
+	if err := repo.DB().Raw(sql, dasherIds).Scan(&results).Error; err != nil {
+		ctx.Logger().Errorf("[BatchWithdrawAmountByDasherIds] ERROR:%v", err.Error())
+		return nil, nil, err
+	}
+
+	// 分类统计
+	for _, r := range results {
+		if _, exists := withdrawnAmounts[r.DasherID]; !exists {
+			withdrawnAmounts[r.DasherID] = 0
+			approvedAmounts[r.DasherID] = 0
+		}
+
+		// 累加已提现金额（非拒绝状态）
+		if r.WithdrawalStatus != enum.Reject() {
+			withdrawnAmounts[r.DasherID] += r.Amount
+		}
+
+		// 累加已成功提现金额
+		if r.WithdrawalStatus == string(enum.Completed()) {
+			approvedAmounts[r.DasherID] += r.Amount
+		}
+	}
+
+	// 确保所有打手都有记录（即使是0）
+	for _, dasherId := range dasherIds {
+		if _, exists := withdrawnAmounts[dasherId]; !exists {
+			withdrawnAmounts[dasherId] = 0
+			approvedAmounts[dasherId] = 0
+		}
+	}
+
+	return withdrawnAmounts, approvedAmounts, nil
 }

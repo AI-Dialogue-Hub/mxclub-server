@@ -3,8 +3,6 @@ package service
 import (
 	"cmp"
 	"errors"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"mxclub/apps/mxclub-admin/config"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	commonEnum "mxclub/domain/common/entity/enum"
@@ -14,9 +12,11 @@ import (
 	"mxclub/pkg/utils"
 	"slices"
 	"sync"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
-// AllDasherHistoryWithDrawAmount 导出所有打手的订单金额记录
+// AllDasherHistoryWithDrawAmount 导出所有打手的订单金额记录（优化版：使用批量查询）
 func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.HistoryWithDrawVO, error) {
 	defer utils.TraceElapsed(ctx, "AllDasherHistoryWithDrawAmount")()
 
@@ -30,61 +30,132 @@ func (svc *OrderService) AllDasherHistoryWithDrawAmount(ctx jet.Ctx) ([]*vo.Hist
 	}
 	ctx.Logger().Infof("find dasher count is %v", count)
 
+	if len(allDasherList) == 0 {
+		return []*vo.HistoryWithDrawVO{}, nil
+	}
+
+	// 1. 准备批量查询所需的ID列表
+	dasherIds := make([]int, 0, len(allDasherList))
+	userIds := make([]uint, 0, len(allDasherList))
+	dasherNumberToUser := make(map[uint]*po.User) // dasherNumber -> User
+
+	for _, dasher := range allDasherList {
+		if dasher.MemberNumber < 0 {
+			continue
+		}
+		dasherIds = append(dasherIds, dasher.MemberNumber)
+		userIds = append(userIds, dasher.ID)
+		dasherNumberToUser[uint(dasher.MemberNumber)] = dasher
+	}
+
+	// 2. 并发批量查询所有数据
 	var (
-		withDrawVOList = make([]*vo.HistoryWithDrawVO, len(allDasherList))
-		wg             = new(sync.WaitGroup)
+		withdrawnAmounts map[int]float64  // 已提现金额（非拒绝）
+		approvedAmounts  map[int]float64  // 已成功提现金额
+		orderAmounts     map[int]float64  // 订单可提现金额
+		rewardAmounts    map[uint]float64 // 打赏金额
+		deductAmounts    map[uint]float64 // 罚款金额
+		wg               = new(sync.WaitGroup)
+		errWithdrawn     error
+		errOrder         error
+		errReward        error
+		errDeduct        error
 	)
 
-	// 1. 并发查询所有打手的历史提现记录（限制每批次最多50个）
-	concurrencyLimit := config.GetConfig().Server.ConcurrencyLimit
-	if concurrencyLimit <= 0 {
-		concurrencyLimit = 10
-	}
-	semaphore := make(chan struct{}, concurrencyLimit)
+	wg.Add(4)
 
-	for index, dasher := range allDasherList {
-		wg.Add(1)
-		semaphore <- struct{}{} // 获取信号量
+	// 批量查询提现金额
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		defer wg.Done()
+		withdrawnAmounts, approvedAmounts, errWithdrawn = svc.withdrawRepo.BatchWithdrawAmountByDasherIds(ctx, dasherIds)
+	}()
 
-		go func(idx int, finalDasher *po.User) {
-			defer utils.RecoverAndLogError(ctx)
-			defer wg.Done()
-			defer func() { <-semaphore }() // 释放信号量
+	// 批量查询订单金额
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		defer wg.Done()
+		orderAmounts, errOrder = svc.orderRepo.BatchOrderWithdrawAbleAmount(ctx, dasherIds)
+	}()
 
-			if finalDasher.MemberNumber < 0 {
-				ctx.Logger().Warnf("invalid MemberNumber: %d", finalDasher.MemberNumber)
-				return
-			}
+	// 批量查询打赏金额
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		defer wg.Done()
+		rewardAmounts, errReward = svc.rewardRecordRepo.BatchRewardAmountByDasherIds(ctx, userIds)
+	}()
 
-			drawAmount, err := svc.HistoryWithDrawAmount(ctx, &req.HistoryWithDrawAmountReq{UserId: finalDasher.ID})
-			if err != nil {
-				ctx.Logger().Errorf("HistoryWithDrawAmount failed for user %d: %v", finalDasher.ID, err)
-				return
-			}
+	// 批量查询罚款金额
+	go func() {
+		defer utils.RecoverAndLogError(ctx)
+		defer wg.Done()
+		deductAmounts, errDeduct = svc.deductionRepo.BatchTotalDeductByUserIds(ctx, userIds)
+	}()
 
-			withDrawVOList[idx] = &vo.HistoryWithDrawVO{
-				WithDrawVO: drawAmount,
-				DasherID:   uint(finalDasher.MemberNumber),
-				DasherName: finalDasher.Name,
-			}
-		}(index, dasher)
-	}
 	wg.Wait()
+
+	// 检查错误
+	if errWithdrawn != nil {
+		ctx.Logger().Errorf("[AllDasherHistoryWithDrawAmount] BatchWithdrawAmountByDasherIds error: %v", errWithdrawn)
+		return nil, errors.New("批量查询提现金额失败")
+	}
+	if errOrder != nil {
+		ctx.Logger().Errorf("[AllDasherHistoryWithDrawAmount] BatchOrderWithdrawAbleAmount error: %v", errOrder)
+		return nil, errors.New("批量查询订单金额失败")
+	}
+	if errReward != nil {
+		ctx.Logger().Errorf("[AllDasherHistoryWithDrawAmount] BatchRewardAmountByDasherIds error: %v", errReward)
+		return nil, errors.New("批量查询打赏金额失败")
+	}
+	if errDeduct != nil {
+		ctx.Logger().Errorf("[AllDasherHistoryWithDrawAmount] BatchTotalDeductByUserIds error: %v", errDeduct)
+		return nil, errors.New("批量查询罚款金额失败")
+	}
+
+	// 3. 组装结果
+	withDrawVOList := make([]*vo.HistoryWithDrawVO, 0, len(allDasherList))
+	for _, dasher := range allDasherList {
+		if dasher.MemberNumber < 0 {
+			continue
+		}
+
+		dasherId := dasher.MemberNumber
+		dasherNumber := uint(dasherId)
+
+		// 获取各项金额
+		approveWithdrawnAmount := utils.RoundToTwoDecimalPlaces(approvedAmounts[dasherId])
+		orderWithdrawAbleAmount := utils.RoundToTwoDecimalPlaces(orderAmounts[dasherId])
+		rewardAmount := utils.RoundToTwoDecimalPlaces(rewardAmounts[dasher.ID])
+		withdrawnAmount := utils.RoundToTwoDecimalPlaces(withdrawnAmounts[dasherId])
+		totalDeduct := utils.RoundToTwoDecimalPlaces(deductAmounts[dasher.ID])
+
+		// 计算可提现金额
+		withdrawAbleAmount := utils.RoundToTwoDecimalPlaces(
+			orderWithdrawAbleAmount + rewardAmount - withdrawnAmount - totalDeduct)
+
+		// 获取提现范围
+		minRangeNum, maxRangeNum := svc.fetchWithDrawRange(ctx)
+
+		withDrawVOList = append(withDrawVOList, &vo.HistoryWithDrawVO{
+			WithDrawVO: &vo.WithDrawVO{
+				HistoryWithDrawAmount: approveWithdrawnAmount,
+				WithdrawAbleAmount:    withdrawAbleAmount,
+				WithdrawRangeMax:      float64(maxRangeNum),
+				WithdrawRangeMin:      float64(minRangeNum),
+			},
+			DasherID:   dasherNumber,
+			DasherName: dasher.Name,
+		})
+	}
 
 	ctx.Logger().Infof("withDrawVOList count is %v", len(withDrawVOList))
 
-	// 2. 过滤无效数据
-	filterWithDrawVOList := utils.Filter(withDrawVOList, func(in *vo.HistoryWithDrawVO) bool {
-		return in != nil && in.DasherID >= 0
-	})
-	ctx.Logger().Infof("filterWithDrawVOList count is %v", len(filterWithDrawVOList))
-
-	// 3. 按 DasherID 排序
-	slices.SortFunc(filterWithDrawVOList, func(a, b *vo.HistoryWithDrawVO) int {
+	// 4. 按 DasherID 排序
+	slices.SortFunc(withDrawVOList, func(a, b *vo.HistoryWithDrawVO) int {
 		return cmp.Compare(a.DasherID, b.DasherID)
 	})
 
-	return filterWithDrawVOList, nil
+	return withDrawVOList, nil
 }
 
 func (svc *OrderService) HistoryWithDrawAmount(ctx jet.Ctx, req *req.HistoryWithDrawAmountReq) (*vo.WithDrawVO, error) {

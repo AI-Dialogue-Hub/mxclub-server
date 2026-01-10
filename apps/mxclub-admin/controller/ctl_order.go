@@ -1,12 +1,13 @@
 package controller
 
 import (
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/service"
 	"mxclub/pkg/api"
 	"mxclub/pkg/common/xjet"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
 func init() {

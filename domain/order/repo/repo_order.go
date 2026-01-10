@@ -32,6 +32,9 @@ type IOrderRepo interface {
 		ge, le string, status enum.OrderStatus, orderId, executorId int) ([]*po.Order, int64, error)
 	// OrderWithdrawAbleAmount 查询打手获得的总金额
 	OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float64, error)
+	// BatchOrderWithdrawAbleAmount 批量查询打手可提现的订单金额
+	// @return map[dasherId]可提现金额
+	BatchOrderWithdrawAbleAmount(ctx jet.Ctx, dasherIds []int) (map[int]float64, error)
 	TotalSpent(ctx jet.Ctx, userId uint) (float64, error)
 	FinishOrder(ctx jet.Ctx, d *dto.FinishOrderDTO) error
 	// FindByOrderId orderId 订单流水号
@@ -205,6 +208,53 @@ func (repo OrderRepo) OrderWithdrawAbleAmount(ctx jet.Ctx, dasherId int) (float6
 	// 计算总金额
 	totalAmount = amount1 + amount2 + amount3
 	return totalAmount, nil
+}
+
+func (repo OrderRepo) BatchOrderWithdrawAbleAmount(ctx jet.Ctx, dasherIds []int) (map[int]float64, error) {
+	if len(dasherIds) == 0 {
+		return make(map[int]float64), nil
+	}
+
+	result := make(map[int]float64)
+	for _, dasherId := range dasherIds {
+		result[dasherId] = 0
+	}
+
+	// 使用UNION ALL一次性查询所有executor位置
+	sql := `
+		SELECT dasher_id, COALESCE(SUM(amount), 0) AS total_amount
+		FROM (
+			SELECT executor_id AS dasher_id, executor_price AS amount
+			FROM orders
+			WHERE executor_id IN (?) AND order_status = ? AND deleted_at IS NULL
+			UNION ALL
+			SELECT executor2_id AS dasher_id, executor2_price AS amount
+			FROM orders
+			WHERE executor2_id IN (?) AND order_status = ? AND deleted_at IS NULL
+			UNION ALL
+			SELECT executor3_id AS dasher_id, executor3_price AS amount
+			FROM orders
+			WHERE executor3_id IN (?) AND order_status = ? AND deleted_at IS NULL
+		) AS combined
+		GROUP BY dasher_id
+	`
+
+	type Result struct {
+		DasherID    int
+		TotalAmount float64
+	}
+
+	var results []Result
+	if err := repo.DB().Raw(sql, dasherIds, enum.SUCCESS, dasherIds, enum.SUCCESS, dasherIds, enum.SUCCESS).Scan(&results).Error; err != nil {
+		ctx.Logger().Errorf("[BatchOrderWithdrawAbleAmount] ERROR:%v", err)
+		return nil, err
+	}
+
+	for _, r := range results {
+		result[r.DasherID] = r.TotalAmount
+	}
+
+	return result, nil
 }
 
 func (repo OrderRepo) TotalSpent(ctx jet.Ctx, userId uint) (float64, error) {

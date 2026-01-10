@@ -23,6 +23,9 @@ type IRewardRecordRepo interface {
 	UpdateRewardStatus(ctx jet.Ctx, outTradeNo string, status enum.OrderStatus) error
 	// AllRewardAmountByDasherId 查询所有打赏的钱，使用db id进行定位
 	AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber uint) (float64, error)
+	// BatchRewardAmountByDasherIds 批量查询打手的打赏金额
+	// @return map[dasherNumber]打赏金额
+	BatchRewardAmountByDasherIds(ctx jet.Ctx, dasherNumbers []uint) (map[uint]float64, error)
 	ListNoCountDuration(ctx jet.Ctx, startDateStr, endDateStr string, status enum.OrderStatus) ([]*po.RewardRecord, error)
 	// ClearAllRewardByDasherId 清理打手所有打赏信息 dasherNumber db id
 	ClearAllRewardByDasherId(ctx jet.Ctx, dasherId any, dasherNumber any) error
@@ -108,6 +111,39 @@ func (repo RewardRepoImpl) AllRewardAmountByDasherId(ctx jet.Ctx, dasherNumber u
 		return 0, err
 	}
 	return rewardAmount, nil
+}
+
+func (repo RewardRepoImpl) BatchRewardAmountByDasherIds(ctx jet.Ctx, dasherNumbers []uint) (map[uint]float64, error) {
+	if len(dasherNumbers) == 0 {
+		return make(map[uint]float64), nil
+	}
+
+	result := make(map[uint]float64)
+	for _, dasherNumber := range dasherNumbers {
+		result[dasherNumber] = 0
+	}
+
+	sql := `SELECT dasher_number, COALESCE(SUM(reward_amount), 0) AS reward_amount
+			FROM reward_records
+			WHERE dasher_number IN (?) AND deleted_at IS NULL
+			GROUP BY dasher_number`
+
+	type Result struct {
+		DasherNumber uint
+		RewardAmount float64
+	}
+
+	var results []Result
+	if err := repo.DB().Raw(sql, dasherNumbers).Scan(&results).Error; err != nil {
+		ctx.Logger().Errorf("[BatchRewardAmountByDasherIds] ERROR:%v", err)
+		return nil, err
+	}
+
+	for _, r := range results {
+		result[r.DasherNumber] = r.RewardAmount
+	}
+
+	return result, nil
 }
 
 func (repo RewardRepoImpl) FindByOutTradeNo(ctx jet.Ctx, outTradeNo string) (*po.RewardRecord, error) {
