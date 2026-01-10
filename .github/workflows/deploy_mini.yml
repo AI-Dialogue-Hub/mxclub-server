@@ -61,6 +61,5 @@ jobs:
             sh /home/lfy/workspace/script/real-deploy.sh fengyuan-liang mxclub-mini 8011 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
             sleep 60  # 等待60秒
             sh /home/lfy/workspace/script/mx-delta-deploy.sh fengyuan-liang mxclub-mini 8012 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
-#             云边电竞
-            sh /home/lfy/workspace/script/cloud-delta-deploy.sh fengyuan-liang mxclub-mini 8013 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
+#            sh /home/lfy/workspace/script/cloud-delta-deploy.sh fengyuan-liang mxclub-mini 8013 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
 #               sh /home/lfy/workspace/script/baozao-deploy.sh fengyuan-liang mxclub-mini 8010 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
