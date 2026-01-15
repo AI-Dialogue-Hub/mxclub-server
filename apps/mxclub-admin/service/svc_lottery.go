@@ -1,9 +1,6 @@
 package service
 
 import (
-	"github.com/fengyuan-liang/GoKit/collection/stream"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/pkg/errors"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/domain/lottery/ability"
@@ -15,6 +12,10 @@ import (
 	userRepo "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
+
+	"github.com/fengyuan-liang/GoKit/collection/stream"
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -89,7 +90,7 @@ func (svc *LotteryService) ListPrize(ctx jet.Ctx, params *req.LotteryPrizePageRe
 	if productId2ProductMap != nil && len(productId2ProductMap) > 0 {
 		// 如果是虚拟类型的奖品，需要拼接商品信息
 		for _, prizePO := range list {
-			if prizePO.PrizeType != enum.Physical {
+			if prizePO.PrizeType != enum.Virtual {
 				continue
 			}
 			if product, ok := productId2ProductMap[prizePO.ProductAttributeID]; ok {

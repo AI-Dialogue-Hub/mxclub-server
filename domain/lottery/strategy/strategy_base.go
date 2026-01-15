@@ -73,13 +73,12 @@ func (s *LotteryStrategyBase) handleDraw(
 		totalProb  = 0.0
 		finalPrize *po.LotteryPrize
 	)
-	// 1. 过滤概率为0的奖品
+	// 1. 过滤概率为0的奖品，并累加概率
 	prizes = utils.Filter(prizes, func(prize *po.LotteryPrize) bool {
 		totalProb += prize.ActualProbability
 		return prize.ActualProbability > 0
 	})
-	totalProb = utils.RoundToTwoDecimalPlaces(totalProb / 100.0)
-	// 2. 验证概率
+	// 2. 验证概率和范围（概率字段存储为小数形式，如0.01表示1%）
 	if totalProb <= 0 || totalProb > 1.0 {
 		ctx.Logger().Errorf(
 			"activity:%v, invalid probability distribution, totalProb is %v", drawInfo.ActivityId, totalProb)

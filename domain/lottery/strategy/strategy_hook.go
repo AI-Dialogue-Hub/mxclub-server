@@ -101,22 +101,37 @@ func fetchMissVal(
 func (l *LotteryStrategyHook) AfterDraw(ctx jet.Ctx, afterDrawDTO *dto.LotteryStrategyAfterDrawDTO) {
 	defer utils.RecoverWithPrefix(ctx, "LotteryStrategyHook#AfterDraw")
 	ctx.Logger().Infof("do after draw, afterDrawDTO:%v", utils.ObjToJsonStr(afterDrawDTO))
-	missVal, err := fetchMissVal(ctx, afterDrawDTO.UserId, afterDrawDTO.ActivityId)
-	if err != nil {
-		ctx.Logger().Errorf("get miss count error,err info:%v", err)
-		return
-	}
-	if missVal < lotteryPrizeLevelThirdQuota {
-		// 0. 增加抽奖的记录
-		missKey := fmt.Sprintf(missKeyTemplate, afterDrawDTO.UserId, afterDrawDTO.ActivityId, enum.PrizeLevelThird)
-		// 增加值
-		incrVal, err := xredis.Incr(missKey)
-		ctx.Logger().Infof("useId:%v, activityId:%v, incr count: %v,missKey => %v, err info:%v",
-			afterDrawDTO.UserId, afterDrawDTO.ActivityId, incrVal, missKey, err)
-	}
+
 	lotteryAbility := ability.FetchLotteryAbilityInstance()
+	missKey := fmt.Sprintf(missKeyTemplate, afterDrawDTO.UserId, afterDrawDTO.ActivityId, enum.PrizeLevelThird)
+
+	// 根据中奖等级处理计数器
+	switch afterDrawDTO.PrizeLevel {
+	case enum.PrizeLevelThird:
+		// 中三等奖：增加计数
+		missVal, err := fetchMissVal(ctx, afterDrawDTO.UserId, afterDrawDTO.ActivityId)
+		if err != nil {
+			ctx.Logger().Errorf("get miss count error,err info:%v", err)
+			return
+		}
+		if missVal < lotteryPrizeLevelThirdQuota {
+			// 增加值
+			incrVal, err := xredis.Incr(missKey)
+			ctx.Logger().Infof("useId:%v, activityId:%v, incr count: %v, missKey => %v, err info:%v",
+				afterDrawDTO.UserId, afterDrawDTO.ActivityId, incrVal, missKey, err)
+		}
+	case enum.PrizeLevelSecond, enum.PrizeLevelFirst:
+		// 中一等奖或二等奖：清零计数器
+		if err := xredis.Del(missKey); err != nil {
+			ctx.Logger().Warnf("failed to clear miss count, missKey => %v, err info:%v", missKey, err)
+		} else {
+			ctx.Logger().Infof("cleared miss count after winning %v, userId:%v, activityId:%v",
+				afterDrawDTO.PrizeLevel, afterDrawDTO.UserId, afterDrawDTO.ActivityId)
+		}
+	}
+
 	// 1. 奖品中奖落库
-	err = lotteryAbility.AddLotteryRecords(ctx, &po.LotteryRecords{
+	err := lotteryAbility.AddLotteryRecords(ctx, &po.LotteryRecords{
 		ActivityId:            afterDrawDTO.ActivityId,
 		PrizeId:               afterDrawDTO.PrizeId,
 		UserId:                afterDrawDTO.UserId,
