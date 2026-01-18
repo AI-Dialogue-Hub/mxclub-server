@@ -19,6 +19,7 @@ import (
 	"mxclub/pkg/common/txsms"
 	"mxclub/pkg/common/wxpay"
 	"mxclub/pkg/common/xjet"
+	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/constant"
 	"runtime/debug"
 	"strconv"
@@ -802,9 +803,14 @@ func (svc *OrderService) fetchWithDrawRange(ctx jet.Ctx) (int, int) {
 }
 
 func (svc *OrderService) WithDraw(ctx jet.Ctx, drawReq *req.WithDrawReq) error {
+	// 0. 提现防抖
+	if err := xredis.Debounce(fmt.Sprintf("mini_withDraw_%v", middleware.MustGetUserId(ctx)), time.Second*60); err != nil {
+		ctx.Logger().Errorf("[WithDraw] Debounce has durable withdraw drawReq => %v", utils.ObjToJsonStr(drawReq))
+		return err
+	}
 	userId := middleware.MustGetUserId(ctx)
 	userById, _ := svc.userService.FindUserById(ctx, userId)
-	// 0. 查找是否有未完成的提现记录 如果有则限制此次提现
+	// 0.1 查找是否有未完成的提现记录 如果有则限制此次提现
 	records, err := svc.withdrawalRepo.FindWithdrawnByStatus(ctx, userById.MemberNumber, enum.Initiated())
 	if records != nil && len(records) > 0 {
 		ctx.Logger().Errorf("[WithDraw] has durable withdraw records => %v", utils.ObjToJsonStr(records))
