@@ -5,18 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/GoKit/collection/maps"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
 	"io"
 	"mxclub/pkg/common/xjet"
 	"mxclub/pkg/utils"
 	"net/http"
 	"net/http/httptest"
 	"time"
+
+	"github.com/fengyuan-liang/GoKit/collection/maps"
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
 )
 
 func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayDTO, err error) {
@@ -25,7 +26,7 @@ func Prepay(ctx jet.Ctx, prePayRequestDTO *prepayRequestDTO) (prepayDTO *PrePayD
 	if payName == "" {
 		payName = "明星电竞"
 	}
-	desc = fmt.Sprintf("%s-打赏订单", payName)
+	desc = fmt.Sprintf("%s-订单", payName)
 	return prepayWithDesc(ctx, prePayRequestDTO, desc, wxPayConfig.CallBackURL)
 }
 
