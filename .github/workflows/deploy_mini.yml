@@ -57,7 +57,7 @@ jobs:
           # 执行脚本 部署脚本 后面的vars是传递给脚本的参数
           script: |
             sh /home/lfy/workspace/script/deploy.sh ${{ vars.USER_NAME }} ${{ vars.IMAGE_NAME }} ${{ vars.PORT }} ${{ vars.CONTAINS_PORT }} ${{ vars.hubAddr }} ${{ vars.tag }}
-            sleep 60  # 等待60秒
+            sleep60  # 等待60秒
             sh /home/lfy/workspace/script/real-deploy.sh fengyuan-liang mxclub-mini 8011 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
             sleep 60  # 等待60秒
             sh /home/lfy/workspace/script/mx-delta-deploy.sh fengyuan-liang mxclub-mini 8012 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1

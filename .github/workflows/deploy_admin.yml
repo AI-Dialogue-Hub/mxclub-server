@@ -57,9 +57,9 @@ jobs:
           # 执行脚本 部署脚本 后面的vars是传递给脚本的参数
           script: |
             sh /home/lfy/workspace/script/deploy.sh fengyuan-liang mxclub-admin 8001 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
-            sleep 60  # 等待60秒
+            sleep 5  # 等待60秒
             sh /home/lfy/workspace/script/real-deploy.sh fengyuan-liang mxclub-admin 8003 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
-            sleep 60  # 等待60秒
+            sleep 5  # 等待60秒
             sh /home/lfy/workspace/script/mx-delta-deploy.sh fengyuan-liang mxclub-admin 8004 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
             # sh /home/lfy/workspace/script/baozao-deploy.sh fengyuan-liang mxclub-admin 8002 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
-            sh /home/lfy/workspace/script/cloud-delta-deploy.sh fengyuan-liang mxclub-admin 8005 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
+            # sh /home/lfy/workspace/script/cloud-delta-deploy.sh fengyuan-liang mxclub-admin 8005 8000 registry.cn-hangzhou.aliyuncs.com v0.0.1
