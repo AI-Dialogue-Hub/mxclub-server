@@ -2,9 +2,6 @@ package service
 
 import (
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
-	"github.com/pkg/errors"
-	"github.com/xuri/excelize/v2"
 	"mxclub/apps/mxclub-admin/config"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
@@ -14,6 +11,10 @@ import (
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
 	"time"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
+	"github.com/pkg/errors"
+	"github.com/xuri/excelize/v2"
 )
 
 func init() {
@@ -87,7 +88,7 @@ func (svc ExcelService) ExportExcel(ctx jet.Ctx, startDate, endDate string) (err
 		return
 	}
 
-	orderIdList := utils.Map(orderPOList, func(in *po.Order) uint64 { return in.OrderId })
+	orderIdList := utils.Map(orderPOList, func(in *po.Order) string { return utils.ParseString(in.OrderId) })
 
 	if !config.GetConfig().WxPayConfig.IsBaoZaoClub() {
 		// 2. 打赏订单
@@ -95,8 +96,8 @@ func (svc ExcelService) ExportExcel(ctx jet.Ctx, startDate, endDate string) (err
 		if err != nil {
 			ctx.Logger().Errorf(err.Error())
 		} else {
-			outTradeNoList := utils.Map[*po.RewardRecord, uint64](rewardRecords, func(in *po.RewardRecord) uint64 {
-				return utils.ParseUint64(in.OutTradeNo)
+			outTradeNoList := utils.Map(rewardRecords, func(in *po.RewardRecord) string {
+				return in.OutTradeNo
 			})
 			ctx.Logger().Infof("find outTradeNoList => %v", outTradeNoList)
 			orderIdList = append(orderIdList, outTradeNoList...)
