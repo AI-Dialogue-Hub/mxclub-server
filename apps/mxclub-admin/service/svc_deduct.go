@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
@@ -11,6 +10,8 @@ import (
 	"mxclub/domain/order/entity/enum"
 	"mxclub/domain/order/po"
 	"mxclub/pkg/utils"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
 func (svc *OrderService) ListDeduction(ctx jet.Ctx, listReq *req.DeductionListReq) ([]*vo.DeductionVO, int64, error) {
@@ -57,6 +58,9 @@ func (svc *OrderService) AddDeduction(ctx jet.Ctx, addReq *req.DeductionAddReq) 
 	}
 	addReq.ConfirmPersonId = middleware.MustGetUserInfo(ctx).ID
 	deductPO := utils.MustCopy[po.Deduction](addReq)
+	// 状态需要转换下
+	deductStatus := enum.Of(addReq.Status)
+	deductPO.Status = deductStatus
 	err = svc.deductionRepo.InsertOne(deductPO)
 	if err != nil {
 		ctx.Logger().Errorf("[orderService]AddDeduction ERROR:%v", err.Error())
