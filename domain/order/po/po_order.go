@@ -2,11 +2,12 @@ package po
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"mxclub/domain/order/entity/enum"
 	"mxclub/pkg/common/xmysql"
 	"regexp"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Order struct {
@@ -87,7 +88,7 @@ func ExtractID(input string) (string, error) {
 	if len(match) > 1 {
 		return match[1], nil // 返回捕获组中的数字
 	}
-	return "", fmt.Errorf("未找到 ID")
+	return "", fmt.Errorf("未找到 ID,input=%v", input)
 }
 
 // ExtractRole 提取 角色: 后的中文部分, Id:9913193068,角色:六哥会打呀 => 六哥会打呀
