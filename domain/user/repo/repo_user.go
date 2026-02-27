@@ -12,6 +12,7 @@ import (
 	"mxclub/pkg/common/xmysql"
 	"mxclub/pkg/common/xredis"
 	"mxclub/pkg/utils"
+	"time"
 )
 
 func init() {
@@ -50,6 +51,12 @@ type IUserRepo interface {
 	FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error)
 	DeletePermissionUser(ctx jet.Ctx, name string) error
 	UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error
+	// UpdateUserBail 更新用户保证金
+	UpdateUserBail(ctx jet.Ctx, userId uint, bail float64) error
+	// FindExpiredBailUsers 查询保证金过期的打手（超过30天）
+	FindExpiredBailUsers(ctx jet.Ctx, days int) ([]*po.User, error)
+	// FindExpiringBailUsers 查询保证金即将过期的打手（提前N天）
+	FindExpiringBailUsers(ctx jet.Ctx, days int) ([]*po.User, error)
 }
 
 func NewUserRepo(db *gorm.DB) IUserRepo {
@@ -301,4 +308,33 @@ func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, name string) error {
 
 func (repo UserRepo) UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error {
 	return repo.UpdateById(map[string]any{"dasher_level": level}, id)
+}
+
+// UpdateUserBail 更新用户保证金和缴纳时间
+func (repo UserRepo) UpdateUserBail(ctx jet.Ctx, userId uint, bail float64) error {
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
+	return repo.UpdateById(map[string]any{
+		"bail":      bail,
+		"bail_time": time.Now(),
+	}, userId)
+}
+
+// FindExpiredBailUsers 查询保证金过期的打手（超过指定天数）
+func (repo UserRepo) FindExpiredBailUsers(ctx jet.Ctx, days int) ([]*po.User, error) {
+	expiredTime := time.Now().AddDate(0, 0, -days)
+	return repo.Find(
+		"role = ? and bail > 0 and bail_time < ?",
+		enum.RoleAssistant.String(), expiredTime,
+	)
+}
+
+// FindExpiringBailUsers 查询保证金即将过期的打手（距离过期还有N天）
+func (repo UserRepo) FindExpiringBailUsers(ctx jet.Ctx, days int) ([]*po.User, error) {
+	// 查找在未来N天内过期的用户
+	startTime := time.Now().AddDate(0, 0, days-1)
+	endTime := time.Now().AddDate(0, 0, days)
+	return repo.Find(
+		"role = ? and bail > 0 and bail_time >= ? and bail_time < ?",
+		enum.RoleAssistant.String(), startTime, endTime,
+	)
 }

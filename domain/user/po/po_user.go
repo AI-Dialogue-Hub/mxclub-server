@@ -2,8 +2,10 @@ package po
 
 import (
 	"database/sql"
-	"gorm.io/gorm"
 	"mxclub/domain/user/entity/enum"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
@@ -23,6 +25,8 @@ type User struct {
 	DasherLevel  enum.DasherLevel  `gorm:"dasher_level;default:-1"` // 打手等级
 	MemberStatus enum.MemberStatus `gorm:"member_status"`           // 编号
 	ActivatedAt  sql.NullTime      `gorm:"activated_at"`            // 最近一次上线
+	Bail         float64           `gorm:"bail"`                    // 保证金
+	BailTime     time.Time         `gorm:"bail_time"`               // 保证金缴纳时间
 }
 
 func (u User) TableName() string {

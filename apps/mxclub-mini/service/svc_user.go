@@ -418,3 +418,42 @@ func (svc UserService) CheckDasherInRunningOrder(ctx jet.Ctx, memberNumber int) 
 	orderPO, err := svc.orderRepo.FindByDasherId(ctx, memberNumber)
 	return err != nil && orderPO != nil && orderPO.ID > 0
 }
+
+// CheckBailExpired 检查保证金有效期
+// 1. 查找保证金超过30天的打手，清空保证金
+// 2. 提前一天发送提醒消息
+func (svc UserService) CheckBailExpired() {
+	ctx := xjet.NewDefaultJetContext()
+	logger := ctx.Logger()
+
+	// 1. 清空超过30天的保证金
+	expiredUsers, err := svc.userRepo.FindExpiredBailUsers(ctx, 30)
+	if err != nil {
+		logger.Errorf("[CheckBailExpired] FindExpiredBailUsers error: %v", err)
+	} else {
+		for _, user := range expiredUsers {
+			// 清空保证金
+			_ = svc.userRepo.UpdateUserBail(ctx, user.ID, 0)
+			// 发送消息通知
+			_ = svc.messageService.PushSystemMessage(ctx, user.ID,
+				"您的保证金已过期，请重新缴纳保证金以继续接单")
+			logger.Infof("[CheckBailExpired] Cleared bail for user: %v(%v)", user.Name, user.MemberNumber)
+		}
+	}
+
+	// 2. 提前1天提醒（即缴纳满29天的用户）
+	expiringUsers, err := svc.userRepo.FindExpiringBailUsers(ctx, 30)
+	if err != nil {
+		logger.Errorf("[CheckBailExpired] FindExpiringBailUsers error: %v", err)
+	} else {
+		for _, user := range expiringUsers {
+			// 发送提醒消息
+			_ = svc.messageService.PushSystemMessage(ctx, user.ID,
+				"您的保证金将在明天过期，请及时续费以避免影响接单")
+			logger.Infof("[CheckBailExpired] Reminded user: %v(%v)", user.Name, user.MemberNumber)
+		}
+	}
+
+	logger.Infof("[CheckBailExpired] Completed. Expired: %d, Expiring: %d",
+		len(expiredUsers), len(expiringUsers))
+}

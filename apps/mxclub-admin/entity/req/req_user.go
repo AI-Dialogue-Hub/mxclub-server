@@ -15,6 +15,7 @@ type UserReq struct {
 	DasherLevel  enum.DasherLevel `json:"dasher_level"`
 	MemberNumber any              `json:"member_number"` // 编号
 	Phone        string           `json:"phone"`
+	Bail         float64          `json:"bail"` // 保证金
 }
 
 type UserListReq struct {

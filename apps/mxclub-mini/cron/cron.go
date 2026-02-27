@@ -20,13 +20,14 @@ type ICronService interface {
 	RunCron()
 }
 
-func NewCronService(config *config.Config, orderService *service.OrderService) ICronService {
+func NewCronService(config *config.Config, orderService *service.OrderService, userService *service.UserService) ICronService {
 	return &CronService{
 		c:            cron.New(),
 		once:         new(sync.Once),
 		config:       config,
 		logger:       xlog.NewWith("cron_service"),
 		orderService: orderService,
+		userService:  userService,
 	}
 }
 
@@ -37,6 +38,7 @@ type CronService struct {
 	logger *xlog.Logger
 	// ================
 	orderService *service.OrderService
+	userService  *service.UserService
 }
 
 // RunCron 注意在集群情况下需要指定单台机器执行定时任务，防止多次执行
@@ -56,6 +58,11 @@ func (cronService *CronService) RunCron() {
 	cronService.c.AddFunc("* */1 * * *", func() {
 		cronService.logger.Infof("[RunCron Func Sync timeout order]...")
 		cronService.orderService.SyncTimeOutOrder()
+	})
+	// 检查保证金有效期 - 每天上午10点执行
+	cronService.c.AddFunc("0 0 10 * * *", func() {
+		cronService.logger.Infof("[RunCron Func CheckBailExpired]...")
+		cronService.userService.CheckBailExpired()
 	})
 	cronService.once.Do(func() {
 		cronService.c.Start()

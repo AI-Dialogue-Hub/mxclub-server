@@ -26,6 +26,8 @@ type UserVO struct {
 	Phone        string           `json:"phone"`
 	ActivatedAt  time.Time        `json:"activated_at"` // 最近一次上线
 	CreatedAt    time.Time        `json:"created_at"`
+	Bail         float64          `json:"bail"`      // 保证金
+	BailTime     time.Time        `json:"bail_time"` // 保证金缴纳时间
 }
 
 type UserTypeVO struct {

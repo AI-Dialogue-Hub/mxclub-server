@@ -1,9 +1,9 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 	"mxclub/apps/mxclub-admin/entity/req"
 	"mxclub/apps/mxclub-admin/entity/vo"
 	"mxclub/apps/mxclub-admin/middleware"
@@ -15,6 +15,8 @@ import (
 	_ "mxclub/domain/user/repo"
 	"mxclub/pkg/api"
 	"mxclub/pkg/utils"
+
+	"github.com/fengyuan-liang/jet-web-fasthttp/jet"
 )
 
 func init() {
@@ -66,6 +68,17 @@ func (svc UserService) List(ctx jet.Ctx, params *req.UserListReq) (*api.PageResu
 func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 	updateMap := utils.ObjToMap(req)
 	updateMap["member_number"] = utils.SafeParseNumber[int](updateMap["member_number"])
+
+	// 如果更新了保证金，需要特殊处理
+	if updateMap["bail"] != nil {
+		if bail, err := updateMap["bail"].(json.Number).Float64(); err == nil && bail > 0 {
+			// 使用专门的保证金更新方法，会自动更新缴纳时间
+			return svc.userRepo.UpdateUserBail(ctx, req.ID, bail)
+		}
+	}
+
+	// 其他字段使用普通更新
+	delete(updateMap, "bail")
 	return svc.userRepo.UpdateUser(ctx, updateMap)
 }
 

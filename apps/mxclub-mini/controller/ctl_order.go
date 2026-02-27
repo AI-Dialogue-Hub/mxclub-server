@@ -21,11 +21,13 @@ func init() {
 type OrderController struct {
 	jet.BaseJetController
 	orderService *service.OrderService
+	userService  *service.UserService
 }
 
-func NewOrderController(orderService *service.OrderService) jet.ControllerResult {
+func NewOrderController(orderService *service.OrderService, userService *service.UserService) jet.ControllerResult {
 	return jet.NewJetController(&OrderController{
 		orderService: orderService,
+		userService:  userService,
 	})
 }
 
@@ -86,6 +88,17 @@ func (ctl OrderController) GetV1OrderDasher(ctx jet.Ctx) (*api.Response, error) 
 	if err != nil {
 		return xjet.WrapperResult(ctx, nil, errors.New("请等待三秒再刷新一次"))
 	}
+
+	// 检查打手是否缴纳保证金
+	userId := middleware.MustGetUserId(ctx)
+	userPO, err := ctl.userService.FindUserById(ctx, userId)
+	if err != nil || userPO == nil {
+		return xjet.WrapperResult(ctx, nil, errors.New("获取用户信息失败"))
+	}
+	if userPO.Role == "assistant" && userPO.Bail <= 0 {
+		return xjet.WrapperResult(ctx, nil, errors.New("您尚未缴纳保证金，无法查看订单。请联系管理员缴纳保证金"))
+	}
+
 	orderVOS, err := ctl.orderService.GetProcessingOrderList(ctx)
 	return xjet.WrapperResult(ctx, orderVOS, err)
 }
