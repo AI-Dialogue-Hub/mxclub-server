@@ -40,6 +40,15 @@ func (ctl OrderController) PostV1OrderList(ctx jet.Ctx, params *req.OrderListReq
 	//if xredis.Debounce(fmt.Sprintf("PostV1OrderList:%v", middleware.MustGetUserId(ctx)), time.Second*3) != nil {
 	//	return nil, errors.New("请等待三秒再刷新一次")
 	//}
+	// 检查打手是否缴纳保证金
+	userId := middleware.MustGetUserId(ctx)
+	userPO, err := ctl.userService.FindUserById(ctx, userId)
+	if err != nil || userPO == nil {
+		return xjet.WrapperResult(ctx, nil, errors.New("获取用户信息失败"))
+	}
+	if userPO.Role == "assistant" && userPO.Bail <= 0 {
+		return xjet.WrapperResult(ctx, nil, errors.New("您尚未缴纳保证金，无法查看订单。请联系管理员缴纳保证金"))
+	}
 	pageResult, err := ctl.orderService.List(ctx, params)
 	return xjet.WrapperResult(ctx, pageResult, err)
 }
