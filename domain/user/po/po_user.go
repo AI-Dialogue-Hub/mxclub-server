@@ -26,7 +26,7 @@ type User struct {
 	MemberStatus enum.MemberStatus `gorm:"member_status"`           // 编号
 	ActivatedAt  sql.NullTime      `gorm:"activated_at"`            // 最近一次上线
 	Bail         float64           `gorm:"bail"`                    // 保证金
-	BailTime     time.Time         `gorm:"bail_time"`               // 保证金缴纳时间
+	BailTime     *time.Time        `gorm:"bail_time"`               // 保证金缴纳时间
 }
 
 func (u User) TableName() string {

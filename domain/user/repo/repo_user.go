@@ -303,7 +303,12 @@ func (repo UserRepo) FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error) {
 }
 
 func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, name string) error {
-	return repo.Remove("name = ?", name)
+	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
+	// 不允许删除用户，改为普通用户
+	update := xmysql.NewMysqlUpdate()
+	update.SetFilter("name = ?", name)
+	update.Set("role", enum.RoleWxUser)
+	return repo.UpdateByWrapper(update)
 }
 
 func (repo UserRepo) UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error {
@@ -313,9 +318,10 @@ func (repo UserRepo) UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLe
 // UpdateUserBail 更新用户保证金和缴纳时间
 func (repo UserRepo) UpdateUserBail(ctx jet.Ctx, userId uint, bail float64) error {
 	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
+	now := time.Now()
 	return repo.UpdateById(map[string]any{
 		"bail":      bail,
-		"bail_time": time.Now(),
+		"bail_time": &now,
 	}, userId)
 }
 
@@ -323,7 +329,7 @@ func (repo UserRepo) UpdateUserBail(ctx jet.Ctx, userId uint, bail float64) erro
 func (repo UserRepo) FindExpiredBailUsers(ctx jet.Ctx, days int) ([]*po.User, error) {
 	expiredTime := time.Now().AddDate(0, 0, -days)
 	return repo.Find(
-		"role = ? and bail > 0 and bail_time < ?",
+		"role = ? and bail > 0 and bail_time is not null and bail_time < ?",
 		enum.RoleAssistant.String(), expiredTime,
 	)
 }
@@ -334,7 +340,7 @@ func (repo UserRepo) FindExpiringBailUsers(ctx jet.Ctx, days int) ([]*po.User, e
 	startTime := time.Now().AddDate(0, 0, days-1)
 	endTime := time.Now().AddDate(0, 0, days)
 	return repo.Find(
-		"role = ? and bail > 0 and bail_time >= ? and bail_time < ?",
+		"role = ? and bail > 0 and bail_time is not null and bail_time >= ? and bail_time < ?",
 		enum.RoleAssistant.String(), startTime, endTime,
 	)
 }

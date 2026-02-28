@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/fengyuan-liang/jet-web-fasthttp/pkg/xlog"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
