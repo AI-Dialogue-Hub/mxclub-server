@@ -30,6 +30,7 @@ type UserRemoveReq struct {
 }
 
 type UserRoleReq struct {
+	ID       uint          `json:"id" validate:"required"`
 	Name     string        `json:"name" validate:"required" reg_err_info:"不能为空"`
 	Password string        `json:"password" validate:"required" reg_err_info:"不能为空"`
 	Role     enum.RoleType `json:"role" validate:"required" reg_err_info:"不能为空"`

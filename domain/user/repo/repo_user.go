@@ -49,7 +49,7 @@ type IUserRepo interface {
 	RemoveDasher(ctx jet.Ctx, id uint) error
 	FindByIdAroundCache(ctx jet.Ctx, id uint) (*po.User, error)
 	FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error)
-	DeletePermissionUser(ctx jet.Ctx, name string) error
+	DeletePermissionUser(ctx jet.Ctx, id any) error
 	UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error
 	// UpdateUserBail 更新用户保证金
 	UpdateUserBail(ctx jet.Ctx, userId uint, bail float64) error
@@ -302,13 +302,10 @@ func (repo UserRepo) FetchPermissionUser(ctx jet.Ctx) ([]*po.User, error) {
 		[]string{enum.RoleTS.String(), enum.RoleManager.String(), enum.RoleAdministrator.String()})
 }
 
-func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, name string) error {
+func (repo UserRepo) DeletePermissionUser(ctx jet.Ctx, id any) error {
 	defer xredis.DelMatchingKeys(ctx, userCachePrefix)
-	// 不允许删除用户，改为普通用户
-	update := xmysql.NewMysqlUpdate()
-	update.SetFilter("name = ?", name)
-	update.Set("role", enum.RoleWxUser)
-	return repo.UpdateByWrapper(update)
+	ctx.Logger().Infof("delete permission user by id %v", id)
+	return repo.RemoveByID(id)
 }
 
 func (repo UserRepo) UpdateDasherLevel(ctx jet.Ctx, id uint, level enum.DasherLevel) error {
