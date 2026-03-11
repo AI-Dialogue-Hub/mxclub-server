@@ -72,8 +72,10 @@ func (svc UserService) Update(ctx jet.Ctx, req *req.UserReq) error {
 	// 如果更新了保证金，需要特殊处理
 	if updateMap["bail"] != nil {
 		if bail, err := updateMap["bail"].(json.Number).Float64(); err == nil && bail > 0 {
-			// 使用专门的保证金更新方法，会自动更新缴纳时间
-			return svc.userRepo.UpdateUserBail(ctx, req.ID, bail)
+			// 使用专门的保证金更新方法，会自动更新缴纳时间 TODO@lfy 需要注意，每次更新其他字段，也会更新保证金，需要优化
+			if err := svc.userRepo.UpdateUserBail(ctx, req.ID, bail); err != nil {
+				ctx.Logger().Errorf("[UserService] error:%v", err)
+			}
 		}
 	}
 
