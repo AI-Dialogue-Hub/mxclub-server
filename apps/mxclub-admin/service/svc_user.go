@@ -179,7 +179,7 @@ func (svc UserService) PutPermissionUser(ctx jet.Ctx, roleReq *req.UserRoleReq) 
 
 // DeletePermissionUser 删除有权限的用户 这里仅把角色改为普通用户
 func (svc UserService) DeletePermissionUser(ctx jet.Ctx, roleReq *req.UserRoleReq) error {
-	err := svc.userRepo.DeletePermissionUser(ctx, roleReq.Name)
+	err := svc.userRepo.DeletePermissionUser(ctx, roleReq.ID)
 	if err != nil {
 		ctx.Logger().Errorf("[UserService#DeletePermissionUser] error:%v", err)
 		return errors.New("删除失败")
